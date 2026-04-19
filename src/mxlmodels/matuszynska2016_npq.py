@@ -193,12 +193,6 @@ def _atp_synthase_activase(
         - k_DeactATPase * (1 - switch) * ATPase_ac
     )
 
-    # switch = 0.5 * (1 + (pfd / (abs(pfd) + 1e-12)))
-    # return (
-    #     k_ActATPase * switch * (1 - ATPase_ac)
-    #     - k_DeactATPase * (1 - switch) * ATPase_ac
-    # )
-
 
 def _proton_leak(
     H_lu: float,
@@ -249,7 +243,7 @@ def _psbs_protonation(
     return k_prot * a * psbS - k_deprot * (PsbS_tot - psbS)
 
 
-def _ps2states_2016a(
+def _ps2states_2016a_analytic(
     pq_ox: float,
     pq_red: float,
     quencher: float,
@@ -260,24 +254,52 @@ def _ps2states_2016a(
     kf: float,
     kp: float,
     psii_tot: float,
-):
-    # light = np.ones(len(P)) * light
-    b0 = pfd + k_pqh2 * pq_red / keq_qapq
-    b1 = kh * quencher + kf
-    b2 = kh * quencher + kf + kp
-
-    M = np.array(
-        [
-            [-b0, b1, k_pqh2 * pq_ox, 0],  # B0
-            [pfd, -b2, 0, 0],  # B1
-            [0, 0, pfd, -b1],  # B3
-            [1, 1, 1, 1],
-        ]
+) -> tuple[float, float, float, float]:
+    x0 = kf**2
+    x1 = kf * kp
+    x2 = kh * quencher
+    x3 = kp * x2
+    x4 = 2 * x2
+    x5 = kf * x4
+    x6 = kh**2 * quencher**2
+    x7 = keq_qapq * kp
+    x8 = k_pqh2 * pq_ox
+    x9 = keq_qapq * x8
+    x10 = k_pqh2 * pq_red
+    x11 = kf * x10
+    x12 = kp * x10
+    x13 = pfd * x9
+    x14 = x10 * x2
+    x15 = pfd * x7
+    x16 = (
+        keq_qapq * pfd * x1
+        + x0 * x10
+        + x1 * x10
+        + x10 * x3
+        + x10 * x6
+        + x11 * x4
+        + x15 * x2
     )
-
-    A = np.array([0, 0, 0, psii_tot])
-    B0, B1, B2, B3 = np.linalg.solve(M, A)
-    return B0, B1, B2, B3
+    x17 = psii_tot / (
+        kf * x13
+        + pfd**2 * x7
+        + pfd * x11
+        + pfd * x12
+        + pfd * x14
+        + x0 * x9
+        + x1 * x9
+        + x13 * x2
+        + x16
+        + x2 * x7 * x8
+        + x5 * x9
+        + x6 * x9
+    )
+    x18 = pfd * x17
+    _B0 = x17 * x9 * (x0 + x1 + x3 + x5 + x6)
+    _B1 = x18 * x9 * (kf + x2)
+    _B2 = x16 * x17
+    _B3 = x18 * (x11 + x12 + x14 + x15)
+    return _B0, _B1, _B2, _B3
 
 
 def create_model() -> Model:
@@ -481,7 +503,7 @@ def create_model() -> Model:
         .add_surrogate(
             "ps2states",
             qss.Surrogate(
-                model=_ps2states_2016a,
+                model=_ps2states_2016a_analytic,
                 args=[
                     "pq_ox",
                     "pq_red",
