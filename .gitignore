@@ -8,3 +8,8 @@ wheels/
 
 # Virtual environments
 .venv
+
+# AI config files
+.github/copilot-instructions.md
+.claude
+CLAUDE.md
