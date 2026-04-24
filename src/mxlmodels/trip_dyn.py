@@ -1,0 +1,68 @@
+from mxlpy import Model
+
+
+def dPdt(
+    beta: float,
+    alpha: float,
+    Public: float,
+    eta: float,
+    r_p: float,
+    Cheater: float,
+    Private: float,
+) -> float:
+    return (
+        -Cheater * Public * alpha
+        - Private * Public * beta
+        + Public * r_p
+        - Public**2.0 * eta
+    )
+
+
+def dCdt(Public: float, alpha: float, Cheater: float, nu: float) -> float:
+    return Cheater * Public * alpha - Cheater**2.0 * nu
+
+
+def dMdt(beta: float, Public: float, gamma: float, r_m: float, Private: float) -> float:
+    return -Private * Public * beta + Private * r_m - Private**2.0 * gamma
+
+
+def create_model() -> Model:
+    return (
+        Model()
+        .add_variable("Public", initial_value=1.0)
+        .add_variable("Cheater", initial_value=1.0)
+        .add_variable("Private", initial_value=1.0)
+        .add_parameter("r_p", value=0.4)
+        .add_parameter("eta", value=0.0001)
+        .add_parameter("nu", value=1.0e-5)
+        .add_parameter("r_m", value=0.2)
+        .add_parameter("gamma", value=0.0001)
+        .add_parameter("alpha", value=0.0002)
+        .add_parameter("beta", value=0.0001)
+        .add_reaction(
+            "dPdt",
+            fn=dPdt,
+            args=[
+                "beta",
+                "alpha",
+                "Public",
+                "eta",
+                "r_p",
+                "Cheater",
+                "Private",
+            ],
+            stoichiometry={"Public": 1.0},
+        )
+        .add_reaction(
+            "dCdt",
+            fn=dCdt,
+            args=["Public", "alpha", "Cheater", "nu"],
+            stoichiometry={"Cheater": 1.0},
+        )
+        .add_reaction(
+            "dMdt",
+            fn=dMdt,
+            args=["beta", "Public", "gamma", "r_m", "Private"],
+            stoichiometry={"Private": 1.0},
+        )
+    )
