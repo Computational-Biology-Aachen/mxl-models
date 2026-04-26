@@ -1,3 +1,5 @@
+"""Matuszynska 2019 photosynthesis model with NPQ, state transitions, and Calvin cycle."""
+
 import math
 
 import numpy as np
@@ -43,7 +45,8 @@ def _quencher(
     y3: float,
     kZSat: float,
 ) -> float:
-    """co-operative 4-state quenching mechanism
+    """Co-operative 4-state quenching mechanism.
+
     gamma0: slow quenching of (Vx - protonation)
     gamma1: fast quenching (Vx + protonation)
     gamma2: fastest possible quenching (Zx + protonation)
@@ -193,9 +196,10 @@ def _ps1states_2019(
     k_pc_ox: float,
     pfd: float,
 ) -> float:
-    """QSSA calculates open state of PSI
-    depends on reduction states of plastocyanin and ferredoxin
-    C = [PC], F = [Fd] (ox. forms)
+    """QSSA calculates open state of PSI.
+
+    Depends on reduction states of plastocyanin and ferredoxin.
+    C = [PC], F = [Fd] (ox. forms).
     """
     L = (1 - ps2cs) * pfd
     return psi_tot / (
@@ -620,6 +624,7 @@ def _ps2states_2016_phd_surrogate(
 
 
 def create_model() -> Model:
+    """Build the Matuszynska 2019 photosynthesis model with NPQ, state transitions, and CBB cycle."""
     m = Model()
 
     m = m.add_variable(

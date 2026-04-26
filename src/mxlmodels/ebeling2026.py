@@ -1,3 +1,5 @@
+"""Ebeling 2026 extended chloroplast model with ion transport, ROS, and Calvin cycle."""
+
 import math
 
 import numpy as np
@@ -33,7 +35,8 @@ def _quencher(
     y3: float,
     kZSat: float,
 ) -> float:
-    """co-operative 4-state quenching mechanism
+    """Co-operative 4-state quenching mechanism.
+
     gamma0: slow quenching of (Vx - protonation)
     gamma1: fast quenching (Vx + protonation)
     gamma2: fastest possible quenching (Zx + protonation)
@@ -294,9 +297,7 @@ def _initial_delta_psi(
     F: float,
     T: float,
 ) -> float:
-    """
-    Estimation of delta psi in the dark - assuming delta_pH and delta_psi have equal contribution to pmf
-    """
+    """Estimate delta_psi in the dark, assuming delta_pH and delta_psi contribute equally to pmf."""
     return np.log(10) * ((R * T) / F) * (pH - pH_lumen)
 
 
@@ -671,7 +672,7 @@ def _rate_mda_reductase(
     km_nadph: float,
     km_mda: float,
 ) -> float:
-    """Compare Valero et al. 2016"""
+    """Compare Valero et al. 2016."""
     nom = vmax * nadph * mda
     denom = km_nadph * mda + km_mda * nadph + nadph * mda + km_nadph * km_mda
     return nom / denom
@@ -690,11 +691,10 @@ def _rate_ascorbate_peroxidase(
     kf5: float,
     XT: float,
 ) -> float:
-    """lumped reaction of ascorbate peroxidase
-    the cycle stretched to a linear chain with
-    two steps producing the MDA
-    two steps releasing ASC
-    and one step producing hydrogen peroxide
+    """Lumped reaction of ascorbate peroxidase.
+
+    The cycle stretched to a linear chain with two steps producing the MDA,
+    two steps releasing ASC, and one step producing hydrogen peroxide.
     """
     nom = A * H * XT
     denom = (
@@ -801,7 +801,7 @@ def _v_at_pactivity(
     kActATPase: float,
     kDeactATPase: float,
 ) -> float:
-    """Activation of ATPsynthase by light"""
+    """Activation of ATPsynthase by light."""
     if light > 0.0:
         return kActATPase * (1 - ATPactivity)
     return -kDeactATPase * ATPactivity
@@ -898,6 +898,7 @@ def _cl_ce_bi(
 
 
 def create_model() -> Model:
+    """Build the Ebeling 2026 extended chloroplast model with ion channels, ROS, and CBB cycle."""
     m = Model()
     m = m.add_variable("3PGA", initial_value=0.9167729479368978)
     m = m.add_variable("BPGA", initial_value=0.0003814495319659031)

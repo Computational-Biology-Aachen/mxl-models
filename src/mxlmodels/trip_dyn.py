@@ -1,3 +1,5 @@
+"""Three-strain public-goods game: cooperators, cheaters, and private-goods producers."""
+
 from mxlpy import Model
 
 
@@ -10,6 +12,7 @@ def dPdt(
     Cheater: float,
     Private: float,
 ) -> float:
+    """Net growth rate of public-goods producers; lost to cheaters and private producers."""
     return (
         -Cheater * Public * alpha
         - Private * Public * beta
@@ -19,14 +22,17 @@ def dPdt(
 
 
 def dCdt(Public: float, alpha: float, Cheater: float, nu: float) -> float:
+    """Net growth rate of cheaters; exploits public-goods producers, density-limited."""
     return Cheater * Public * alpha - Cheater**2.0 * nu
 
 
 def dMdt(beta: float, Public: float, gamma: float, r_m: float, Private: float) -> float:
+    """Net growth rate of private-goods producers; grows on public goods, density-limited."""
     return -Private * Public * beta + Private * r_m - Private**2.0 * gamma
 
 
 def create_model() -> Model:
+    """Build the three-strain public-goods game model (Public / Cheater / Private)."""
     return (
         Model()
         .add_variable("Public", initial_value=1.0)

@@ -1,15 +1,20 @@
+"""Two-species population dynamics: E. coli and C. glutamicum with fixed affinities."""
+
 from mxlpy import Model
 
 
 def dEdt(mu_e: float, a_e: float, e_coli: float) -> float:
+    """Net growth rate of E. coli: affinity * population * growth rate."""
     return a_e * e_coli * mu_e
 
 
 def dCdt(mu_c: float, a_c: float, c_gluta: float, theta: float) -> float:
+    """Net growth rate of C. glutamicum minus density-dependent death."""
     return a_c * c_gluta * mu_c - c_gluta**2.0 * theta
 
 
 def create_model() -> Model:
+    """Build the two-species population dynamics model (E. coli / C. glutamicum)."""
     return (
         Model()
         .add_variable("e_coli", initial_value=5.0)

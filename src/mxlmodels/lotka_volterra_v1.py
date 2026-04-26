@@ -1,23 +1,30 @@
+"""Lotka-Volterra predator-prey model (v1): explicit prey growth and predation reactions."""
+
 from mxlpy import Model
 
 
 def v0(Alpha: float, Prey: float) -> float:
+    """Prey intrinsic growth: Alpha * Prey."""
     return Alpha * Prey
 
 
 def v1(Predator: float, Beta: float, Prey: float) -> float:
+    """Predation rate (prey loss): Beta * Predator * Prey."""
     return Beta * Predator * Prey
 
 
 def v2(Delta: float, Predator: float, Prey: float) -> float:
+    """Predator growth from predation: Delta * Predator * Prey."""
     return Delta * Predator * Prey
 
 
 def v3(Predator: float, Gamma: float) -> float:
+    """Predator natural death: Gamma * Predator."""
     return Gamma * Predator
 
 
 def create_model() -> Model:
+    """Build the Lotka-Volterra predator-prey model (v1)."""
     return (
         Model()
         .add_variable("Prey", initial_value=10.0)

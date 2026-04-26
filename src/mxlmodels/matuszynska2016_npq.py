@@ -1,3 +1,5 @@
+"""Matuszynska 2016 NPQ model: non-photochemical quenching via PsbS and xanthophyll cycle."""
+
 import numpy as np
 from mxlpy.surrogates import qss
 
@@ -53,8 +55,9 @@ def _keq_atp_synth(
     T: float,
     Pi: float,
 ):
-    """Equilibrium constant of ATP synthase. For more
-    information see Matuszynska et al 2016 or Ebenhöh et al. 2011,2014.
+    """Equilibrium constant of ATP synthase.
+
+    For more information see Matuszynska et al 2016 or Ebenhöh et al. 2011,2014.
     """
     RT = R * T
     DG = DG_ATP - np.log(10) * (pH_st - pH_lu) * (14 / 3) * RT
@@ -303,6 +306,7 @@ def _ps2states_2016a_analytic(
 
 
 def create_model() -> Model:
+    """Build the Matuszynska 2016 NPQ model (PsbS protonation + xanthophyll cycle)."""
     return (
         Model()
         .add_variable("pq_red", initial_value=0)

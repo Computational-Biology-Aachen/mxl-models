@@ -1,3 +1,5 @@
+"""Saadat 2021 chloroplast model with ROS scavenging, Calvin cycle, and thioredoxin regulation."""
+
 import math
 
 import numpy as np
@@ -37,7 +39,8 @@ def _quencher(
     y3: float,
     kZSat: float,
 ) -> float:
-    """co-operative 4-state quenching mechanism
+    """Co-operative 4-state quenching mechanism.
+
     gamma0: slow quenching of (Vx - protonation)
     gamma1: fast quenching (Vx + protonation)
     gamma2: fastest possible quenching (Zx + protonation)
@@ -230,6 +233,7 @@ def _rate_translocator(
 
 
 def mass_action_2s(s1: float, s2: float, k_fwd: float) -> float:
+    """Second-order mass action: k_fwd * s1 * s2."""
     return k_fwd * s1 * s2
 
 
@@ -346,10 +350,10 @@ def _rate_ferredoxin_reductase(
     kFdred: float,
     Keq_FAFd: float,
 ) -> float:
-    """rate of the redcution of Fd by the activity of PSI
-    used to be equall to the rate of PSI but now
-    alternative electron pathway from Fd allows for the production of ROS
-    hence this rate has to be separate
+    """Rate of Fd reduction by PSI activity.
+
+    Separate from the PSI rate because the alternative electron pathway from Fd
+    allows for the production of ROS.
     """
     return kFdred * Fd * A1 - kFdred / Keq_FAFd * Fdred * A2
 
@@ -549,7 +553,7 @@ def _rate_mda_reductase(
     km_nadph: float,
     km_mda: float,
 ) -> float:
-    """Compare Valero et al. 2016"""
+    """Compare Valero et al. 2016."""
     nom = vmax * nadph * mda
     denom = km_nadph * mda + km_mda * nadph + nadph * mda + km_nadph * km_mda
     return nom / denom
@@ -568,11 +572,10 @@ def _rate_ascorbate_peroxidase(
     kf5: float,
     XT: float,
 ) -> float:
-    """lumped reaction of ascorbate peroxidase
-    the cycle stretched to a linear chain with
-    two steps producing the MDA
-    two steps releasing ASC
-    and one step producing hydrogen peroxide
+    """Lumped reaction of ascorbate peroxidase.
+
+    The cycle stretched to a linear chain with two steps producing the MDA,
+    two steps releasing ASC, and one step producing hydrogen peroxide.
     """
     nom = A * H * XT
     denom = (
@@ -706,9 +709,10 @@ def _ps1states_2021(
     k0: float,
     o2: float,
 ) -> tuple[float, float, float]:
-    """QSSA calculates open state of PSI
-    depends on reduction states of plastocyanin and ferredoxin
-    C = [PC], F = [Fd] (ox. forms)
+    """QSSA calculates open state of PSI.
+
+    Depends on reduction states of plastocyanin and ferredoxin.
+    C = [PC], F = [Fd] (ox. forms).
     """
     kLI = (1 - ps2cs) * pfd
 
@@ -750,7 +754,7 @@ def _ps1states_2021(
 
 
 def create_model() -> Model:
-
+    """Build the Saadat 2021 chloroplast model with ROS scavenging, CBB cycle, and Trx regulation."""
     m = Model()
     m = m.add_variable("3PGA", initial_value=0.9167729479368978)
     m = m.add_variable("BPGA", initial_value=0.0003814495319659031)

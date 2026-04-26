@@ -1,31 +1,40 @@
+"""Dynamic enterobactin competition model: E. coli vs C. glutamicum siderophore cross-feeding."""
+
 from mxlpy import Derived, InitialAssignment, Model
 
 
 def a_c(a_e: float) -> float:
+    """Affinity of C. glutamicum for enterobactin: conservation with E. coli affinity."""
     return 10.0 - a_e
 
 
 def uptake_E_growth(a_e: float, enterobactin: float, K_e: float) -> float:
+    """Michaelis-Menten uptake of enterobactin by E. coli, scaled by E. coli affinity."""
     return a_e * enterobactin / (K_e + enterobactin)
 
 
 def uptake_C_growth(enterobactin: float, a_c: float, K_c: float) -> float:
+    """Michaelis-Menten uptake of enterobactin by C. glutamicum, scaled by its affinity."""
     return a_c * enterobactin / (K_c + enterobactin)
 
 
 def cons_term_E(a_e: float, e_coli: float, K_e: float, mu_e: float) -> float:
+    """Enterobactin consumption term for E. coli: affinity * population * growth rate."""
     return a_e * e_coli * mu_e / (K_e + a_e)
 
 
 def cons_term_C(mu_c: float, a_c: float, K_c: float, c_gluta: float) -> float:
+    """Enterobactin consumption term for C. glutamicum: affinity * population * growth rate."""
     return a_c * c_gluta * mu_c / (K_c + a_c)
 
 
 def dEdt(mu_e: float, e_coli: float, uptake_E_growth: float) -> float:
+    """Net growth rate of E. coli population."""
     return e_coli * mu_e * uptake_E_growth
 
 
 def dCdt(mu_c: float, c_gluta: float, uptake_C_growth: float, theta: float) -> float:
+    """Net growth rate of C. glutamicum minus density-dependent death."""
     return c_gluta * mu_c * uptake_C_growth - c_gluta**2.0 * theta
 
 
@@ -37,10 +46,12 @@ def dBdt(
     cons_term_C: float,
     r_cons_c: float,
 ) -> float:
+    """Net rate of change of enterobactin: production by E. coli minus consumption by both species."""
     return -cons_term_C * r_cons_c - cons_term_E * r_cons_e + enterobactin * r_prod
 
 
 def create_model() -> Model:
+    """Build the dynamic enterobactin cross-feeding model (E. coli / C. glutamicum)."""
     return (
         Model()
         .add_variable("e_coli", initial_value=5.0)

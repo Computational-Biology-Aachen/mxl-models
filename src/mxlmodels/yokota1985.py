@@ -1,3 +1,5 @@
+"""Yokota 1985 photorespiratory carbon oxidation cycle model."""
+
 from mxlpy import Model
 
 
@@ -24,6 +26,7 @@ def _ping_pong_bi_bi(
 
 
 def create_model() -> Model:
+    """Build the Yokota 1985 photorespiratory carbon oxidation cycle model."""
     return (
         Model()
         .add_variable("glycolate", initial_value=0.09)

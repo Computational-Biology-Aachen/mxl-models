@@ -1,3 +1,5 @@
+"""Poolman 2000 Calvin-Benson-Bassham cycle model."""
+
 from mxlpy import Model
 
 
@@ -241,6 +243,7 @@ def _rate_atp_synthase_2000(
 
 
 def create_model() -> Model:
+    """Build the Poolman 2000 Calvin-Benson-Bassham cycle model."""
     return (
         Model()
         .add_variable("3PGA", initial_value=0.6387788347932627)
