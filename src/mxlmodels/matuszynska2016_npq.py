@@ -1,67 +1,70 @@
 """Matuszynska 2016 NPQ model: non-photochemical quenching via PsbS and xanthophyll cycle."""
 
 import numpy as np
+from mxlpy import Derived, Model
 from mxlpy.surrogates import qss
 
-from mxlpy import Derived, Model
 
-
-def _ph(h: float) -> float:
+def _ph(
+    h: float,
+) -> float:
     return -np.log10(h * 2.5e-4)
 
 
-def _ph_inv(ph: float) -> float:
+def _ph_inv(
+    ph: float,
+) -> float:
     return 3.2e4 * 10**-ph
 
 
 def _keq_qapq(
-    F: float,
-    E0_QA: float,
-    E0_PQ: float,
-    pH_st: float,
-    R: float,
-    T: float,
-):
-    RT = R * T
-    DG1 = -F * E0_QA
-    DG2 = -2 * F * E0_PQ + 2 * pH_st * np.log(10) * RT
+    f: float,
+    e0_qa: float,
+    e0_pq: float,
+    p_h_st: float,
+    r: float,
+    t: float,
+) -> float:
+    RT = r * t
+    DG1 = -f * e0_qa
+    DG2 = -2 * f * e0_pq + 2 * p_h_st * np.log(10) * RT
     DG0 = -2 * DG1 + DG2
     return np.exp(-DG0 / RT)
 
 
 def _keq_cytb6f(
-    pH_lu: float,
-    F: float,
-    E0_PQ: float,
-    R: float,
-    T: float,
-    E0_PC: float,
-    pH_st: float,
-):
+    p_h_lu: float,
+    f: float,
+    e0_pq: float,
+    r: float,
+    t: float,
+    e0_pc: float,
+    p_h_st: float,
+) -> float:
     """Equilibriu constant of Cytochrome b6f."""
-    RT = R * T
-    DG1 = -2 * F * E0_PQ + 2 * RT * np.log(10) * pH_lu
-    DG2 = -F * E0_PC
-    DG3 = RT * np.log(10) * (pH_st - pH_lu)
+    RT = r * t
+    DG1 = -2 * f * e0_pq + 2 * RT * np.log(10) * p_h_lu
+    DG2 = -f * e0_pc
+    DG3 = RT * np.log(10) * (p_h_st - p_h_lu)
     DG = -DG1 + 2 * DG2 + 2 * DG3
     return np.exp(-DG / RT)
 
 
 def _keq_atp_synth(
-    pH_lu: float,
-    DG_ATP: float,
-    pH_st: float,
-    R: float,
-    T: float,
-    Pi: float,
-):
+    p_h_lu: float,
+    dg_atp: float,
+    p_h_st: float,
+    r: float,
+    t: float,
+    pi: float,
+) -> float:
     """Equilibrium constant of ATP synthase.
 
     For more information see Matuszynska et al 2016 or Ebenhöh et al. 2011,2014.
     """
-    RT = R * T
-    DG = DG_ATP - np.log(10) * (pH_st - pH_lu) * (14 / 3) * RT
-    return Pi * np.exp(-DG / RT)
+    RT = r * t
+    DG = dg_atp - np.log(10) * (p_h_st - p_h_lu) * (14 / 3) * RT
+    return pi * np.exp(-DG / RT)
 
 
 def _moiety_1s(
@@ -98,152 +101,160 @@ def _moiety_1s(
 
 
 def _quencher(
-    psbS: float,
-    Zx: float,
-    PsbSP: float,
-    K_ZSat: float,
+    psb_s: float,
+    zx: float,
+    psb_sp: float,
+    k_z_sat: float,
     gamma_0: float,
     gamma_1: float,
     gamma_2: float,
     gamma_3: float,
-):
+) -> float:
     """Quencher mechanism.
 
     accepts:
     psbS: fraction of non-protonated PsbS protein
     Vx: fraction of Violaxanthin
     """
-    Zs = Zx / (Zx + K_ZSat)
+    Zs = zx / (zx + k_z_sat)
 
     return (
-        gamma_0 * (1 - Zs) * psbS
-        + gamma_1 * (1 - Zs) * PsbSP
-        + gamma_2 * Zs * PsbSP
-        + gamma_3 * Zs * psbS
+        gamma_0 * (1 - Zs) * psb_s
+        + gamma_1 * (1 - Zs) * psb_sp
+        + gamma_2 * Zs * psb_sp
+        + gamma_3 * Zs * psb_s
     )
 
 
 def _fluorescence(
-    Q: float,
-    B0: float,
-    B2: float,
-    k_H: float,
-    k_F: float,
-    k_P: float,
-):
+    q: float,
+    b0: float,
+    b2: float,
+    k_h: float,
+    k_f: float,
+    k_p: float,
+) -> float:
     """Fluorescence function."""
-    return k_F / (k_H * Q + k_F + k_P) * B0 + k_F / (k_H * Q + k_F) * B2
+    return k_f / (k_h * q + k_f + k_p) * b0 + k_f / (k_h * q + k_f) * b2
 
 
 def _psii(
-    B1: float,
-    k_P: float,
-):
+    b1: float,
+    k_p: float,
+) -> float:
     """Reduction of PQ due to ps2."""
-    return k_P * 0.5 * B1
+    return k_p * 0.5 * b1
 
 
-def _two_divided_value(x: float) -> float:
+def _two_divided_value(
+    x: float,
+) -> float:
     return 2 / x
 
 
 def _ptox(
-    PQH_2: float,
+    pqh_2: float,
     pfd: float,
-    k_Cytb6f: float,
-    k_PTOX: float,
-    O2_ex: float,
-    PQ_tot: float,
-    K_cytb6f: float,
-):
+    kf_cytb6f: float,
+    k_ptox: float,
+    o2_ex: float,
+    pq_tot: float,
+    keq_cytb6f: float,
+) -> float:
     """Oxidation of the PQ pool through cytochrome and PTOX."""
-    kPFD = k_Cytb6f * pfd
-    k_PTOX = k_PTOX * O2_ex
-    a1 = kPFD * K_cytb6f / (K_cytb6f + 1)
-    a2 = kPFD / (K_cytb6f + 1)
-    return (a1 + k_PTOX) * PQH_2 - a2 * (PQ_tot - PQH_2)
+    kPFD = kf_cytb6f * pfd
+    k_ptox = k_ptox * o2_ex
+    a1 = kPFD * keq_cytb6f / (keq_cytb6f + 1)
+    a2 = kPFD / (keq_cytb6f + 1)
+    return (a1 + k_ptox) * pqh_2 - a2 * (pq_tot - pqh_2)
 
 
-def _four_divided_value(x: float) -> float:
+def _four_divided_value(
+    x: float,
+) -> float:
     return 4 / x
 
 
 def _atp_synthase(
-    ATP_st: float,
-    ATPase_ac: float,
-    k_ATPsynth: float,
-    K_ATPsynth: float,
-    AP_tot: float,
-):
+    atp_st: float,
+    at_pase_ac: float,
+    kf_at_psynth: float,
+    keq_at_psynth: float,
+    ap_tot: float,
+) -> float:
     """Production of ATP by ATPsynthase."""
-    return ATPase_ac * k_ATPsynth * (AP_tot - ATP_st - ATP_st / K_ATPsynth)
+    return at_pase_ac * kf_at_psynth * (ap_tot - atp_st - atp_st / keq_at_psynth)
 
 
-def _neg_fourteenthirds_divided_value(x: float) -> float:
+def _neg_fourteenthirds_divided_value(
+    x: float,
+) -> float:
     return -(14 / 3) / x
 
 
 def _atp_synthase_activase(
-    ATPase_ac: float,
+    at_pase_ac: float,
     pfd: float,
-    k_ActATPase: float,
-    k_DeactATPase: float,
-):
+    k_act_at_pase: float,
+    k_deact_at_pase: float,
+) -> float:
     """Activation of ATPsynthase by light."""
     switch = pfd > 0
     return (
-        k_ActATPase * switch * (1 - ATPase_ac)
-        - k_DeactATPase * (1 - switch) * ATPase_ac
+        k_act_at_pase * switch * (1 - at_pase_ac)
+        - k_deact_at_pase * (1 - switch) * at_pase_ac
     )
 
 
 def _proton_leak(
-    H_lu: float,
+    h_lu: float,
     k_leak: float,
-    H_st: float,
-):
+    h_st: float,
+) -> float:
     """Transmembrane proton leak."""
-    return k_leak * (H_lu - H_st)
+    return k_leak * (h_lu - h_st)
 
 
-def _neg_divided_value(x: float) -> float:
+def _neg_divided_value(
+    x: float,
+) -> float:
     return -1 / x
 
 
 def _atp_consumption(
-    ATP_st: float,
-    k_ATPconsum: float,
-):
+    atp_st: float,
+    k_at_pconsum: float,
+) -> float:
     """ATP consuming reaction."""
-    return k_ATPconsum * ATP_st
+    return k_at_pconsum * atp_st
 
 
 def _xantophyll_cycle(
-    Vx: float,
-    H_lu: float,
+    vx: float,
+    h_lu: float,
     nhx: float,
-    K_pHSat_inv: float,
-    k_DV: float,
-    k_EZ: float,
-    X_tot: float,
-):
+    k_p_h_sat_inv: float,
+    k_dv: float,
+    k_ez: float,
+    x_tot: float,
+) -> float:
     """Xanthophyll cycle."""
-    a = H_lu**nhx / (H_lu**nhx + K_pHSat_inv**nhx)
-    return k_DV * a * Vx - k_EZ * (X_tot - Vx)
+    a = h_lu**nhx / (h_lu**nhx + k_p_h_sat_inv**nhx)
+    return k_dv * a * vx - k_ez * (x_tot - vx)
 
 
 def _psbs_protonation(
-    psbS: float,
-    H_lu: float,
+    psb_s: float,
+    h_lu: float,
     nhl: float,
-    K_pHSatLHC_inv: float,
+    k_p_h_sat_lhc_inv: float,
     k_prot: float,
     k_deprot: float,
-    PsbS_tot: float,
-):
+    psb_s_tot: float,
+) -> float:
     """Protonation of PsbS protein."""
-    a = H_lu**nhl / (H_lu**nhl + K_pHSatLHC_inv**nhl)
-    return k_prot * a * psbS - k_deprot * (PsbS_tot - psbS)
+    a = h_lu**nhl / (h_lu**nhl + k_p_h_sat_lhc_inv**nhl)
+    return k_prot * a * psb_s - k_deprot * (psb_s_tot - psb_s)
 
 
 def _ps2states_2016a_analytic(
@@ -309,54 +320,198 @@ def create_model() -> Model:
     """Build the Matuszynska 2016 NPQ model (PsbS protonation + xanthophyll cycle)."""
     return (
         Model()
-        .add_variable("pq_red", initial_value=0)
-        .add_variable("protons", initial_value=6.32975752e-05)
-        .add_variable("vmax_atp_synthase", initial_value=0)
-        .add_variable("atp", initial_value=25.0)
-        .add_variable("psbs_de", initial_value=1)
-        .add_variable("vx", initial_value=1)
-        .add_parameter("PSII_tot", value=2.5)
-        .add_parameter("PQ_tot", value=20)
-        .add_parameter("AP_tot", value=50)
-        .add_parameter("PsbS_tot", value=1)
-        .add_parameter("X_tot", value=1)
-        .add_parameter("O2_ex", value=8)
-        .add_parameter("Pi", value=0.01)
-        .add_parameter("k_Cytb6f", value=0.104)
-        .add_parameter("k_ActATPase", value=0.01)
-        .add_parameter("k_DeactATPase", value=0.002)
-        .add_parameter("k_ATPsynth", value=20.0)
-        .add_parameter("k_ATPconsum", value=10.0)
-        .add_parameter("k_PQH2", value=250.0)
-        .add_parameter("k_H", value=5000000000.0)
-        .add_parameter("k_F", value=625000000.0)
-        .add_parameter("k_P", value=5000000000.0)
-        .add_parameter("k_PTOX", value=0.01)
-        .add_parameter("pH_st", value=7.8)
-        .add_parameter("k_leak", value=1000)
-        .add_parameter("b_H", value=100)
-        .add_parameter("hpr", value=4.666666666666667)
-        .add_parameter("k_DV", value=0.0024)
-        .add_parameter("k_EZ", value=0.00024)
-        .add_parameter("K_pHSat", value=5.8)
-        .add_parameter("nhx", value=5.0)
-        .add_parameter("K_ZSat", value=0.12)
-        .add_parameter("nhl", value=3)
-        .add_parameter("k_deprot", value=0.0096)
-        .add_parameter("k_prot", value=0.0096)
-        .add_parameter("K_pHSatLHC", value=5.8)
-        .add_parameter("gamma_0", value=0.1)
-        .add_parameter("gamma_1", value=0.25)
-        .add_parameter("gamma_2", value=0.6)
-        .add_parameter("gamma_3", value=0.15)
-        .add_parameter("F", value=96.485)
-        .add_parameter("R", value=0.0083)
-        .add_parameter("T", value=298)
-        .add_parameter("E0_QA", value=-0.14)
-        .add_parameter("E0_PQ", value=0.354)
-        .add_parameter("E0_PC", value=0.38)
-        .add_parameter("DG_ATP", value=30.6)
-        .add_parameter("PPFD", value=100)
+        .add_variable(
+            "pq_red",
+            initial_value=0,
+        )
+        .add_variable(
+            "protons",
+            initial_value=6.32975752e-05,
+        )
+        .add_variable(
+            "vmax_atp_synthase",
+            initial_value=0,
+        )
+        .add_variable(
+            "atp",
+            initial_value=25.0,
+        )
+        .add_variable(
+            "psbs_de",
+            initial_value=1,
+        )
+        .add_variable(
+            "vx",
+            initial_value=1,
+        )
+        .add_parameter(
+            "PSII_tot",
+            value=2.5,
+        )
+        .add_parameter(
+            "PQ_tot",
+            value=20,
+        )
+        .add_parameter(
+            "AP_tot",
+            value=50,
+        )
+        .add_parameter(
+            "PsbS_tot",
+            value=1,
+        )
+        .add_parameter(
+            "X_tot",
+            value=1,
+        )
+        .add_parameter(
+            "O2_ex",
+            value=8,
+        )
+        .add_parameter(
+            "Pi",
+            value=0.01,
+        )
+        .add_parameter(
+            "k_Cytb6f",
+            value=0.104,
+        )
+        .add_parameter(
+            "k_ActATPase",
+            value=0.01,
+        )
+        .add_parameter(
+            "k_DeactATPase",
+            value=0.002,
+        )
+        .add_parameter(
+            "k_ATPsynth",
+            value=20.0,
+        )
+        .add_parameter(
+            "k_ATPconsum",
+            value=10.0,
+        )
+        .add_parameter(
+            "k_PQH2",
+            value=250.0,
+        )
+        .add_parameter(
+            "k_H",
+            value=5000000000.0,
+        )
+        .add_parameter(
+            "k_F",
+            value=625000000.0,
+        )
+        .add_parameter(
+            "k_P",
+            value=5000000000.0,
+        )
+        .add_parameter(
+            "k_PTOX",
+            value=0.01,
+        )
+        .add_parameter(
+            "pH_st",
+            value=7.8,
+        )
+        .add_parameter(
+            "k_leak",
+            value=1000,
+        )
+        .add_parameter(
+            "b_H",
+            value=100,
+        )
+        .add_parameter(
+            "hpr",
+            value=4.666666666666667,
+        )
+        .add_parameter(
+            "k_DV",
+            value=0.0024,
+        )
+        .add_parameter(
+            "k_EZ",
+            value=0.00024,
+        )
+        .add_parameter(
+            "K_pHSat",
+            value=5.8,
+        )
+        .add_parameter(
+            "nhx",
+            value=5.0,
+        )
+        .add_parameter(
+            "K_ZSat",
+            value=0.12,
+        )
+        .add_parameter(
+            "nhl",
+            value=3,
+        )
+        .add_parameter(
+            "k_deprot",
+            value=0.0096,
+        )
+        .add_parameter(
+            "k_prot",
+            value=0.0096,
+        )
+        .add_parameter(
+            "K_pHSatLHC",
+            value=5.8,
+        )
+        .add_parameter(
+            "gamma_0",
+            value=0.1,
+        )
+        .add_parameter(
+            "gamma_1",
+            value=0.25,
+        )
+        .add_parameter(
+            "gamma_2",
+            value=0.6,
+        )
+        .add_parameter(
+            "gamma_3",
+            value=0.15,
+        )
+        .add_parameter(
+            "F",
+            value=96.485,
+        )
+        .add_parameter(
+            "R",
+            value=0.0083,
+        )
+        .add_parameter(
+            "T",
+            value=298,
+        )
+        .add_parameter(
+            "E0_QA",
+            value=-0.14,
+        )
+        .add_parameter(
+            "E0_PQ",
+            value=0.354,
+        )
+        .add_parameter(
+            "E0_PC",
+            value=0.38,
+        )
+        .add_parameter(
+            "DG_ATP",
+            value=30.6,
+        )
+        .add_parameter(
+            "PPFD",
+            value=100,
+        )
         .add_derived(
             "pH_lu",
             fn=_ph,
@@ -437,7 +592,10 @@ def create_model() -> Model:
             args=["B1", "k_P"],
             stoichiometry={
                 "pq_red": 1,
-                "protons": Derived(fn=_two_divided_value, args=["b_H"]),
+                "protons": Derived(
+                    fn=_two_divided_value,
+                    args=["b_H"],
+                ),
             },
         )
         .add_reaction(
@@ -454,7 +612,10 @@ def create_model() -> Model:
             ],
             stoichiometry={
                 "pq_red": -1,
-                "protons": Derived(fn=_four_divided_value, args=["b_H"]),
+                "protons": Derived(
+                    fn=_four_divided_value,
+                    args=["b_H"],
+                ),
             },
         )
         .add_reaction(
@@ -463,7 +624,10 @@ def create_model() -> Model:
             args=["atp", "vmax_atp_synthase", "k_ATPsynth", "K_ATPsynth", "AP_tot"],
             stoichiometry={
                 "atp": 1,
-                "protons": Derived(fn=_neg_fourteenthirds_divided_value, args=["b_H"]),
+                "protons": Derived(
+                    fn=_neg_fourteenthirds_divided_value,
+                    args=["b_H"],
+                ),
             },
         )
         .add_reaction(
@@ -476,7 +640,12 @@ def create_model() -> Model:
             "proton_leak",
             fn=_proton_leak,
             args=["protons", "k_leak", "H_st"],
-            stoichiometry={"protons": Derived(fn=_neg_divided_value, args=["b_H"])},
+            stoichiometry={
+                "protons": Derived(
+                    fn=_neg_divided_value,
+                    args=["b_H"],
+                )
+            },
         )
         .add_reaction(
             "v_ATPcons",

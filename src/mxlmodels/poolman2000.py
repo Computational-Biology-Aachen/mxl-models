@@ -3,7 +3,10 @@
 from mxlpy import Model
 
 
-def _moiety_1(concentration: float, total: float) -> float:
+def _moiety_1(
+    concentration: float,
+    total: float,
+) -> float:
     return total - concentration
 
 
@@ -46,7 +49,10 @@ def _pi_cbb(
     )
 
 
-def _mass_action_1s(s1: float, k_fwd: float) -> float:
+def _mass_action_1s(
+    s1: float,
+    k_fwd: float,
+) -> float:
     return k_fwd * s1
 
 
@@ -246,97 +252,370 @@ def create_model() -> Model:
     """Build the Poolman 2000 Calvin-Benson-Bassham cycle model."""
     return (
         Model()
-        .add_variable("3PGA", initial_value=0.6387788347932627)
-        .add_variable("BPGA", initial_value=0.0013570885908749779)
-        .add_variable("GAP", initial_value=0.011259431827358068)
-        .add_variable("DHAP", initial_value=0.24770748227012374)
-        .add_variable("FBP", initial_value=0.01980222074817044)
-        .add_variable("F6P", initial_value=1.093666906864421)
-        .add_variable("G6P", initial_value=2.5154338857582377)
-        .add_variable("G1P", initial_value=0.14589516537322303)
-        .add_variable("SBP", initial_value=0.09132688566151095)
-        .add_variable("S7P", initial_value=0.23281380022778891)
-        .add_variable("E4P", initial_value=0.02836065066520614)
-        .add_variable("X5P", initial_value=0.03647242425941113)
-        .add_variable("R5P", initial_value=0.06109130988031577)
-        .add_variable("RUBP", initial_value=0.2672164362349537)
-        .add_variable("RU5P", initial_value=0.0244365238237522)
-        .add_variable("atp", initial_value=0.43633201706180874)
-        .add_parameter("CO2 (dissolved)", value=0.2)
-        .add_parameter("nadph", value=0.21)
-        .add_parameter("protons", value=1.2589254117941661e-05)
-        .add_parameter("A*P", value=0.5)
-        .add_parameter("NADP*", value=0.5)
-        .add_parameter("Pi_tot", value=15.0)
-        .add_parameter("E0_rubisco_carboxylase", value=1.0)
-        .add_parameter("kcat_rubisco_carboxylase", value=2.72)
-        .add_parameter("km_rubisco_carboxylase_RUBP", value=0.02)
-        .add_parameter("km_rubisco_carboxylase_CO2 (dissolved)", value=0.0107)
-        .add_parameter("ki_rubisco_carboxylase_3PGA", value=0.04)
-        .add_parameter("ki_rubisco_carboxylase_FBP", value=0.04)
-        .add_parameter("ki_rubisco_carboxylase_SBP", value=0.075)
-        .add_parameter("ki_rubisco_carboxylase_pi", value=0.9)
-        .add_parameter("ki_rubisco_carboxylase_nadph", value=0.07)
-        .add_parameter("kre_phosphoglycerate_kinase", value=800000000.0)
-        .add_parameter("keq_phosphoglycerate_kinase", value=0.00031)
-        .add_parameter("kre_gadph", value=800000000.0)
-        .add_parameter("keq_gadph", value=16000000.0)
-        .add_parameter("kre_triose_phosphate_isomerase", value=800000000.0)
-        .add_parameter("keq_triose_phosphate_isomerase", value=22.0)
-        .add_parameter("kre_aldolase_dhap_gap", value=800000000.0)
-        .add_parameter("keq_aldolase_dhap_gap", value=7.1)
-        .add_parameter("kre_aldolase_dhap_e4p", value=800000000.0)
-        .add_parameter("keq_aldolase_dhap_e4p", value=13.0)
-        .add_parameter("E0_fbpase", value=1.0)
-        .add_parameter("kcat_fbpase", value=1.6)
-        .add_parameter("km_fbpase_s", value=0.03)
-        .add_parameter("ki_fbpase_F6P", value=0.7)
-        .add_parameter("ki_fbpase_pi", value=12.0)
-        .add_parameter("kre_transketolase_gap_f6p", value=800000000.0)
-        .add_parameter("keq_transketolase_gap_f6p", value=0.084)
-        .add_parameter("kre_transketolase_gap_s7p", value=800000000.0)
-        .add_parameter("keq_transketolase_gap_s7p", value=0.85)
-        .add_parameter("E0_SBPase", value=1.0)
-        .add_parameter("kcat_SBPase", value=0.32)
-        .add_parameter("km_SBPase_s", value=0.013)
-        .add_parameter("ki_SBPase_pi", value=12.0)
-        .add_parameter("kre_ribose_phosphate_isomerase", value=800000000.0)
-        .add_parameter("keq_ribose_phosphate_isomerase", value=0.4)
-        .add_parameter("kre_ribulose_phosphate_epimerase", value=800000000.0)
-        .add_parameter("keq_ribulose_phosphate_epimerase", value=0.67)
-        .add_parameter("E0_phosphoribulokinase", value=1.0)
-        .add_parameter("kcat_phosphoribulokinase", value=7.9992)
-        .add_parameter("km_phosphoribulokinase_RU5P", value=0.05)
-        .add_parameter("km_phosphoribulokinase_atp", value=0.05)
-        .add_parameter("ki_phosphoribulokinase_3PGA", value=2.0)
-        .add_parameter("ki_phosphoribulokinase_RUBP", value=0.7)
-        .add_parameter("ki_phosphoribulokinase_pi", value=4.0)
-        .add_parameter("ki_phosphoribulokinase_4", value=2.5)
-        .add_parameter("ki_phosphoribulokinase_5", value=0.4)
-        .add_parameter("kre_g6pi", value=800000000.0)
-        .add_parameter("keq_g6pi", value=2.3)
-        .add_parameter("kre_phosphoglucomutase", value=800000000.0)
-        .add_parameter("keq_phosphoglucomutase", value=0.058)
-        .add_parameter("pi_ext", value=0.5)
-        .add_parameter("km_ex_pga", value=0.25)
-        .add_parameter("km_ex_gap", value=0.075)
-        .add_parameter("km_ex_dhap", value=0.077)
-        .add_parameter("km_N_translocator_pi_ext", value=0.74)
-        .add_parameter("km_N_translocator_pi", value=0.63)
-        .add_parameter("kcat_N_translocator", value=2.0)
-        .add_parameter("E0_N_translocator", value=1.0)
-        .add_parameter("km_ex_g1p_G1P", value=0.08)
-        .add_parameter("km_ex_g1p_atp", value=0.08)
-        .add_parameter("ki_ex_g1p", value=10.0)
-        .add_parameter("ki_ex_g1p_3PGA", value=0.1)
-        .add_parameter("ki_ex_g1p_F6P", value=0.02)
-        .add_parameter("ki_ex_g1p_FBP", value=0.02)
-        .add_parameter("E0_ex_g1p", value=1.0)
-        .add_parameter("kcat_ex_g1p", value=0.32)
-        .add_parameter("km_atp_synthase_adp", value=0.014)
-        .add_parameter("km_atp_synthase_pi", value=0.3)
-        .add_parameter("kcat_atp_synthase", value=2.8)
-        .add_parameter("E0_atp_synthase", value=1.0)
+        .add_variable(
+            "3PGA",
+            initial_value=0.6387788347932627,
+        )
+        .add_variable(
+            "BPGA",
+            initial_value=0.0013570885908749779,
+        )
+        .add_variable(
+            "GAP",
+            initial_value=0.011259431827358068,
+        )
+        .add_variable(
+            "DHAP",
+            initial_value=0.24770748227012374,
+        )
+        .add_variable(
+            "FBP",
+            initial_value=0.01980222074817044,
+        )
+        .add_variable(
+            "F6P",
+            initial_value=1.093666906864421,
+        )
+        .add_variable(
+            "G6P",
+            initial_value=2.5154338857582377,
+        )
+        .add_variable(
+            "G1P",
+            initial_value=0.14589516537322303,
+        )
+        .add_variable(
+            "SBP",
+            initial_value=0.09132688566151095,
+        )
+        .add_variable(
+            "S7P",
+            initial_value=0.23281380022778891,
+        )
+        .add_variable(
+            "E4P",
+            initial_value=0.02836065066520614,
+        )
+        .add_variable(
+            "X5P",
+            initial_value=0.03647242425941113,
+        )
+        .add_variable(
+            "R5P",
+            initial_value=0.06109130988031577,
+        )
+        .add_variable(
+            "RUBP",
+            initial_value=0.2672164362349537,
+        )
+        .add_variable(
+            "RU5P",
+            initial_value=0.0244365238237522,
+        )
+        .add_variable(
+            "atp",
+            initial_value=0.43633201706180874,
+        )
+        .add_parameter(
+            "CO2 (dissolved)",
+            value=0.2,
+        )
+        .add_parameter(
+            "nadph",
+            value=0.21,
+        )
+        .add_parameter(
+            "protons",
+            value=1.2589254117941661e-05,
+        )
+        .add_parameter(
+            "A*P",
+            value=0.5,
+        )
+        .add_parameter(
+            "NADP*",
+            value=0.5,
+        )
+        .add_parameter(
+            "Pi_tot",
+            value=15.0,
+        )
+        .add_parameter(
+            "E0_rubisco_carboxylase",
+            value=1.0,
+        )
+        .add_parameter(
+            "kcat_rubisco_carboxylase",
+            value=2.72,
+        )
+        .add_parameter(
+            "km_rubisco_carboxylase_RUBP",
+            value=0.02,
+        )
+        .add_parameter(
+            "km_rubisco_carboxylase_CO2 (dissolved)",
+            value=0.0107,
+        )
+        .add_parameter(
+            "ki_rubisco_carboxylase_3PGA",
+            value=0.04,
+        )
+        .add_parameter(
+            "ki_rubisco_carboxylase_FBP",
+            value=0.04,
+        )
+        .add_parameter(
+            "ki_rubisco_carboxylase_SBP",
+            value=0.075,
+        )
+        .add_parameter(
+            "ki_rubisco_carboxylase_pi",
+            value=0.9,
+        )
+        .add_parameter(
+            "ki_rubisco_carboxylase_nadph",
+            value=0.07,
+        )
+        .add_parameter(
+            "kre_phosphoglycerate_kinase",
+            value=800000000.0,
+        )
+        .add_parameter(
+            "keq_phosphoglycerate_kinase",
+            value=0.00031,
+        )
+        .add_parameter(
+            "kre_gadph",
+            value=800000000.0,
+        )
+        .add_parameter(
+            "keq_gadph",
+            value=16000000.0,
+        )
+        .add_parameter(
+            "kre_triose_phosphate_isomerase",
+            value=800000000.0,
+        )
+        .add_parameter(
+            "keq_triose_phosphate_isomerase",
+            value=22.0,
+        )
+        .add_parameter(
+            "kre_aldolase_dhap_gap",
+            value=800000000.0,
+        )
+        .add_parameter(
+            "keq_aldolase_dhap_gap",
+            value=7.1,
+        )
+        .add_parameter(
+            "kre_aldolase_dhap_e4p",
+            value=800000000.0,
+        )
+        .add_parameter(
+            "keq_aldolase_dhap_e4p",
+            value=13.0,
+        )
+        .add_parameter(
+            "E0_fbpase",
+            value=1.0,
+        )
+        .add_parameter(
+            "kcat_fbpase",
+            value=1.6,
+        )
+        .add_parameter(
+            "km_fbpase_s",
+            value=0.03,
+        )
+        .add_parameter(
+            "ki_fbpase_F6P",
+            value=0.7,
+        )
+        .add_parameter(
+            "ki_fbpase_pi",
+            value=12.0,
+        )
+        .add_parameter(
+            "kre_transketolase_gap_f6p",
+            value=800000000.0,
+        )
+        .add_parameter(
+            "keq_transketolase_gap_f6p",
+            value=0.084,
+        )
+        .add_parameter(
+            "kre_transketolase_gap_s7p",
+            value=800000000.0,
+        )
+        .add_parameter(
+            "keq_transketolase_gap_s7p",
+            value=0.85,
+        )
+        .add_parameter(
+            "E0_SBPase",
+            value=1.0,
+        )
+        .add_parameter(
+            "kcat_SBPase",
+            value=0.32,
+        )
+        .add_parameter(
+            "km_SBPase_s",
+            value=0.013,
+        )
+        .add_parameter(
+            "ki_SBPase_pi",
+            value=12.0,
+        )
+        .add_parameter(
+            "kre_ribose_phosphate_isomerase",
+            value=800000000.0,
+        )
+        .add_parameter(
+            "keq_ribose_phosphate_isomerase",
+            value=0.4,
+        )
+        .add_parameter(
+            "kre_ribulose_phosphate_epimerase",
+            value=800000000.0,
+        )
+        .add_parameter(
+            "keq_ribulose_phosphate_epimerase",
+            value=0.67,
+        )
+        .add_parameter(
+            "E0_phosphoribulokinase",
+            value=1.0,
+        )
+        .add_parameter(
+            "kcat_phosphoribulokinase",
+            value=7.9992,
+        )
+        .add_parameter(
+            "km_phosphoribulokinase_RU5P",
+            value=0.05,
+        )
+        .add_parameter(
+            "km_phosphoribulokinase_atp",
+            value=0.05,
+        )
+        .add_parameter(
+            "ki_phosphoribulokinase_3PGA",
+            value=2.0,
+        )
+        .add_parameter(
+            "ki_phosphoribulokinase_RUBP",
+            value=0.7,
+        )
+        .add_parameter(
+            "ki_phosphoribulokinase_pi",
+            value=4.0,
+        )
+        .add_parameter(
+            "ki_phosphoribulokinase_4",
+            value=2.5,
+        )
+        .add_parameter(
+            "ki_phosphoribulokinase_5",
+            value=0.4,
+        )
+        .add_parameter(
+            "kre_g6pi",
+            value=800000000.0,
+        )
+        .add_parameter(
+            "keq_g6pi",
+            value=2.3,
+        )
+        .add_parameter(
+            "kre_phosphoglucomutase",
+            value=800000000.0,
+        )
+        .add_parameter(
+            "keq_phosphoglucomutase",
+            value=0.058,
+        )
+        .add_parameter(
+            "pi_ext",
+            value=0.5,
+        )
+        .add_parameter(
+            "km_ex_pga",
+            value=0.25,
+        )
+        .add_parameter(
+            "km_ex_gap",
+            value=0.075,
+        )
+        .add_parameter(
+            "km_ex_dhap",
+            value=0.077,
+        )
+        .add_parameter(
+            "km_N_translocator_pi_ext",
+            value=0.74,
+        )
+        .add_parameter(
+            "km_N_translocator_pi",
+            value=0.63,
+        )
+        .add_parameter(
+            "kcat_N_translocator",
+            value=2.0,
+        )
+        .add_parameter(
+            "E0_N_translocator",
+            value=1.0,
+        )
+        .add_parameter(
+            "km_ex_g1p_G1P",
+            value=0.08,
+        )
+        .add_parameter(
+            "km_ex_g1p_atp",
+            value=0.08,
+        )
+        .add_parameter(
+            "ki_ex_g1p",
+            value=10.0,
+        )
+        .add_parameter(
+            "ki_ex_g1p_3PGA",
+            value=0.1,
+        )
+        .add_parameter(
+            "ki_ex_g1p_F6P",
+            value=0.02,
+        )
+        .add_parameter(
+            "ki_ex_g1p_FBP",
+            value=0.02,
+        )
+        .add_parameter(
+            "E0_ex_g1p",
+            value=1.0,
+        )
+        .add_parameter(
+            "kcat_ex_g1p",
+            value=0.32,
+        )
+        .add_parameter(
+            "km_atp_synthase_adp",
+            value=0.014,
+        )
+        .add_parameter(
+            "km_atp_synthase_pi",
+            value=0.3,
+        )
+        .add_parameter(
+            "kcat_atp_synthase",
+            value=2.8,
+        )
+        .add_parameter(
+            "E0_atp_synthase",
+            value=1.0,
+        )
         .add_derived(
             "adp",
             fn=_moiety_1,

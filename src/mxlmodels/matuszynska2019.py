@@ -35,15 +35,15 @@ def _moiety_1(
 
 
 def _quencher(
-    Psbs: float,
-    Vx: float,
-    Psbsp: float,
-    Zx: float,
+    psbs: float,
+    vx: float,
+    psbsp: float,
+    zx: float,
     y0: float,
     y1: float,
     y2: float,
     y3: float,
-    kZSat: float,
+    k_z_sat: float,
 ) -> float:
     """Co-operative 4-state quenching mechanism.
 
@@ -52,22 +52,22 @@ def _quencher(
     gamma2: fastest possible quenching (Zx + protonation)
     gamma3: slow quenching of Zx present (Zx - protonation)
     """
-    ZAnt = Zx / (Zx + kZSat)
-    return y0 * Vx * Psbs + y1 * Vx * Psbsp + y2 * ZAnt * Psbsp + y3 * ZAnt * Psbs
+    ZAnt = zx / (zx + k_z_sat)
+    return y0 * vx * psbs + y1 * vx * psbsp + y2 * ZAnt * psbsp + y3 * ZAnt * psbs
 
 
 def _keq_pq_red(
-    E0_QA: float,
-    F: float,
-    E0_PQ: float,
-    pHstroma: float,
-    dG_pH: float,
-    RT: float,
+    e0_qa: float,
+    f: float,
+    e0_pq: float,
+    p_hstroma: float,
+    d_g_p_h: float,
+    rt: float,
 ) -> float:
-    dg1 = -E0_QA * F
-    dg2 = -2 * E0_PQ * F
-    dg = -2 * dg1 + dg2 + 2 * pHstroma * dG_pH
-    return np.exp(-dg / RT)
+    dg1 = -e0_qa * f
+    dg2 = -2 * e0_pq * f
+    dg = -2 * dg1 + dg2 + 2 * p_hstroma * d_g_p_h
+    return np.exp(-dg / rt)
 
 
 def _ps2_crosssection(
@@ -118,45 +118,45 @@ def _pi_cbb(
 
 
 def _keq_atp(
-    pH: float,
-    DeltaG0_ATP: float,
-    dG_pH: float,
-    HPR: float,
-    pHstroma: float,
-    Pi_mol: float,
-    RT: float,
+    p_h: float,
+    delta_g0_atp: float,
+    d_g_p_h: float,
+    hpr: float,
+    p_hstroma: float,
+    pi_mol: float,
+    rt: float,
 ) -> float:
-    delta_g = DeltaG0_ATP - dG_pH * HPR * (pHstroma - pH)
-    return Pi_mol * math.exp(-delta_g / RT)
+    delta_g = delta_g0_atp - d_g_p_h * hpr * (p_hstroma - p_h)
+    return pi_mol * math.exp(-delta_g / rt)
 
 
 def _keq_cytb6f(
-    pH: float,
-    F: float,
-    E0_PQ: float,
-    E0_PC: float,
-    pHstroma: float,
-    RT: float,
-    dG_pH: float,
+    p_h: float,
+    f: float,
+    e0_pq: float,
+    e0_pc: float,
+    p_hstroma: float,
+    rt: float,
+    d_g_p_h: float,
 ) -> float:
-    DG1 = -2 * F * E0_PQ
-    DG2 = -F * E0_PC
-    DG = -(DG1 + 2 * dG_pH * pH) + 2 * DG2 + 2 * dG_pH * (pHstroma - pH)
-    return math.exp(-DG / RT)
+    DG1 = -2 * f * e0_pq
+    DG2 = -f * e0_pc
+    DG = -(DG1 + 2 * d_g_p_h * p_h) + 2 * DG2 + 2 * d_g_p_h * (p_hstroma - p_h)
+    return math.exp(-DG / rt)
 
 
 def _keq_fnr(
-    E0_Fd: float,
-    F: float,
-    E0_NADP: float,
-    pHstroma: float,
-    dG_pH: float,
-    RT: float,
+    e0_fd: float,
+    f: float,
+    e0_nadp: float,
+    p_hstroma: float,
+    d_g_p_h: float,
+    rt: float,
 ) -> float:
-    dg1 = -E0_Fd * F
-    dg2 = -2 * E0_NADP * F
-    dg = -2 * dg1 + dg2 + dG_pH * pHstroma
-    return math.exp(-dg / RT)
+    dg1 = -e0_fd * f
+    dg2 = -2 * e0_nadp * f
+    dg = -2 * dg1 + dg2 + d_g_p_h * p_hstroma
+    return math.exp(-dg / rt)
 
 
 def _keq_pcp700(
@@ -228,13 +228,13 @@ def _rate_translocator(
 
 
 def _rate_atp_synthase_2019(
-    ATP: float,
-    ADP: float,
-    Keq_ATPsynthase: float,
-    kATPsynth: float,
+    atp: float,
+    adp: float,
+    keq_at_psynthase: float,
+    k_at_psynth: float,
     convf: float,
 ) -> float:
-    return kATPsynth * (ADP / convf - ATP / convf / Keq_ATPsynthase)
+    return k_at_psynth * (adp / convf - atp / convf / keq_at_psynthase)
 
 
 def _neg_div(
@@ -251,16 +251,16 @@ def _value(
 
 
 def _b6f(
-    PC_ox: float,
-    PQ_ox: float,
-    PQ_red: float,
-    PC_red: float,
-    Keq_B6f: float,
-    kCytb6f: float,
+    pc_ox: float,
+    pq_ox: float,
+    pq_red: float,
+    pc_red: float,
+    keq_b6f: float,
+    k_cytb6f: float,
 ) -> float:
     return max(
-        kCytb6f * (PQ_red * PC_ox**2 - PQ_ox * PC_red**2 / Keq_B6f),
-        -kCytb6f,
+        k_cytb6f * (pq_red * pc_ox**2 - pq_ox * pc_red**2 / keq_b6f),
+        -k_cytb6f,
     )
 
 
@@ -281,41 +281,41 @@ def _protonation_hill(
 
 
 def _rate_cyclic_electron_flow(
-    Pox: float,
-    Fdred: float,
+    pox: float,
+    fdred: float,
     kcyc: float,
 ) -> float:
-    return kcyc * Fdred**2 * Pox
+    return kcyc * fdred**2 * pox
 
 
 def _rate_protonation_hill(
-    Vx: float,
-    H: float,
+    vx: float,
+    h: float,
     k_fwd: float,
-    nH: float,
-    kphSat: float,
+    n_h: float,
+    kph_sat: float,
 ) -> float:
-    return k_fwd * (H**nH / (H**nH + _protons_stroma(kphSat) ** nH)) * Vx  # type: ignore
+    return k_fwd * (h**n_h / (h**n_h + _protons_stroma(kph_sat) ** n_h)) * vx  # type: ignore
 
 
 def _rate_fnr_2019(
-    Fd_ox: float,
-    Fd_red: float,
-    NADPH: float,
-    NADP: float,
-    KM_FNR_F: float,
-    KM_FNR_N: float,
+    fd_ox: float,
+    fd_red: float,
+    nadph: float,
+    nadp: float,
+    km_fnr_f: float,
+    km_fnr_n: float,
     vmax: float,
-    Keq_FNR: float,
+    keq_fnr: float,
     convf: float,
 ) -> float:
-    fdred = Fd_red / KM_FNR_F
-    fdox = Fd_ox / KM_FNR_F
-    nadph = NADPH / convf / KM_FNR_N
-    nadp = NADP / convf / KM_FNR_N
+    fdred = fd_red / km_fnr_f
+    fdox = fd_ox / km_fnr_f
+    nadph = nadph / convf / km_fnr_n
+    nadp = nadp / convf / km_fnr_n
     return (
         vmax
-        * (fdred**2 * nadp - fdox**2 * nadph / Keq_FNR)
+        * (fdred**2 * nadp - fdox**2 * nadph / keq_fnr)
         / ((1 + fdred + fdred**2) * (1 + nadp) + (1 + fdox + fdox**2) * (1 + nadph) - 1)
     )
 
@@ -1862,4 +1862,4 @@ def create_model() -> Model:
             outputs=["B0", "B1", "B2", "B3"],
         ),
     )
-    return m
+    return m  # noqa: RET504
