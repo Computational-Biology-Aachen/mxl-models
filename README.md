@@ -1,36 +1,19 @@
+<p align="center">
+    <img src="https://raw.githubusercontent.com/Computational-Biology-Aachen/mxl-models/refs/heads/main/docs/assets/logo.png" width="400px" alt='mxlmodels-logo'>
+</p>
+
 # MxlModels
 
-
-MxlModels is a Python package of reference mechanistic models.
+`MxlModels` is a Python package of reference mechanistic models.
 It contains the same models as in the [MxlBricks](https://github.com/Computational-Biology-Aachen/mxl-bricks) repo, but written as single, flat files to make inspection easier.
 
 Usually, these here will be created by codegen from [MxlBricks](https://github.com/Computational-Biology-Aachen/mxl-bricks).
 
 ## Installation
 
-
 You can install mxlpy using pip: `pip install mxlmodels`.
 
-
-If you want access to the sundials solver suite via the [assimulo](https://jmodelica.org/assimulo/) package, we recommend setting up a virtual environment via [pixi](https://pixi.sh/) or [mamba / conda](https://mamba.readthedocs.io/en/latest/) using the [conda-forge](https://conda-forge.org/) channel.
-
-```bash
-pixi init
-pixi add python assimulo
-pixi add --pypi mxlmodels
-```
-
-
-## Development setup
-
-Install pixi [as described in the docs](https://pixi.sh/latest/#installation).
-
-Run
-
-```bash
-pixi install
-```
-
+Done. Simple as that.
 
 ## Models
 
@@ -44,7 +27,7 @@ pixi install
 | Matuszyńska 2016 PhD | ?                                                                           |
 | Matuszyńska 2019     | Merges PETC (Ebenhöh 2014), NPQ (Matuszynska 2016) and CBB (Poolman 2000)   |
 | Saadat 2021          | 2019 + Mehler (Valero ?) & Thioredoxin & extendend PSI states & consumption |
-
+| Ebeling 2026         | unpublishd                                                                  |
 
 
 ## Tool family 🏠
