@@ -121,9 +121,9 @@ parameters: dict[str, float] = {
     "k_Q": 1789.6877149900638,
     "k_pass": 0.0103757688087645,
     "k_aa": 1.0726342220286855,
-    "fluo_influence_PS2": 1.0871604554468057,
-    "fluo_influence_PS1": 1.0580747331180056,
-    "fluo_influence_PBS": 1.2652931291892002,
+    "fluo_influence_ps2": 1.0871604554468057,
+    "fluo_influence_ps1": 1.0580747331180056,
+    "fluo_influence_pbs": 1.2652931291892002,
     "lcf": 0.4852970468572075,
     "KMPGA": 0.108119035344566,
     "kATPsynth": 10.508685365751944,
@@ -204,7 +204,7 @@ parameters: dict[str, float] = {
 
 
 # Light sources
-def _light_gaussian_led(
+def light_gaussian_led(
     wavelength: float,
     intensity: float = 1.0,
     spread: float = 10,
@@ -1923,13 +1923,25 @@ def add_electron_transport_chain(
     m.add_derived(
         "FPS2",
         fn=_fluorescence_ps2,
-        args=["B1", "B3", "B1_tot", "B3_tot", "kF", "fluo_influence_ps2"],
+        args=[
+            "B1",
+            "B3",
+            "B1_tot",
+            "B3_tot",
+            "kF",
+            "fluo_influence_ps2",
+        ],
     )
 
     m.add_derived(
         "FPS1",
         fn=_fluorescence_ps1,
-        args=["Y1", "Y1_tot", "k_F1", "fluo_influence_ps1"],
+        args=[
+            "Y1",
+            "Y1_tot",
+            "k_F1",
+            "fluo_influence_ps1",
+        ],
     )
 
     m.add_derived(
@@ -1938,9 +1950,9 @@ def add_electron_transport_chain(
         args=[
             "OCP",
             "PBS_free",
-            "complex_abs_ML",
             "fluo_influence_pbs",
             "lcf",
+            "ml_absorption_pbs",
         ],
     )
 
@@ -2129,14 +2141,14 @@ def add_cbb_and_oxy(
     return m
 
 
-def get_model(
+def create_model(
     light_spectrum: pd.Series,  # # [umol(photons) m^-2 s^-1], warm white led @ pfd 100
     light_spectrum_measure: pd.Series,  # [umol(photons) m^-2 s^-1], 625 @ 1
-    ocp_absorption: pd.DataFrame,
+    ocp_absorption: pd.Series,
     abs_coef: pd.DataFrame,
-    molar_masses: pd.DataFrame,
+    molar_masses: pd.Series,
     ps_comp: pd.DataFrame,
-    pigment_content: pd.DataFrame,
+    pigment_content: pd.Series,
     # variants
     pbs_behaviour: Literal["static", "dynamic"] = "static",
 ) -> Model:
@@ -2144,7 +2156,7 @@ def get_model(
 
     Assembles all sub-models (electron transport chain, ATP synthase, CBB cycle,
     photorespiratory salvage, and lumped consumption reactions) with experimentally
-    derived initial conditions and parameters. Light spectra and pigment data are
+    derived initial conditions and parameters. Light specGtra and pigment data are
     attached as model data rather than parameters to allow dynamic updates.
     """
     m = Model()
@@ -2160,7 +2172,6 @@ def get_model(
             "PG": 0.894,  # [mmol mol(Chl)^-1] initial concentration of (2-phospho) glycolate (Huege2011)
             "succinate": 2.000,  # [mmol mol(Chl)^-1] initial concentration of succinate (guess)
             "fumarate": 2.000,  # [mmol mol(Chl)^-1] initial concentration of fumarate (guess)
-            "GA": 0.500,  # [mmol mol(Chl)^-1] initial concentration of glycerate (guess)
             "3PGA": 2.000e03,  # [mmol mol(Chl)^-1] initial concentration of 3-phospho glycerate (including all other sugars) (guess)
             "CBBa": 0.000e00,  # [unitless] fraction of Fd-activated, lumped enzymes of the CBB (guess)
             "Hi": 0.217,  # [mmol mol(Chl)^-1] initial concentration of lumenal protons in 10^4 uE cm^-1 s^-1 light (Belkin1987)
@@ -2179,18 +2190,6 @@ def get_model(
     m.add_data("ps_comp", ps_comp)
     m.add_data("pigment_content", pigment_content)
 
-    # relative pigment concentrations in a synechocystis cell (Zavrel2023)
-    m.add_data(
-        "pigment_content",
-        data=pd.Series(
-            {
-                "chla": 1.000,  # [mg(Pigment) mg(Chla)^-1]
-                "beta_carotene": 0.176,  # [mg(Pigment) mg(Chla)^-1]
-                "allophycocyanin": 1.118,  # [mg(Pigment) mg(Chla)^-1]
-                "phycocyanin": 6.765,  # [mg(Pigment) mg(Chla)^-1]
-            },
-        ),
-    )
     m = add_electron_transport_chain(m, pbs_behaviour=pbs_behaviour)
     m = add_atpase(m)
     m = add_consuming_reactions(m)
