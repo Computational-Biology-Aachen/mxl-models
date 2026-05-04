@@ -1,5 +1,6 @@
 import mxlmodels
 
+
 def test_import() -> None:
     assert mxlmodels.get_dynamic_enterobactin()
     assert mxlmodels.get_ebeling_2026()
