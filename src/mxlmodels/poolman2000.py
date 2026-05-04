@@ -3,6 +3,8 @@
 Reference: Poolman, Mark G., David A. Fell, and Simon Thomas.
 "Modelling photosynthesis and its control."
 Journal of experimental botany 51.suppl_1 (2000): 319-328
+DOI: 10.1093/jxb/erh090
+biomodels: https://www.biomodels.org/BIOMD0000000013
 """
 
 from mxlpy import Model
