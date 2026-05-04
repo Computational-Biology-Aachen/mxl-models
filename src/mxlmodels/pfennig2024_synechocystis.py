@@ -204,7 +204,7 @@ parameters: dict[str, float] = {
 
 
 # Light sources
-def light_gaussian_led(
+def _light_gaussian_led(
     wavelength: float,
     intensity: float = 1.0,
     spread: float = 10,
@@ -237,7 +237,7 @@ def light_gaussian_led(
 ###############################################################################
 
 
-def get_pigment_association(
+def _get_pigment_association(
     *,
     ps1_ratio: float,
     # data
@@ -302,7 +302,7 @@ def get_pigment_association(
     return df
 
 
-def absorption_per_complex(
+def _absorption_per_complex(
     ps_ratio: float,
     # data
     light_spectrum: pd.Series,
@@ -326,20 +326,20 @@ def absorption_per_complex(
             axis=0,
         )  # pigment
     )
-    pigment_association_per_complex = get_pigment_association(
+    pigment_association_per_complex = _get_pigment_association(
         ps1_ratio=ps_ratio,
         pigment_content=pigment_content,
         ps_comp=ps_comp,
         molar_masses=molar_masses,
     )  # complex x pigment
-    absorption_per_complex = (
+    _absorption_per_complex = (
         pigment_association_per_complex.dot(absorption_per_pigment)
         * molar_masses["chla"]
     )  # complex
     return (
-        absorption_per_complex["ps1"],
-        absorption_per_complex["ps2"],
-        absorption_per_complex["pbs"],
+        _absorption_per_complex["ps1"],
+        _absorption_per_complex["ps2"],
+        _absorption_per_complex["pbs"],
     )
 
 
@@ -348,14 +348,14 @@ def absorption_per_complex(
 ###############################################################################
 
 
-def _pHlumen(
+def _p_hlumen(
     x: float,
 ) -> float:
     """Convert lumenal proton concentration [mmol mol(Chl)^-1] to pH using the lumen conversion factor."""
     return -np.log(x * (2.9e-5)) / np.log(10)
 
 
-def _pHcytoplasm(
+def _p_hcytoplasm(
     x: float,
 ) -> float:
     """Convert cytoplasmic proton concentration [mmol mol(Chl)^-1] to pH using the cytoplasm conversion factor."""
@@ -363,16 +363,16 @@ def _pHcytoplasm(
 
 
 def _atp_synthase(
-    Hi: float,
-    Ho: float,
-    ATP: float,
-    ADP: float,
-    DeltaG0_ATP: float,
-    dG_pH: float,
-    HPR: float,
-    Pi_mol: float,
-    RT: float,
-    kATPsynth: float,
+    hi: float,
+    ho: float,
+    atp: float,
+    adp: float,
+    delta_g0_atp: float,
+    d_g_p_h: float,
+    hpr: float,
+    pi_mol: float,
+    rt: float,
+    k_at_psynth: float,
 ) -> float:
     """Rate of ATP synthesis driven by the transmembrane proton gradient (ΔpH).
 
@@ -380,155 +380,155 @@ def _atp_synthase(
     from the free energy of ATP hydrolysis and the proton motive force across the
     thylakoid membrane. Units: [mmol mol(Chl)^-1 s^-1].
     """
-    pHlumen = _pHlumen(Hi)
-    pHcytoplasm = _pHcytoplasm(Ho)
-    DG = DeltaG0_ATP - dG_pH * HPR * (pHcytoplasm - pHlumen)
-    Keq = Pi_mol * np.exp(-DG / RT)
-    return kATPsynth * (ADP - ATP / Keq)
+    pHlumen = _p_hlumen(hi)
+    p_hcytoplasm = _p_hcytoplasm(ho)
+    DG = delta_g0_atp - d_g_p_h * hpr * (p_hcytoplasm - pHlumen)
+    Keq = pi_mol * np.exp(-DG / rt)
+    return k_at_psynth * (adp - atp / Keq)
 
 
-def _stoich_Hi_ATPsynthase(
-    HPR: float,
-    bHi: float,
+def _stoich_hi_at_psynthase(
+    hpr: float,
+    b_hi: float,
 ) -> float:
     """Stoichiometric factor for Hi: HPR lumenal protons consumed per ATP synthesized, scaled by lumen buffering capacity."""
-    return -HPR / bHi
+    return -hpr / b_hi
 
 
-def _stoich_Ho_ATPsynthase(
-    HPR: float,
-    bHo: float,
+def _stoich_ho_at_psynthase(
+    hpr: float,
+    b_ho: float,
 ) -> float:
     """Stoichiometric factor for Ho: HPR cytoplasmic protons released per ATP synthesized, scaled by cytoplasm buffering capacity."""
-    return HPR / bHo
+    return hpr / b_ho
 
 
-def _stoich_Ho_vNADHconsumption(
-    bHo: float,
+def _stoich_ho_v_nad_hconsumption(
+    b_ho: float,
 ) -> float:
     """Stoichiometric factor for Ho: 1 cytoplasmic proton consumed per NADH oxidised, scaled by cytoplasm buffering capacity."""
-    return -1 / bHo
+    return -1 / b_ho
 
 
 def _atp_consumption(
-    ATP: float,
-    kATPconsumption: float,
+    atp: float,
+    k_at_pconsumption: float,
 ) -> float:
     """Lumped first-order ATP consumption rate representing cellular maintenance and biosynthesis demand [mmol mol(Chl)^-1 s^-1]."""
-    return kATPconsumption * ATP
+    return k_at_pconsumption * atp
 
 
 def _nadph_consumption(
-    NADH: float,
-    Ho: float,
-    kNADHconsumption: float,
+    nadh: float,
+    ho: float,
+    k_nad_hconsumption: float,
 ) -> float:
     """Lumped NADH consumption rate for cytoplasmic biosynthetic reactions, proportional to NADH and cytoplasmic proton concentration [mmol mol(Chl)^-1 s^-1]."""
-    return kNADHconsumption * NADH * Ho
+    return k_nad_hconsumption * nadh * ho
 
 
 # Add the parameter dG_pH which is used in the calculation of equilibrium constants when protons take part
-def _dG_pH(
-    R: float,
-    T: float,
+def _d_g_p_h(
+    r: float,
+    t: float,
 ) -> float:
     """Proton free energy coefficient RT·ln(10) [kJ mol^-1], used to convert pH differences to Gibbs free energy contributions."""
-    return np.log(10) * R * T
+    return np.log(10) * r * t
 
 
 # Add the ratio of photosystems (PS1:PS2) which is used in light handling
 def _ps_ratio(
-    PSItot: float,
-    PSIItot: float,
+    ps_itot: float,
+    psi_itot: float,
 ) -> float:
     """Molar PSI:PSII ratio corrected for subunit stoichiometry (3 Chl per PSI monomer vs 2 per PSII monomer)."""
-    return (PSItot * 3) / (PSIItot * 2)
+    return (ps_itot * 3) / (psi_itot * 2)
 
 
 # Define the functions used for calculation of pH/molar proton concentrations
-def _molarHlumen(
-    H: float,
+def _molar_hlumen(
+    h: float,
     cf_lumen: float,
 ) -> float:
-    """
-    Calculate the molar concentration of protons in the thylakoid lumen from the chlorophyll-normalised concentration.
+    """Calculate the molar concentration of protons in the thylakoid lumen from the chlorophyll-normalised concentration.
+
     Uses a conversion factor dependent on the volume of the thylakoid lumen.
     """
-    return H * cf_lumen  # (2.9e-5)
+    return h * cf_lumen  # (2.9e-5)
 
 
-def _molarHcytoplasm(
-    H: float,
+def _molar_hcytoplasm(
+    h: float,
     cf_cytoplasm: float,
 ) -> float:
     """
     Calculate the molar concentration of protons in the cytoplasm from the chlorophyll-normalised concentration.
+
     Uses a conversion factor dependent on the volume of the cytoplasm.
     """
-    return H * cf_cytoplasm  # (4.8e-6)
+    return h * cf_cytoplasm  # (4.8e-6)
 
 
-def _pH(
-    H_mol: float,
+def _p_h(
+    h_mol: float,
 ) -> float:
     """Compute pH from molar proton concentration [mol l^-1]."""
-    return -np.log(H_mol) / np.log(10)
+    return -np.log(h_mol) / np.log(10)
 
 
-def _deltapH(
+def _deltap_h(
     lumen: float,
     cytoplasm: float,
 ) -> float:
-    """Transmembrane ΔpH = pHcytoplasm − pHlumen; positive when lumen is more acidic than cytoplasm."""
+    """Transmembrane ΔpH = pHcytoplasm - pHlumen; positive when lumen is more acidic than cytoplasm."""
     return cytoplasm - lumen
 
 
 def _ps_normabsorption_tot(
     light_ps1: float,
     light_ps2: float,
-    light_ps1_ML: float,
-    light_ps2_ML: float,
+    light_ps1_ml: float,
+    light_ps2_ml: float,
 ) -> tuple[float, float]:
     """Sum growth-light and measuring-light absorption for PSI and PSII to give total absorbed excitation per photosystem."""
-    return (light_ps1 + light_ps1_ML, light_ps2 + light_ps2_ML)
+    return (light_ps1 + light_ps1_ml, light_ps2 + light_ps2_ml)
 
 
 def _moiety_1(
     part: float,
     total: float,
 ) -> float:
-    """Compute the complementary pool of a conserved moiety: total − part (e.g. PQ_red = PQ_tot − PQ_ox)."""
+    """Compute the complementary pool of a conserved moiety: total - part (e.g. PQ_red = PQ_tot - PQ_ox)."""
     return total - part
 
 
-def _Keq_PQred(
-    pHcytoplasm: float,
-    E0_QA: float,
-    F: float,
-    E0_PQ: float,
-    dG_pH: float,
-    RT: float,
+def _keq_p_qred(
+    p_hcytoplasm: float,
+    e0_qa: float,
+    f: float,
+    e0_pq: float,
+    d_g_p_h: float,
+    rt: float,
 ) -> float:
     """pH-dependent equilibrium constant for PQ reduction by the PSII primary acceptor QA."""
-    DG1 = -E0_QA * F
-    DG2 = -2 * E0_PQ * F + 2 * dG_pH * pHcytoplasm
+    DG1 = -e0_qa * f
+    DG2 = -2 * e0_pq * f + 2 * d_g_p_h * p_hcytoplasm
     DG = -2 * DG1 + DG2
-    K = np.exp(-DG / RT)
-    return K
+    return np.exp(-DG / rt)
 
 
 def _ps2states(
-    PSIIq: float,
-    PQ: float,
-    PQred: float,
-    Keq_PQred: float,
+    psi_iq: float,
+    pq: float,
+    p_qred: float,
+    keq_p_qred: float,
     light_ps2: float,
-    PSIItot: float,
+    psi_itot: float,
     k2: float,
-    kF: float,
-    kH0: float,
-    kHst: float,
-    kPQred: float,
+    k_f: float,
+    k_h0: float,
+    k_hst: float,
+    k_p_qred: float,
 ) -> tuple[float, float, float, float]:
     """Analytical quasi-steady-state solution for the four PSII state occupancies.
 
@@ -538,31 +538,31 @@ def _ps2states(
     Units: [mmol mol(Chl)^-1].
     """
     # Calculate some rates
-    kH = kH0 + kHst * (PSIIq / PSIItot)
-    k3p = kPQred * PQ
-    k3m = kPQred * PQred / Keq_PQred
+    kH = k_h0 + k_hst * (psi_iq / psi_itot)
+    k3p = k_p_qred * pq
+    k3m = k_p_qred * p_qred / keq_p_qred
 
     x0 = k2 * k3p
-    x1 = kF * x0
+    x1 = k_f * x0
     x2 = kH * x0
-    x3 = kF**2
+    x3 = k_f**2
     x4 = k3p * x3
     x5 = kH**2
     x6 = k3p * x5
-    x7 = 2 * kF * kH
+    x7 = 2 * k_f * kH
     x8 = k3p * x7
     x9 = light_ps2 * k2
     x10 = k3m * x9
-    x11 = kF * x9
+    x11 = k_f * x9
     x12 = kH * x9
     x13 = light_ps2 * k3m
-    x14 = kF * x13
+    x14 = k_f * x13
     x15 = kH * x13
     x16 = light_ps2 * k3p
-    x17 = kF * x16
+    x17 = k_f * x16
     x18 = kH * x16
     x19 = k2 * k3m
-    x20 = kF * x19
+    x20 = k_f * x19
     x21 = kH * x19
     x22 = light_ps2**2 * k2
     x23 = k3m * x3
@@ -590,24 +590,30 @@ def _ps2states(
     ) ** (-1.0)
     return (
         x26
-        * (PSIItot * x1 + PSIItot * x2 + PSIItot * x4 + PSIItot * x6 + PSIItot * x8),
-        x26 * (PSIItot * x17 + PSIItot * x18),
+        * (
+            psi_itot * x1
+            + psi_itot * x2
+            + psi_itot * x4
+            + psi_itot * x6
+            + psi_itot * x8
+        ),
+        x26 * (psi_itot * x17 + psi_itot * x18),
         x26
         * (
-            PSIItot * x11
-            + PSIItot * x12
-            + PSIItot * x20
-            + PSIItot * x21
-            + PSIItot * x23
-            + PSIItot * x24
-            + PSIItot * x25
+            psi_itot * x11
+            + psi_itot * x12
+            + psi_itot * x20
+            + psi_itot * x21
+            + psi_itot * x23
+            + psi_itot * x24
+            + psi_itot * x25
         ),
-        x26 * (PSIItot * x10 + PSIItot * x14 + PSIItot * x15 + PSIItot * x22),
+        x26 * (psi_itot * x10 + psi_itot * x14 + psi_itot * x15 + psi_itot * x22),
     )
 
 
 def _psii(
-    B1: float,
+    b1: float,
     k2: float,
 ) -> float:
     """PSII photochemical rate: electron transfer from water to PQ via charge-separated state B1 [mmol mol(Chl)^-1 s^-1].
@@ -616,49 +622,48 @@ def _psii(
     the full PSII reaction extracts 2 electrons per PQ reduction.
     """
     return (
-        0.5 * k2 * B1
+        0.5 * k2 * b1
     )  # k2 is scaled to single electron extraction (B1 -> B2) and has to be scaled by 0.5 for 2-electron PS2 reaction
 
 
-def _Keq_vSDH(
-    pHcytoplasm: float,
-    E0_PQ: float,
-    F: float,
-    E0_succinate_fumarate: float,
-    RT: float,
-    dG_pH: float,
+def _keq_v_sdh(
+    p_hcytoplasm: float,
+    e0_pq: float,
+    f: float,
+    e0_succinate_fumarate: float,
+    rt: float,
+    d_g_p_h: float,
 ) -> float:
     """pH-dependent equilibrium constant for PQ reduction by succinate dehydrogenase (SDH)."""
-    DG1 = -2 * E0_PQ * F + 2 * dG_pH * pHcytoplasm
-    DG2 = -2 * E0_succinate_fumarate * F + 2 * dG_pH * pHcytoplasm
+    DG1 = -2 * e0_pq * f + 2 * d_g_p_h * p_hcytoplasm
+    DG2 = -2 * e0_succinate_fumarate * f + 2 * d_g_p_h * p_hcytoplasm
     DG = DG1 - DG2
-    K = np.exp(-DG / RT)
-    return K
+    return np.exp(-DG / rt)
 
 
-def _vSDH(
+def _v_sdh(
     q: float,
     succinate: float,
     fumarate: float,
     pqred: float,
-    Ksdh: float,
+    keq_sdh: float,
     ksdh: float,
 ) -> float:
     """Electron flow via SDH"""
-    return ksdh * (q * succinate - (pqred * fumarate) / (Ksdh))
+    return ksdh * (q * succinate - (pqred * fumarate) / (keq_sdh))
 
 
-def _vRespiration(
-    PGA: float,
+def _v_respiration(
+    pga: float,
     fumarate: float,
-    ADP: float,
-    NAD: float,
-    NADP: float,
-    kRespiration: float,
-    KMPGA: float,
+    adp: float,
+    nad: float,
+    nadp: float,
+    k_respiration: float,
+    kmpga: float,
 ) -> float:
     """Approximation of respiration resulting in the consumption of 3PGA with generation of ATP, NADPH, NADH, and succinate (from fumarate)"""
-    return kRespiration * fumarate * ADP * NAD * NADP * PGA / (PGA + KMPGA)
+    return k_respiration * fumarate * adp * nad * nadp * pga / (pga + kmpga)
 
 
 def _vbd(
@@ -691,73 +696,71 @@ def _vaa(
     return kaa * pcred * o2 * ho
 
 
-def _Keq_FAFd(
-    E0_FA: float,
-    F: float,
-    E0_Fd: float,
-    RT: float,
+def _keq_fa_fd(
+    e0_fa: float,
+    f: float,
+    e0_fd: float,
+    rt: float,
 ) -> float:
     """Equilibrium constant for electron transfer from PSI iron-sulfur cluster FA to free ferredoxin (Fd)."""
-    DG1 = -E0_FA * F
-    DG2 = -E0_Fd * F
+    DG1 = -e0_fa * f
+    DG2 = -e0_fd * f
     DG = -DG1 + DG2
-    K = np.exp(-DG / RT)
-    return K
+    return np.exp(-DG / rt)
 
 
-def _Keq_PCP700(
-    E0_PC: float,
-    F: float,
-    E0_P700: float,
-    RT: float,
+def _keq_pcp700(
+    e0_pc: float,
+    f: float,
+    e0_p700: float,
+    rt: float,
 ) -> float:
     """Equilibrium constant for electron transfer from reduced PC to the oxidised PSI reaction centre P700+."""
-    DG1 = -E0_PC * F
-    DG2 = -E0_P700 * F
+    DG1 = -e0_pc * f
+    DG2 = -e0_p700 * f
     DG = -DG1 + DG2
-    K = np.exp(-DG / RT)
-    return K
+    return np.exp(-DG / rt)
 
 
 def _calc_a(
-    Fd_red: float,
-    Keq_FAFd: float,
-    k_L1: float,
-    kFdred: float,
+    fd_red: float,
+    keq_fa_fd: float,
+    k_l1: float,
+    k_fdred: float,
 ) -> float:
     """Intermediate variable a in the analytical QSS solution for PSI states: back-transfer rate from FA to Fd minus light rate."""
-    return (kFdred / Keq_FAFd) * Fd_red - k_L1
+    return (k_fdred / keq_fa_fd) * fd_red - k_l1
 
 
 def _calc_b(
-    Fd_ox: float,
-    k_L1: float,
-    k_F1: float,
-    kFdred: float,
+    fd_ox: float,
+    k_l1: float,
+    k_f1: float,
+    k_fdred: float,
 ) -> float:
     """Intermediate variable b in the analytical QSS solution for PSI states: sum of Fd reduction, fluorescence decay, and light absorption rate constants."""
-    return kFdred * Fd_ox + k_F1 + k_L1
+    return k_fdred * fd_ox + k_f1 + k_l1
 
 
 def _calc_c(
-    PC_ox: float,
-    Keq_PCP700: float,
-    k_L1: float,
-    kPCox: float,
+    pc_ox: float,
+    keq_pcp700: float,
+    k_l1: float,
+    k_p_cox: float,
 ) -> float:
     """Intermediate variable c in the analytical QSS solution for PSI states: reverse PC-to-P700 transfer rate plus light rate."""
-    return (kPCox / Keq_PCP700) * PC_ox + k_L1
+    return (k_p_cox / keq_pcp700) * pc_ox + k_l1
 
 
 def _calc_d(
     a: float,
     b: float,
-    PC_red: float,
-    k_F1: float,
-    kPCox: float,
+    pc_red: float,
+    k_f1: float,
+    k_p_cox: float,
 ) -> float:
     """Intermediate variable d in the analytical QSS solution for PSI states: combined PC reduction and fluorescence flux."""
-    return k_F1 * a / b + kPCox * PC_red
+    return k_f1 * a / b + k_p_cox * pc_red
 
 
 def _calc_f(
@@ -769,54 +772,54 @@ def _calc_f(
     return (1 + a / b) / d
 
 
-def _calc_Y0(
+def _calc_y0(
     b: float,
     c: float,
     f: float,
-    PSItot: float,
-    k_L1: float,
-    k_F1: float,
+    ps_itot: float,
+    k_l1: float,
+    k_f1: float,
 ) -> float:
     """QSS concentration of open (ground-state) PSI [mmol mol(Chl)^-1]: P700 reduced, FA oxidised, able to absorb light."""
-    return (PSItot * (1 - (k_L1 / b) * (1 - k_F1 * f))) / (1 + c * f)
+    return (ps_itot * (1 - (k_l1 / b) * (1 - k_f1 * f))) / (1 + c * f)
 
 
-def _calc_Y2(
-    Y0: float,
+def _calc_y2(
+    y0: float,
     b: float,
     c: float,
     d: float,
-    PSItot: float,
-    k_L1: float,
-    k_F1: float,
+    ps_itot: float,
+    k_l1: float,
+    k_f1: float,
 ) -> float:
     """QSS concentration of doubly-reduced PSI state Y2 [mmol mol(Chl)^-1]: P700 reduced, FA reduced."""
-    return (Y0 * c - (k_F1 * k_L1 * PSItot) / b) / d
+    return (y0 * c - (k_f1 * k_l1 * ps_itot) / b) / d
 
 
-def _calc_Y1(
-    Y2: float,
+def _calc_y1(
+    y2: float,
     a: float,
     b: float,
-    PSItot: float,
-    k_L1: float,
+    ps_itot: float,
+    k_l1: float,
 ) -> float:
     """QSS concentration of charge-separated PSI state Y1 [mmol mol(Chl)^-1]: P700 oxidised, FA reduced."""
-    return Y2 * a / b + (k_L1 * PSItot) / b
+    return y2 * a / b + (k_l1 * ps_itot) / b
 
 
 def _ps1_states(
-    Fd_ox: float,
-    Fd_red: float,
-    PC_ox: float,
-    PC_red: float,
+    fd_ox: float,
+    fd_red: float,
+    pc_ox: float,
+    pc_red: float,
     light_ps1: float,
-    Keq_PCP700: float,
-    Keq_FAFd: float,
-    PSItot: float,
-    k_F1: float,
-    kPCox: float,
-    kFdred: float,
+    keq_pcp700: float,
+    keq_fa_fd: float,
+    ps_itot: float,
+    k_f1: float,
+    k_p_cox: float,
+    k_fdred: float,
 ) -> tuple[float, float, float]:
     """Analytical quasi-steady-state solution for PSI state occupancies.
 
@@ -824,32 +827,32 @@ def _ps1_states(
     Y1 = charge-separated PSI (P700 oxidised, FA reduced), and
     Y2 = doubly-reduced PSI (P700 reduced, FA reduced). Units: [mmol mol(Chl)^-1].
     """
-    k_L1 = light_ps1
+    k_l1 = light_ps1
 
     a = _calc_a(
-        Fd_red,
-        Keq_FAFd,
-        k_L1,
-        kFdred,
+        fd_red,
+        keq_fa_fd,
+        k_l1,
+        k_fdred,
     )
     b = _calc_b(
-        Fd_ox,
-        k_L1,
-        k_F1,
-        kFdred,
+        fd_ox,
+        k_l1,
+        k_f1,
+        k_fdred,
     )
     c = _calc_c(
-        PC_ox,
-        Keq_PCP700,
-        k_L1,
-        kPCox,
+        pc_ox,
+        keq_pcp700,
+        k_l1,
+        k_p_cox,
     )
     d = _calc_d(
         a,
         b,
-        PC_red,
-        k_F1,
-        kPCox,
+        pc_red,
+        k_f1,
+        k_p_cox,
     )
     f = _calc_f(
         a,
@@ -857,75 +860,75 @@ def _ps1_states(
         d,
     )
 
-    Y0 = _calc_Y0(
+    y0 = _calc_y0(
         b,
         c,
         f,
-        PSItot,
-        k_L1,
-        k_F1,
+        ps_itot,
+        k_l1,
+        k_f1,
     )
-    Y2 = _calc_Y2(
-        Y0,
+    y2 = _calc_y2(
+        y0,
         b,
         c,
         d,
-        PSItot,
-        k_L1,
-        k_F1,
+        ps_itot,
+        k_l1,
+        k_f1,
     )
-    Y1 = _calc_Y1(
-        Y2,
+    y1 = _calc_y1(
+        y2,
         a,
         b,
-        PSItot,
-        k_L1,
+        ps_itot,
+        k_l1,
     )
-    return Y0, Y1, Y2
+    return y0, y1, y2
 
 
-def _vPS1(
-    Y0: float,
-    Y1: float,
+def _v_ps1(
+    y0: float,
+    y1: float,
     light_ps1: float,
-    k_F1: float,
+    k_f1: float,
 ) -> float:
     """Net PSI photochemical rate: light absorption by open PSI (Y0) minus back-reaction from charge-separated state (Y1) [mmol mol(Chl)^-1 s^-1]."""
-    return light_ps1 * Y0 - Y1 * k_F1
+    return light_ps1 * y0 - y1 * k_f1
 
 
 def _fluorescence_ps2(
-    B1: float,
-    B3: float,
-    B1_tot: float,
-    B3_tot: float,
-    kF: float,
+    b1: float,
+    b3: float,
+    b1_tot: float,
+    b3_tot: float,
+    k_f: float,
     fluo_influence_ps2: float,
 ) -> float:
     """PSII fluorescence signal: difference between total-light and growth-light-only open PSII states, weighted by fluorescence rate constant kF."""
-    return ((B1_tot - B1) * kF + (B3_tot - B3) * kF) * fluo_influence_ps2
+    return ((b1_tot - b1) * k_f + (b3_tot - b3) * k_f) * fluo_influence_ps2
 
 
 def _fluorescence_ps1(
-    Y1: float,
-    Y1_tot: float,
-    k_F1: float,
+    y1: float,
+    y1_tot: float,
+    k_f1: float,
     fluo_influence_ps1: float,
 ) -> float:
     """PSI fluorescence signal: difference in charge-separated PSI state Y1 between total-light and growth-light, weighted by k_F1."""
-    return (Y1_tot - Y1) * k_F1 * fluo_influence_ps1
+    return (y1_tot - y1) * k_f1 * fluo_influence_ps1
 
 
 def _fluorescence_tot(
-    FPS2: float,
-    FPS1: float,
-    FPBS: float,
+    fps2: float,
+    fps1: float,
+    fpbs: float,
 ) -> float:
     """Total chlorophyll fluorescence as the sum of PSII, PSI, and PBS contributions."""
-    return FPS2 + FPS1 + FPBS
+    return fps2 + fps1 + fpbs
 
 
-def _vNDH(
+def _v_ndh(
     q: float,
     ho: float,
     nadh: float,
@@ -935,45 +938,44 @@ def _vNDH(
     return kndh * q * nadh * ho
 
 
-def _dG0_FNR(
-    pHcytoplasm: float,
-    E0_Fd: float,
-    F: float,
-    E0_NADP: float,
-    dG_pH: float,
+def _d_g0_fnr(
+    p_hcytoplasm: float,
+    e0_fd: float,
+    f: float,
+    e0_nadp: float,
+    d_g_p_h: float,
 ) -> float:
     """Standard Gibbs free energy [kJ mol^-1] for the FNR reaction: 2 Fd_red + NADP+ → 2 Fd_ox + NADPH + H+."""
-    DG1 = -E0_Fd * F
-    DG2 = -2 * E0_NADP * F + dG_pH * pHcytoplasm
-    dG0 = -2 * DG1 + DG2
-    return dG0
+    DG1 = -e0_fd * f
+    DG2 = -2 * e0_nadp * f + d_g_p_h * p_hcytoplasm
+    return -2 * DG1 + DG2
 
 
-def _dG_FNR(
-    Fd_red: float,
-    NADP: float,
-    Fd_ox: float,
-    NADPH: float,
-    dG0_FNR: float,
-    RT: float,
+def _d_g_fnr(
+    fd_red: float,
+    nadp: float,
+    fd_ox: float,
+    nadph: float,
+    d_g0_fnr: float,
+    rt: float,
 ) -> float:
     """Actual Gibbs free energy [kJ mol^-1] of the FNR reaction at current metabolite concentrations."""
     # Caclulate delta G
-    S = Fd_red**2 * NADP
-    P = Fd_ox**2 * NADPH
-    return dG0_FNR + RT * np.log(P / S)
+    s = fd_red**2 * nadp
+    P = fd_ox**2 * nadph
+    return d_g0_fnr + rt * np.log(P / s)
 
 
-def _vFNR(
-    Fd_red: float,
-    NADP: float,
-    Fd_ox: float,
-    NADPH: float,
-    dG_FNR: float,
-    dG0_FNR: float,
-    k_FN_fwd: float,
-    k_FN_rev: float,
-    RT: float,
+def _v_fnr(
+    fd_red: float,
+    nadp: float,
+    fd_ox: float,
+    nadph: float,
+    d_g_fnr: float,
+    d_g0_fnr: float,
+    k_fn_fwd: float,
+    k_fn_rev: float,
+    rt: float,
 ) -> float:
     """Rate of NADPH production by FNR, thermodynamically gated.
 
@@ -982,147 +984,145 @@ def _vFNR(
     Units: [mmol mol(Chl)^-1 s^-1].
     """
     # Calculate the forward reaction rate
-    S = Fd_red * NADP
-    P = Fd_ox * NADPH
+    s = fd_red * nadp
+    P = fd_ox * nadph
 
     # If delta G is positive calculate the reverse rate
-    if dG_FNR > 0:
-        Keq = np.exp(-dG0_FNR / RT)
-        return k_FN_rev / Keq * P * (np.exp(-dG_FNR > 0) - 1)
+    if d_g_fnr > 0:
+        Keq = np.exp(-d_g0_fnr / rt)
+        return k_fn_rev / Keq * P * (np.exp(-d_g_fnr > 0) - 1)
 
-    return k_FN_fwd * S * (1 - np.exp(dG_FNR))
+    return k_fn_fwd * s * (1 - np.exp(d_g_fnr))
 
 
 def _thylakoid_proton_leakage(
-    Hi_mol: float,
-    Ho_mol: float,
+    hi_mol: float,
+    ho_mol: float,
     kpass: float,
 ) -> float:
     """Passive proton flow"""
-    return kpass * (Hi_mol - Ho_mol)
+    return kpass * (hi_mol - ho_mol)
 
 
-def _vO2out(
-    O2: float,
-    O2ext: float,
-    kO2out: float,
+def _v_o2out(
+    o2: float,
+    o2ext: float,
+    k_o2out: float,
 ) -> float:
+    """Exchange of oxygen with the environment.
+
+    Viewed in outward direction, assumes a constant external oxygen concentration
     """
-    Exchange of oxygen with the environment, viewed in outward direction
-    assumes a constant external oxygen concentration
-    """
-    return kO2out * (O2 - O2ext)
+    return k_o2out * (o2 - o2ext)
 
 
-def _stoich_Ho_vPS2(
-    bHo: float,
+def _stoich_ho_v_ps2(
+    b_ho: float,
 ) -> float:
     """Stoichiometric factor for Ho: 2 cytoplasmic protons consumed per PSII turnover (water splitting), scaled by cytoplasm buffering capacity."""
-    return -2 / bHo
+    return -2 / b_ho
 
 
-def _stoich_Hi_vPS2(
-    bHi: float,
+def _stoich_hi_v_ps2(
+    b_hi: float,
 ) -> float:
     """Stoichiometric factor for Hi: 2 lumenal protons released per PSII turnover (water splitting), scaled by lumen buffering capacity."""
-    return 2 / bHi
+    return 2 / b_hi
 
 
-def _stoich_Ho_vRespiration(
-    bHo: float,
+def _stoich_ho_v_respiration(
+    b_ho: float,
 ) -> float:
     """Stoichiometric factor for Ho: ~4.9 cytoplasmic protons produced per respiratory turnover, scaled by cytoplasm buffering capacity."""
-    return 4.926 / bHo
+    return 4.926 / b_ho
 
 
-def _stoich_Ho_vbd(
-    bHo: float,
+def _stoich_ho_vbd(
+    b_ho: float,
 ) -> float:
     """Stoichiometric factor for Ho: 4 cytoplasmic protons consumed per O2 reduced by bd-type oxidase (Cyd), scaled by cytoplasm buffering capacity."""
-    return -4 / bHo
+    return -4 / b_ho
 
 
-def _stoich_Hi_vbd(
-    bHi: float,
+def _stoich_hi_vbd(
+    b_hi: float,
 ) -> float:
     """Stoichiometric factor for Hi: 4 lumenal protons released per O2 reduced by bd-type oxidase (Cyd), scaled by lumen buffering capacity."""
-    return 4 / bHi
+    return 4 / b_hi
 
 
-def _stoich_Hi_vb6f(
-    bHi: float,
+def _stoich_hi_vb6f(
+    b_hi: float,
 ) -> float:
     """Stoichiometric factor for Hi: 4 lumenal protons released per Cyt b6f turnover (Q-cycle), scaled by lumen buffering capacity."""
-    return 4 / bHi
+    return 4 / b_hi
 
 
-def _stoich_Ho_vb6f(
-    bHo: float,
+def _stoich_ho_vb6f(
+    b_ho: float,
 ) -> float:
     """Stoichiometric factor for Ho: 2 cytoplasmic protons consumed per Cyt b6f turnover (Q-cycle), scaled by cytoplasm buffering capacity."""
-    return -2 / bHo
+    return -2 / b_ho
 
 
-def _stoich_Hi_vaa(
-    bHi: float,
+def _stoich_hi_vaa(
+    b_hi: float,
 ) -> float:
     """Stoichiometric factor for Hi: 1 lumenal proton released per aa3-COX turnover, scaled by lumen buffering capacity."""
-    return 1 / bHi
+    return 1 / b_hi
 
 
-def _stoich_Ho_vaa(
-    bHo: float,
+def _stoich_ho_vaa(
+    b_ho: float,
 ) -> float:
     """Stoichiometric factor for Ho: 5 cytoplasmic protons consumed per aa3-COX turnover, scaled by cytoplasm buffering capacity."""
-    return -5 / bHo
+    return -5 / b_ho
 
 
-def _stoich_Ho_vFNR(
-    bHo: float,
+def _stoich_ho_v_fnr(
+    b_ho: float,
 ) -> float:
     """Stoichiometric factor for Ho: 1 cytoplasmic proton consumed per FNR turnover (NADPH production), scaled by cytoplasm buffering capacity."""
-    return -1 / bHo
+    return -1 / b_ho
 
 
-def _stoich_Hi_vPass(
-    bHi: float,
+def _stoich_hi_v_pass(
+    b_hi: float,
 ) -> float:
     """Stoichiometric factor for Hi: 1 lumenal proton lost per passive leakage event, scaled by lumen buffering capacity."""
-    return -1 / bHi
+    return -1 / b_hi
 
 
-def _stoich_Ho_vPass(
-    bHo: float,
+def _stoich_ho_v_pass(
+    b_ho: float,
 ) -> float:
     """Stoichiometric factor for Ho: 1 cytoplasmic proton gained per passive leakage event, scaled by cytoplasm buffering capacity."""
-    return 1 / bHo
+    return 1 / b_ho
 
 
-def _stoich_Ho_vNDH(
-    bHo: float,
+def _stoich_ho_v_ndh(
+    b_ho: float,
 ) -> float:
     """Stoichiometric factor for Ho: 1 cytoplasmic proton consumed per NDH-2 turnover (non-electrogenic PQ reduction), scaled by cytoplasm buffering capacity."""
-    return -1 / bHo
+    return -1 / b_ho
 
 
 def _lumped_photorespiration(
-    PG: float,
-    ATP: float,
-    NADPH: float,
-    NAD: float,
-    kPR: float,
+    pg: float,
+    atp: float,
+    nadph: float,
+    nad: float,
+    k_pr: float,
 ) -> float:
-    """
-    Calculate the rate of PG recycling
-    """
-    return kPR * PG * ATP * NADPH * NAD
+    """Calculate the rate of PG recycling"""
+    return k_pr * pg * atp * nadph * nad
 
 
-def _stoich_Ho_vPRsalv(
-    bHo: float,
+def _stoich_ho_v_p_rsalv(
+    b_ho: float,
 ) -> float:
     """Stoichiometric factor for Ho: 1 cytoplasmic proton released per photorespiratory salvage turnover, scaled by cytoplasm buffering capacity."""
-    return 1 / bHo
+    return 1 / b_ho
 
 
 ##############################################
@@ -1132,13 +1132,13 @@ def _stoich_Ho_vPRsalv(
 
 #  Calvin-Benson-Bassham cycle (CBB)
 def _cbb_cycle(
-    f_CBB_energy: float,
-    f_CBB_gas: float,
-    f_CBB_light: float,
-    vCBB_max: float,
+    f_cbb_energy: float,
+    f_cbb_gas: float,
+    f_cbb_light: float,
+    v_cbb_max: float,
 ) -> float:
     """Rate of CO2 fixation by the CBB cycle [mmol mol(Chl)^-1 s^-1], limited by energy (ATP/NADPH), gas (CO2/O2), and light-activated enzyme fraction."""
-    return vCBB_max * f_CBB_energy * f_CBB_gas * f_CBB_light
+    return v_cbb_max * f_cbb_energy * f_cbb_gas * f_cbb_light
 
 
 def _rubisco_oxygenation(
@@ -1146,261 +1146,292 @@ def _rubisco_oxygenation(
     f_oxy_energy: float,
     f_oxy_gas: float,
     f_oxy_light: float,
-    vOxy_max: float,
+    v_oxy_max: float,
 ) -> float:
     """Rate of RuBisCO oxygenation producing 2-phosphoglycolate (PG) [mmol mol(Chl)^-1 s^-1], limited by carbon (3PGA), energy, gas (O2/CO2), and light activation."""
-    return vOxy_max * f_oxy_carbon * f_oxy_energy * f_oxy_gas * f_oxy_light
+    return v_oxy_max * f_oxy_carbon * f_oxy_energy * f_oxy_gas * f_oxy_light
 
 
-def CBB_energy_MM(ATP: float, NADPH: float, KMATP: float, KMNADPH: float) -> float:
+def _cbb_energy_mm(
+    atp: float,
+    nadph: float,
+    kmatp: float,
+    kmnadph: float,
+) -> float:
     """Michaelis-Menten energy-limitation factor for CBB and Oxy: fraction of maximal rate given current ATP and NADPH concentrations."""
-    return ATP / (KMATP + ATP) * NADPH / (KMNADPH + NADPH)
+    return atp / (kmatp + atp) * nadph / (kmnadph + nadph)
 
 
 # Michaelis-Menten with competetive O2 inhibition
-def CBB_gas_MM_O2(CO2: float, O2: float, KMCO2: float, KIO2: float) -> float:
+def _cbb_gas_mm_o2(
+    co2: float,
+    o2: float,
+    kmco2: float,
+    kio2: float,
+) -> float:
     """Michaelis-Menten CO2 saturation factor for CBB with competitive O2 inhibition of RuBisCO carboxylation."""
-    return 1 * CO2 / (CO2 + KMCO2 * (1 + O2 / KIO2))
+    return 1 * co2 / (co2 + kmco2 * (1 + o2 / kio2))
 
 
 # Michaelis-Menten with competetive CO2 inhibition
-def oxy_gas_MM_CO2(O2: float, CO2: float, KMO2: float, KICO2: float) -> float:
+def _oxy_gas_mm_co2(
+    o2: float,
+    co2: float,
+    kmo2: float,
+    kico2: float,
+) -> float:
     """Michaelis-Menten O2 saturation factor for RuBisCO oxygenation with competitive CO2 inhibition."""
-    return 1 * O2 / (O2 + KMO2 * (1 + CO2 / KICO2))
+    return 1 * o2 / (o2 + kmo2 * (1 + co2 / kico2))
 
 
 # Michaelis-Menten
-def oxy_carbon_MM(PGA: float, KMPGA: float) -> float:
+def _oxy_carbon_mm(
+    pga: float,
+    kmpga: float,
+) -> float:
     """Michaelis-Menten carbon-substrate factor for RuBisCO oxygenation: 3PGA saturation representing carbon pool availability."""
-    return PGA / (KMPGA + PGA)
+    return pga / (kmpga + pga)
 
 
-def _stoich_Ho_vCBB(
-    bHo: float,
+def _stoich_ho_v_cbb(
+    b_ho: float,
 ) -> float:
     """Stoichiometric factor for Ho: 5 cytoplasmic protons consumed per CBB cycle turnover, scaled by cytoplasm buffering capacity."""
-    return -5 / bHo
+    return -5 / b_ho
 
 
-def _stoich_Ho_vOxy(
-    bHo: float,
+def _stoich_ho_v_oxy(
+    b_ho: float,
 ) -> float:
     """Stoichiometric factor for Ho: 5 cytoplasmic protons consumed per RuBisCO oxygenation turnover, scaled by cytoplasm buffering capacity."""
-    return -5 / bHo
+    return -5 / b_ho
 
 
 def _cbb_activation(
-    CBBa: float,
-    Fd_red: float,
-    kCBBactivation: float,
-    KMFdred: float,
+    cb_ba: float,
+    fd_red: float,
+    k_cb_bactivation: float,
+    km_fdred: float,
 ) -> float:
     """Rate of CBB enzyme activation by reduced ferredoxin (Fd_red) via the ferredoxin-thioredoxin regulatory pathway [s^-1].
 
     CBBa approaches Fd_red / (KMFdred + Fd_red) at steady state, linking carbon
     fixation capacity to the redox state of the photosynthetic electron transport chain.
     """
-    return kCBBactivation * (Fd_red / (KMFdred + Fd_red) - CBBa)
+    return k_cb_bactivation * (fd_red / (km_fdred + fd_red) - cb_ba)
 
 
-def vFlv_v2(
-    Fd_red: float,
-    O2: float,
-    Ho: float,
-    k_O2: float,
-    KHillFdred: float,
-    nHillFdred: float,
+def _v_flv_v2(
+    fd_red: float,
+    o2: float,
+    ho: float,
+    k_o2: float,
+    k_hill_fdred: float,
+    n_hill_fdred: float,
 ) -> float:
     """Electron flow from Fd to O2 via Flv1/3-Heterodimere"""
-    return k_O2 * O2 * Ho * 1 * Fd_red**nHillFdred / (KHillFdred + Fd_red**nHillFdred)
-
-
-def CO2pK1(
-    T: float,
-    S: float,
-) -> float:  # [unitless] MojicaPrieto2002
-    """First dissociation constant (pK1) of carbonic acid as a function of temperature T [K] and salinity S [unitless] (MojicaPrieto2002)."""
     return (
-        -43.6977 - 0.0129037 * S + 1.364e-4 * S**2 + 2885.378 / T + 7.045159 * np.log(T)
+        k_o2
+        * o2
+        * ho
+        * 1
+        * fd_red**n_hill_fdred
+        / (k_hill_fdred + fd_red**n_hill_fdred)
     )
 
 
-def CO2KHenry(
-    T: float,
-    S: float,
+def _co2p_k1(
+    t: float,
+    s: float,
+) -> float:  # [unitless] MojicaPrieto2002
+    """First dissociation constant (pK1) of carbonic acid as a function of temperature T [K] and salinity S [unitless] (MojicaPrieto2002)."""
+    return (
+        -43.6977 - 0.0129037 * s + 1.364e-4 * s**2 + 2885.378 / t + 7.045159 * np.log(t)
+    )
+
+
+def _co2_k_henry(
+    t: float,
+    s: float,
 ) -> float:  # [mol l^-1 atm^-1] König2019
     """Henry's law solubility constant for CO2 [mol l^-1 atm^-1] as a function of temperature T [K] and salinity S [unitless] (König2019)."""
     return np.exp(
         -58.0931
-        + 90.5069 * 100 / T
-        + 22.2940 * np.log(T / 100)
-        + S * (0.027766 - 0.025888 * T / 100 + 0.0050578 * (T / 100) ** 2)
+        + 90.5069 * 100 / t
+        + 22.2940 * np.log(t / 100)
+        + s * (0.027766 - 0.025888 * t / 100 + 0.0050578 * (t / 100) ** 2)
     )
 
 
-def CO2sol(
-    T: float,
-    S: float,
-    CO2pp: float,
+def _co2sol(
+    t: float,
+    s: float,
+    co2pp: float,
 ) -> float:  # [mol l^-1]
     """Dissolved CO2 concentration [mol l^-1] at partial pressure CO2pp [atm], temperature T [K], and salinity S, via Henry's law."""
-    return CO2KHenry(T, S) * CO2pp
+    return _co2_k_henry(t, s) * co2pp
 
 
-def CO2aq(
-    CO2dissolved: float,
-    Ho: float,
-    K: float,
+def _co2aq(
+    co2dissolved: float,
+    ho: float,
+    k: float,
 ) -> float:  # [mol l^-1]
     """Aqueous CO2 (CO2·H2O) fraction of total dissolved inorganic carbon [mol l^-1], pH-dependent via the first dissociation equilibrium."""
-    return CO2dissolved * Ho / (Ho + K)
+    return co2dissolved * ho / (ho + k)
 
 
-def vCCM_v2(
-    CO2: float,
-    Ho: float,
-    CO2ext_pp: float,
-    kCCM: float,
-    fCin: float,
-    T: float,
-    S: float,
-    cChl: float,
+def _v_ccm_v2(
+    co2: float,
+    ho: float,
+    co2ext_pp: float,
+    k_ccm: float,
+    f_cin: float,
+    t: float,
+    s: float,
+    c_chl: float,
 ) -> float:
-    """
-    Exchange of CO2 with the environment, viewed in inward direction
+    """Exchange of CO2 with the environment.
+
+    Viewed in inward direction.
     raises the total cellular CO2 concentration to the maximum allowed by external concentration or solubility
     assumes a constant external CO2 concentration
     """
     # Converssion factor mol l^-1 -> mmol mol(Chl)^-1
-    perChl = 1 / cChl * 1e3
+    perChl = 1 / c_chl * 1e3
 
     # Assume the CCM-increased partial pressure within the cell
-    CO2pp = CO2ext_pp * fCin
+    co2pp = co2ext_pp * f_cin
 
     # Calculate the CO2 equilibrium constant
-    K1 = 10 ** (-CO2pK1(T, S)) * perChl  # [mmol mol(Chl)]
+    K1 = 10 ** (-_co2p_k1(t, s)) * perChl  # [mmol mol(Chl)]
 
     # Calculate the maximally achievable CO2aq concentration
-    CO2dissolved = CO2sol(
-        T,
-        S,
-        CO2pp,
+    co2dissolved = _co2sol(
+        t,
+        s,
+        co2pp,
     )
     CO2aq_max = (
-        CO2aq(
-            CO2dissolved,
-            Ho,
+        _co2aq(
+            co2dissolved,
+            ho,
             K1,
         )
         * perChl
     )  # [mmol mol(Chl)]
 
-    return kCCM * (CO2aq_max - CO2)
+    return k_ccm * (CO2aq_max - co2)
 
 
-def _stoich_Ho_vFlv_hill(
-    bHo: float,
+def _stoich_ho_v_flv_hill(
+    b_ho: float,
 ) -> float:
     """Stoichiometric factor for Ho: 4 cytoplasmic protons consumed per O2 reduced by Flv 1/3, scaled by cytoplasm buffering capacity."""
-    return -4 / bHo
+    return -4 / b_ho
 
 
-def _stoich_Hi_vNQ_MM(
-    bHi: float,
+def _stoich_hi_v_nq_mm(
+    b_hi: float,
 ) -> float:
     """Stoichiometric factor for Hi: 1 lumenal proton released per NDH-1 turnover (cyclic electron flow), scaled by lumen buffering capacity."""
-    return 1 / bHi
+    return 1 / b_hi
 
 
-def _stoich_Ho_vNQ_MM(
-    bHo: float,
+def _stoich_ho_v_nq_mm(
+    b_ho: float,
 ) -> float:
     """Stoichiometric factor for Ho: 3 cytoplasmic protons consumed per NDH-1 turnover (cyclic electron flow), scaled by cytoplasm buffering capacity."""
-    return -3 / bHo
+    return -3 / b_ho
 
 
-def vNQ_MM(
-    Q_ox: float,
-    Fd_red: float,
-    vNQ_max: float,
-    KMNQ_Qox: float,
-    KMNQ_Fdred: float,
+def _v_nq_mm(
+    q_ox: float,
+    fd_red: float,
+    v_nq_max: float,
+    kmnq_qox: float,
+    kmnq_fdred: float,
 ) -> float:
     """Rate of PQ reduction by NDH-1 complex using Fd_red as electron donor; Michaelis-Menten kinetics for both PQ_ox and Fd_red [mmol mol(Chl)^-1 s^-1]."""
-    return vNQ_max * Q_ox / (KMNQ_Qox + Q_ox) * Fd_red / (KMNQ_Fdred + Fd_red)
+    return v_nq_max * q_ox / (kmnq_qox + q_ox) * fd_red / (kmnq_fdred + fd_red)
 
 
 def _free_pbs(
-    PBS_PS1: float,
-    PBS_PS2: float,
+    pbs_ps1: float,
+    pbs_ps2: float,
 ) -> float:
     """Fraction of free phycobilisomes"""
-    return 1 - PBS_PS1 - PBS_PS2
+    return 1 - pbs_ps1 - pbs_ps2
 
 
 def _ocp_activation(
-    OCP: float,
-    kOCPactivation: float,
-    kOCPdeactivation: float,
+    ocp: float,
+    k_oc_pactivation: float,
+    k_oc_pdeactivation: float,
     lcf: float,
-    OCPmax: float,
+    oc_pmax: float,
     # data
     light_spectrum: pd.Series,
     ocp_absorption: pd.Series,
 ) -> float:
-    """Activation of orange carotenoid protein as active, light-involved process
-    with passive reversal.
+    """Activation of orange carotenoid protein.
+
+    As active, light-involved processwith passive reversal.
     """
     return (
         cast(float, simpson(ocp_absorption.mul(light_spectrum)))
         * lcf
-        * kOCPactivation
-        * (OCPmax - OCP)
-        - kOCPdeactivation * OCP
+        * k_oc_pactivation
+        * (oc_pmax - ocp)
+        - k_oc_pdeactivation * ocp
     )
 
 
 def _fluorescence_pbs_ocp(
-    OCP: float,
-    PBS_free: float,
+    ocp: float,
+    pbs_free: float,
     fluo_influence_pbs: float,
     lcf: float,
     ml_absorption_pbs: float,
 ) -> float:
-    """Fluorescence from free PBS, reduced by active OCP quenching; proportional to unquenched fraction (1 − OCP)."""
-    return PBS_free * ml_absorption_pbs * fluo_influence_pbs * (1 - OCP) * lcf
+    """Fluorescence from free PBS, reduced by active OCP quenching; proportional to unquenched fraction (1 - OCP)."""
+    return pbs_free * ml_absorption_pbs * fluo_influence_pbs * (1 - ocp) * lcf
 
 
 def _ps_normabsorption_ocp(
-    PBS_PS1: float,
-    PBS_PS2: float,
-    OCP: float,
-    PSItot: float,
-    PSIItot: float,
+    pbs_ps1: float,
+    pbs_ps2: float,
+    ocp: float,
+    ps_itot: float,
+    psi_itot: float,
     lcf: float,
     absorption_ps1: float,
     absorption_ps2: float,
     absorption_pbs: float,
 ) -> tuple[float, float]:
     """Normalised light absorption per PSI and PSII molecule, including PBS antenna energy transfer attenuated by OCP quenching."""
-    light_ps1 = (absorption_ps1 + absorption_pbs * PBS_PS1 * (1 - OCP)) / PSItot
-    light_ps2 = (absorption_ps2 + absorption_pbs * PBS_PS2 * (1 - OCP)) / PSIItot
+    light_ps1 = (absorption_ps1 + absorption_pbs * pbs_ps1 * (1 - ocp)) / ps_itot
+    light_ps2 = (absorption_ps2 + absorption_pbs * pbs_ps2 * (1 - ocp)) / psi_itot
 
     return light_ps1 * lcf, light_ps2 * lcf
 
 
 def _psii_unquench(
-    PSIIq: float,
-    Q_red: float,
-    kUnquench: float,
-    KMUnquench: float,
+    psi_iq: float,
+    q_red: float,
+    k_unquench: float,
+    km_unquench: float,
 ) -> float:
     """Rate of PSII recovery from the quenched state (PSIIq → PSII), inhibited by reduced PQ via a Hill-type term."""
     nUnquench = 1
-    return kUnquench * PSIIq * (1 - Q_red**nUnquench / (KMUnquench + Q_red**nUnquench))
+    return (
+        k_unquench * psi_iq * (1 - q_red**nUnquench / (km_unquench + q_red**nUnquench))
+    )
 
 
-def add_ATPase(m: Model) -> Model:
+def add_atpase(
+    m: Model,
+) -> Model:
     """Add the ATP synthase reaction (vATPsynthase) to the model, driven by the transmembrane proton gradient."""
     m.add_reaction(
         "vATPsynthase",
@@ -1418,15 +1449,17 @@ def add_ATPase(m: Model) -> Model:
             "kATPsynth",
         ],
         stoichiometry={
-            "Hi": Derived(fn=_stoich_Hi_ATPsynthase, args=["HPR", "bHi"]),
-            "Ho": Derived(fn=_stoich_Ho_ATPsynthase, args=["HPR", "bHo"]),
+            "Hi": Derived(fn=_stoich_hi_at_psynthase, args=["HPR", "bHi"]),
+            "Ho": Derived(fn=_stoich_ho_at_psynthase, args=["HPR", "bHo"]),
             "ATP": 1,
         },
     )
     return m
 
 
-def add_consuming_reactions(m: Model) -> Model:
+def add_consuming_reactions(
+    m: Model,
+) -> Model:
     """Add lumped ATP and NADH consumption reactions representing cellular maintenance and biosynthesis demand."""
     m.add_reaction(
         "vATPconsumption",
@@ -1449,7 +1482,7 @@ def add_consuming_reactions(m: Model) -> Model:
         ],
         stoichiometry={
             "NADH": -1,
-            "Ho": Derived(fn=_stoich_Ho_vNADHconsumption, args=["bHo"]),
+            "Ho": Derived(fn=_stoich_ho_v_nad_hconsumption, args=["bHo"]),
         },
     )
     return m
@@ -1473,7 +1506,7 @@ def add_electron_transport_chain(
 
     m.add_derived(
         "dG_pH",
-        fn=_dG_pH,
+        fn=_d_g_p_h,
         args=["R", "T"],
     )
 
@@ -1485,27 +1518,27 @@ def add_electron_transport_chain(
 
     m.add_derived(
         "Hi_mol",
-        fn=_molarHlumen,
+        fn=_molar_hlumen,
         args=["Hi", "cf_lumen"],
     )
     m.add_derived(
         "Ho_mol",
-        fn=_molarHcytoplasm,
+        fn=_molar_hcytoplasm,
         args=["Ho", "cf_cytoplasm"],
     )
     m.add_derived(
         "pHlumen",
-        fn=_pH,
+        fn=_p_h,
         args=["Hi_mol"],
     )
     m.add_derived(
         "pHcytoplasm",
-        fn=_pH,
+        fn=_p_h,
         args=["Ho_mol"],
     )
     m.add_derived(
         "dpH",
-        fn=_deltapH,
+        fn=_deltap_h,
         args=["pHlumen", "pHcytoplasm"],
     )
 
@@ -1532,7 +1565,7 @@ def add_electron_transport_chain(
     m.add_surrogate(
         "absorption_per_complex",
         surrogate=qss.Surrogate(
-            model=absorption_per_complex,
+            model=_absorption_per_complex,
             args=[
                 "ps_ratio",
                 # data
@@ -1552,7 +1585,7 @@ def add_electron_transport_chain(
     m.add_surrogate(
         "abs_per_complex_ml",
         surrogate=qss.Surrogate(
-            model=absorption_per_complex,
+            model=_absorption_per_complex,
             args=[
                 "ps_ratio",
                 # data
@@ -1665,19 +1698,19 @@ def add_electron_transport_chain(
     )
     m.add_derived(
         "Keq_PQred",
-        fn=_Keq_PQred,
+        fn=_keq_p_qred,
         args=["pHcytoplasm", "E0_QA", "F", "E0_PQ", "dG_pH", "RT"],
     )
 
     m.add_derived(
         "Keq_FAFd",
-        fn=_Keq_FAFd,
+        fn=_keq_fa_fd,
         args=["E0_FA", "F", "E0_Fd", "RT"],
     )
 
     m.add_derived(
         "Keq_PCP700",
-        fn=_Keq_PCP700,
+        fn=_keq_pcp700,
         args=["E0_PC", "F", "E0_P700", "RT"],
     )
 
@@ -1788,13 +1821,13 @@ def add_electron_transport_chain(
 
     m.add_derived(
         "Keq_vSDH",  # equilibrium constant of succinate dehydrogenase
-        fn=_Keq_vSDH,
+        fn=_keq_v_sdh,
         args=["pHcytoplasm", "E0_PQ", "F", "E0_succinate/fumarate", "RT", "dG_pH"],
     )
 
     m.add_reaction(
         "vSDH",  # Succinate dehydrogenase
-        fn=_vSDH,
+        fn=_v_sdh,
         args=["PQ_ox", "succinate", "fumarate", "PQ_red", "Keq_vSDH", "k_SDH"],
         stoichiometry={
             "PQ_ox": -1,
@@ -1805,7 +1838,7 @@ def add_electron_transport_chain(
 
     m.add_reaction(
         "vRespiration",  # glycolysis and the tricarboxylic acid cycle
-        fn=_vRespiration,
+        fn=_v_respiration,
         args=["3PGA", "fumarate", "ADP", "NAD", "NADP", "kRespiration", "KMPGA"],
         stoichiometry={
             "3PGA": -1.000,
@@ -1815,7 +1848,7 @@ def add_electron_transport_chain(
             "ATP": 0.567,
             "NADPH": 2.237,
             "NADH": 2.689,
-            "Ho": Derived(fn=_stoich_Ho_vRespiration, args=["bHo"]),
+            "Ho": Derived(fn=_stoich_ho_v_respiration, args=["bHo"]),
         },
     )
 
@@ -1826,8 +1859,8 @@ def add_electron_transport_chain(
         stoichiometry={
             "PQ_ox": 2,
             "O2": -1,
-            "Ho": Derived(fn=_stoich_Ho_vbd, args=["bHo"]),
-            "Hi": Derived(fn=_stoich_Hi_vbd, args=["bHi"]),
+            "Ho": Derived(fn=_stoich_ho_vbd, args=["bHo"]),
+            "Hi": Derived(fn=_stoich_hi_vbd, args=["bHi"]),
         },
     )
 
@@ -1837,9 +1870,9 @@ def add_electron_transport_chain(
         args=["PC_ox", "Ho", "PQ_red", "k_Q"],
         stoichiometry={
             "PQ_ox": 1,
-            "Hi": Derived(fn=_stoich_Hi_vb6f, args=["bHi"]),
+            "Hi": Derived(fn=_stoich_hi_vb6f, args=["bHi"]),
             "PC_ox": -2,
-            "Ho": Derived(fn=_stoich_Ho_vb6f, args=["bHo"]),
+            "Ho": Derived(fn=_stoich_ho_vb6f, args=["bHo"]),
         },
     )
 
@@ -1849,9 +1882,9 @@ def add_electron_transport_chain(
         args=["PC_red", "O2", "Ho", "k_aa"],
         stoichiometry={
             "PC_ox": 4,
-            "Hi": Derived(fn=_stoich_Hi_vaa, args=["bHi"]),
+            "Hi": Derived(fn=_stoich_hi_vaa, args=["bHi"]),
             "O2": -1,
-            "Ho": Derived(fn=_stoich_Ho_vaa, args=["bHo"]),
+            "Ho": Derived(fn=_stoich_ho_vaa, args=["bHo"]),
         },
     )
 
@@ -1874,15 +1907,15 @@ def add_electron_transport_chain(
         args=["B1", "k2"],
         stoichiometry={
             "PQ_ox": -1,
-            "Ho": Derived(fn=_stoich_Ho_vPS2, args=["bHo"]),
-            "Hi": Derived(fn=_stoich_Hi_vPS2, args=["bHi"]),
+            "Ho": Derived(fn=_stoich_ho_v_ps2, args=["bHo"]),
+            "Hi": Derived(fn=_stoich_hi_v_ps2, args=["bHi"]),
             "O2": 0.5,
         },
     )
 
     m.add_reaction(
         "vPS1",  # photosystem i
-        fn=_vPS1,
+        fn=_v_ps1,
         args=["Y0", "Y1", "light_ps1", "k_F1"],
         stoichiometry={"Fd_ox": -1, "PC_ox": 1},
     )
@@ -1919,41 +1952,41 @@ def add_electron_transport_chain(
 
     m.add_reaction(
         "vFlv",
-        fn=vFlv_v2,
+        fn=_v_flv_v2,
         args=["Fd_red", "O2", "Ho", "k_O2", "KHillFdred", "nHillFdred"],
         stoichiometry={
             "Fd_ox": 4,
             "O2": -1,
-            "Ho": Derived(fn=_stoich_Ho_vFlv_hill, args=["bHo"]),
+            "Ho": Derived(fn=_stoich_ho_v_flv_hill, args=["bHo"]),
         },
     )
 
     m.add_reaction(
         "vNDH",
-        fn=_vNDH,
+        fn=_v_ndh,
         args=["PQ_ox", "Ho", "NADH", "k_NDH"],
         stoichiometry={
             "PQ_ox": -1,
             "NADH": -1,
-            "Ho": Derived(fn=_stoich_Ho_vNDH, args=["bHo"]),
+            "Ho": Derived(fn=_stoich_ho_v_ndh, args=["bHo"]),
         },
     )
 
     m.add_derived(
         "dG0_FNR",
-        fn=_dG0_FNR,
+        fn=_d_g0_fnr,
         args=["pHcytoplasm", "E0_Fd", "F", "E0_NADP", "dG_pH"],
     )
 
     m.add_derived(
         "dG_FNR",
-        fn=_dG_FNR,
+        fn=_d_g_fnr,
         args=["Fd_red", "NADP", "Fd_ox", "NADPH", "dG0_FNR", "RT"],
     )
 
     m.add_reaction(
         "vFNR",
-        fn=_vFNR,
+        fn=_v_fnr,
         args=[
             "Fd_red",
             "NADP",
@@ -1968,7 +2001,7 @@ def add_electron_transport_chain(
         stoichiometry={
             "Fd_ox": 2,
             "NADPH": 1,
-            "Ho": Derived(fn=_stoich_Ho_vFNR, args=["bHo"]),
+            "Ho": Derived(fn=_stoich_ho_v_fnr, args=["bHo"]),
         },
     )
 
@@ -1977,40 +2010,42 @@ def add_electron_transport_chain(
         fn=_thylakoid_proton_leakage,
         args=["Hi_mol", "Ho_mol", "k_pass"],
         stoichiometry={
-            "Hi": Derived(fn=_stoich_Hi_vPass, args=["bHi"]),
-            "Ho": Derived(fn=_stoich_Ho_vPass, args=["bHo"]),
+            "Hi": Derived(fn=_stoich_hi_v_pass, args=["bHi"]),
+            "Ho": Derived(fn=_stoich_ho_v_pass, args=["bHo"]),
         },
     )
 
     m.add_reaction(
         "vNQ",
-        fn=vNQ_MM,
+        fn=_v_nq_mm,
         args=["PQ_ox", "Fd_red", "vNQ_max", "KMNQ_Qox", "KMNQ_Fdred"],
         stoichiometry={
             "Fd_ox": 2,
             "PQ_ox": -1,
-            "Hi": Derived(fn=_stoich_Hi_vNQ_MM, args=["bHi"]),
-            "Ho": Derived(fn=_stoich_Ho_vNQ_MM, args=["bHo"]),
+            "Hi": Derived(fn=_stoich_hi_v_nq_mm, args=["bHi"]),
+            "Ho": Derived(fn=_stoich_ho_v_nq_mm, args=["bHo"]),
         },
     )
 
     m.add_reaction(
         "vO2out",  # Oxygen efflux
-        fn=_vO2out,
+        fn=_v_o2out,
         args=["O2", "O2ext", "kO2out"],
         stoichiometry={"O2": -1},
     )
 
     m.add_reaction(
         "vCCM",  # Carbon dioxide concentration by CCM
-        fn=vCCM_v2,
+        fn=_v_ccm_v2,
         args=["CO2", "Ho", "CO2ext_pp", "kCCM", "fCin", "T", "S", "cChl"],
         stoichiometry={"CO2": 1},
     )
     return m
 
 
-def add_photorespiratory_salvage(m: Model) -> Model:
+def add_photorespiratory_salvage(
+    m: Model,
+) -> Model:
     """Adds the lumped reaction recycling (2-phospho)glycolate from photorespiration.
 
     The standard stoichiometry assumes complete recycling via glycolate dehydrogenase
@@ -2026,7 +2061,7 @@ def add_photorespiratory_salvage(m: Model) -> Model:
             "PG": -2,
             "ATP": -1,
             "NADPH": -1,
-            "Ho": Derived(fn=_stoich_Ho_vPRsalv, args=["bHo"]),
+            "Ho": Derived(fn=_stoich_ho_v_p_rsalv, args=["bHo"]),
             "NADH": 2,
             "3PGA": 1,
             "CO2": 1,
@@ -2035,27 +2070,29 @@ def add_photorespiratory_salvage(m: Model) -> Model:
     return m
 
 
-def add_CBB_and_oxy(m: Model) -> Model:
+def add_cbb_and_oxy(
+    m: Model,
+) -> Model:
     """Add CBB cycle, RuBisCO oxygenation, and Fd-dependent CBB activation reactions to the model."""
     # Add the factors as algebraic modules
     m.add_derived(
         "f_CBB_energy",
-        fn=CBB_energy_MM,
+        fn=_cbb_energy_mm,
         args=["ATP", "NADPH", "KMATP", "KMNADPH"],
     )
     m.add_derived(
         "f_CBB_gas",
-        fn=CBB_gas_MM_O2,
+        fn=_cbb_gas_mm_o2,
         args=["CO2", "O2", "KMCO2", "KIO2"],
     )
     m.add_derived(
         "f_oxy_carbon",
-        fn=oxy_carbon_MM,
+        fn=_oxy_carbon_mm,
         args=["3PGA", "KMPGA"],
     )
     m.add_derived(
         "f_oxy_gas",
-        fn=oxy_gas_MM_CO2,
+        fn=_oxy_gas_mm_co2,
         args=["O2", "CO2", "KMO2", "KICO2"],
     )
     m.add_reaction(
@@ -2073,7 +2110,7 @@ def add_CBB_and_oxy(m: Model) -> Model:
             "ATP": -8,
             "NADPH": -5,
             "3PGA": 1,
-            "Ho": Derived(fn=_stoich_Ho_vCBB, args=["bHo"]),
+            "Ho": Derived(fn=_stoich_ho_v_cbb, args=["bHo"]),
         },
     )
     m.add_reaction(
@@ -2086,7 +2123,7 @@ def add_CBB_and_oxy(m: Model) -> Model:
             "NADPH": -5,
             "3PGA": -2,
             "PG": 3,
-            "Ho": Derived(fn=_stoich_Ho_vOxy, args=["bHo"]),
+            "Ho": Derived(fn=_stoich_ho_v_oxy, args=["bHo"]),
         },
     )
     return m
@@ -2155,8 +2192,7 @@ def get_model(
         ),
     )
     m = add_electron_transport_chain(m, pbs_behaviour=pbs_behaviour)
-    m = add_ATPase(m)
+    m = add_atpase(m)
     m = add_consuming_reactions(m)
-    m = add_CBB_and_oxy(m)
-    m = add_photorespiratory_salvage(m)
-    return m
+    m = add_cbb_and_oxy(m)
+    return add_photorespiratory_salvage(m)
