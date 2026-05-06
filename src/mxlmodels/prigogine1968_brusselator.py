@@ -39,7 +39,7 @@ def _removal(
     return x
 
 
-def create_model() -> Model:
+def get_prigogine1968_brusselator() -> Model:
     """Build the Brusselator model: two-variable autocatalytic oscillator exhibiting limit cycle behavior."""
     return (
         Model()

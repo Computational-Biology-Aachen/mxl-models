@@ -79,7 +79,7 @@ def _d_bdt(
     return -_cons_term_c * r_cons_c - _cons_term_e * r_cons_e + enterobactin * r_prod
 
 
-def create_model() -> Model:
+def get_dynamic_enterobactin() -> Model:
     """Build the dynamic enterobactin cross-feeding model (E. coli / C. glutamicum)."""
     return (
         Model()

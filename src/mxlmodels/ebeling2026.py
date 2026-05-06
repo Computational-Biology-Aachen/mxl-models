@@ -1034,7 +1034,7 @@ def _div(
     return x / y
 
 
-def create_model() -> Model:
+def get_ebeling_2026() -> Model:
     """Ebeling 2026 extended chloroplast model with ion transport, ROS, and Calvin cycle.
 
     Reference: tbd

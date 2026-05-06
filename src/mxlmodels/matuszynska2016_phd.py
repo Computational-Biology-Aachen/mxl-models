@@ -456,7 +456,7 @@ def _rate_fluorescence(
     return ps2cs * k_f * b0 / (k_f + k2 + k_h * q) + ps2cs * k_f * b2 / (k_f + k_h * q)
 
 
-def create_model() -> Model:
+def get_matuszynska2016_phd() -> Model:
     """Matuszynska 2016 PhD photosynthesis model.
 
     Full chloroplast electron transport chain with non-photochemical quenching (NPQ)

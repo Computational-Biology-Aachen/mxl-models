@@ -6,25 +6,23 @@ but written as single, flat files to make inspection easier.
 """
 
 from . import data
-from .dyn_entro import create_model as get_dynamic_enterobactin
-from .ebeling2026 import create_model as get_ebeling_2026
-from .elowitz2000_repressilator import create_model as get_elowitz2000_repressilator
-from .lotka_volterra_v1 import create_model as get_lotka_volterra_v1
-from .lotka_volterra_v2 import create_model as get_lotka_volterra_v2
-from .matuszynska2016_npq import create_model as get_matuszynska2016_npq
-from .matuszynska2016_phd import create_model as get_matuszynska2016_phd
-from .matuszynska2019 import create_model as get_matuszynska2019
-from .nguyen2026_tomato import create_model as get_nguyen2026_tomato
-from .pfennig2024_synechocystis import create_model as get_pfennig2024_synechocystis
-from .poolman2000 import create_model as get_poolman2000
-from .pop_dyn import create_model as get_population_dynamics
-from .prigogine1968_brusselator import create_model as get_prigogine1968_brusselator
-from .saadat2021 import create_model as get_saadat2021
-from .selkov1968_glycolysis_oscillator import (
-    create_model as get_selkov1968_glycolysis_oscillator,
-)
-from .trip_dyn import create_model as get_tripartite_dynamics
-from .yokota1985 import create_model as get_yokota1985
+from .dyn_entro import get_dynamic_enterobactin
+from .ebeling2026 import get_ebeling_2026
+from .elowitz2000_repressilator import get_elowitz2000_repressilator
+from .lotka_volterra_v1 import get_lotka_volterra_v1
+from .lotka_volterra_v2 import get_lotka_volterra_v2
+from .matuszynska2016_npq import get_matuszynska2016_npq
+from .matuszynska2016_phd import get_matuszynska2016_phd
+from .matuszynska2019 import get_matuszynska2019
+from .nguyen2026_tomato import get_nguyen2026_tomato
+from .pfennig2024_synechocystis import get_pfennig2024_synechocystis
+from .poolman2000 import get_poolman2000
+from .population_dynamics import get_population_dynamics
+from .prigogine1968_brusselator import get_prigogine1968_brusselator
+from .saadat2021 import get_saadat2021 as get_saadat2021
+from .selkov1968_glycolysis_oscillator import get_selkov1968_glycolysis_oscillator
+from .tripartite_dynamics import get_tripartite_dynamics
+from .yokota1985 import get_yokota1985
 
 __all__ = [
     "data",

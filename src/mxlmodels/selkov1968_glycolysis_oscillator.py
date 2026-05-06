@@ -32,7 +32,7 @@ def _f6p_influx(
     return b
 
 
-def create_model() -> Model:
+def get_selkov1968_glycolysis_oscillator() -> Model:
     """Build the Sel'kov oscillator: two-variable dimensionless model of glycolytic oscillations via autocatalytic PFK activation."""
     return (
         Model()

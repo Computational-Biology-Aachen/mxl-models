@@ -466,7 +466,7 @@ def _ps2states_2016a_analytical(
     return _B0, _B1, _B2, _B3
 
 
-def create_model() -> Model:
+def get_matuszynska2016_npq() -> Model:
     """Matuszynska 2016 NPQ model: non-photochemical quenching via PsbS and xanthophyll cycle.
 
     Reference: Matuszyńska, Anna, et al.

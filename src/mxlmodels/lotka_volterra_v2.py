@@ -28,7 +28,7 @@ def _predator_death(
     return gamma * predator
 
 
-def create_model() -> Model:
+def get_lotka_volterra_v2() -> Model:
     """Build the Lotka-Volterra predator-prey model (v2) with derived stoichiometry."""
     return (
         Model()

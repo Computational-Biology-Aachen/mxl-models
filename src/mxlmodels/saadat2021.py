@@ -870,7 +870,7 @@ def _rate_fluorescence(
     return ps2cs * k_f * b0 / (k_f + k2 + k_h * q) + ps2cs * k_f * b2 / (k_f + k_h * q)
 
 
-def create_model() -> Model:
+def get_saadat2021() -> Model:
     """Saadat 2021 chloroplast model with ROS scavenging, Calvin cycle, and thioredoxin regulation.
 
     Reference: Saadat, Nima P., et al.

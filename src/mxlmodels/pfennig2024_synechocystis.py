@@ -2141,7 +2141,7 @@ def add_cbb_and_oxy(
     return m
 
 
-def create_model(
+def get_pfennig2024_synechocystis(
     light_spectrum: pd.Series,  # # [umol(photons) m^-2 s^-1], warm white led @ pfd 100
     light_spectrum_measure: pd.Series,  # [umol(photons) m^-2 s^-1], 625 @ 1
     ocp_absorption: pd.Series,

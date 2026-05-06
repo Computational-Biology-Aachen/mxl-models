@@ -693,7 +693,7 @@ def _rate_fluorescence(
     return ps2cs * k_f * b0 / (k_f + k2 + k_h * q) + ps2cs * k_f * b2 / (k_f + k_h * q)
 
 
-def create_model() -> Model:
+def get_matuszynska2019() -> Model:
     """Matuszynska 2019 photosynthesis model with NPQ, state transitions, and Calvin cycle.
 
     Reference: Matuszyńska, Anna, Nima P. Saadat, and Oliver Ebenhöh.

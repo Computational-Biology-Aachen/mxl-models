@@ -63,7 +63,7 @@ def _protein_degradation(
     return beta * p
 
 
-def create_model() -> Model:
+def get_elowitz2000_repressilator() -> Model:
     """Build the Repressilator model: synthetic three-gene ring oscillator where each repressor cyclically inhibits the next."""
     return (
         Model()

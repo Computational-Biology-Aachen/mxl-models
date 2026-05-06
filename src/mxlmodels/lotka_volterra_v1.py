@@ -37,7 +37,7 @@ def _v3(
     return gamma * predator
 
 
-def create_model() -> Model:
+def get_lotka_volterra_v1() -> Model:
     """Build the Lotka-Volterra predator-prey model (v1)."""
     return (
         Model()

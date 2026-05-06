@@ -42,7 +42,7 @@ def _d_mdt(
     return -private * public * beta + private * r_m - private**2.0 * gamma
 
 
-def create_model() -> Model:
+def get_tripartite_dynamics() -> Model:
     """Build the three-strain public-goods game model (Public / Cheater / Private)."""
     return (
         Model()

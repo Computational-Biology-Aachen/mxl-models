@@ -43,7 +43,7 @@ def _ping_pong_bi_bi(
     return vmax * s1 * s2 / (1 / (km_s1 * km_s2) + s1 / km_s1 + s2 / km_s2 + s1 * s2)
 
 
-def create_model() -> Model:
+def get_yokota1985() -> Model:
     """Yokota 1985 photorespiratory carbon oxidation cycle model.
 
     Reference: Yokota, Akiho, Hiroshi Komura, and Shozaburo Kitaoka.

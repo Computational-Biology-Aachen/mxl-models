@@ -270,7 +270,7 @@ def _rate_atp_synthase_2000(
     return v16 * adp * pi / ((adp + km161) * (pi + km162))
 
 
-def create_model() -> Model:
+def get_poolman2000() -> Model:
     """Poolman 2000 Calvin-Benson-Bassham cycle model.
 
     Reference: Poolman, Mark G., David A. Fell, and Simon Thomas.

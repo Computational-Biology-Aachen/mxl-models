@@ -22,7 +22,7 @@ def _d_cdt(
     return a_c * c_gluta * mu_c - c_gluta**2.0 * theta
 
 
-def create_model() -> Model:
+def get_population_dynamics() -> Model:
     """Build the two-species population dynamics model (E. coli / C. glutamicum)."""
     return (
         Model()

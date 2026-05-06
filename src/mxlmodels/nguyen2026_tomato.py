@@ -698,7 +698,7 @@ def _v_psb_s(
     return k_deprot * psbs_deprot_act * psb_sp
 
 
-def create_model() -> Model:
+def get_nguyen2026_tomato() -> Model:
     """NPQ model for tomato.
 
     Adapted from the original NPQ model for Arabidopsis - without the light conversion fn
