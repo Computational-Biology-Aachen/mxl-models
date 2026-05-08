@@ -27,6 +27,7 @@ from .saadat2021 import get_saadat2021 as get_saadat2021
 from .selkov1968_oscillator import get_selkov1968_glycolysis_oscillator
 from .yokota1985 import get_yokota1985
 from .davis2017 import get_davis2017
+from .lam2026 import get_lam2026
 __all__ = [
     "Simulator",
     "data",
@@ -49,6 +50,7 @@ __all__ = [
     "get_tripartite_dynamics",
     "get_yokota1985",
     "get_davis2017",
+    "get_lam2026",
     "mc",
     "mca",
     "plot",
