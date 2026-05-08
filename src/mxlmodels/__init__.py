@@ -19,6 +19,7 @@ from .ebenhoeh2014 import get_ebenhoeh2014
 from .elowitz2000_repressilator import get_elowitz2000_repressilator
 from .fuente2024 import get_fuente_2024
 from .hahn1987 import get_hahn1987
+from .lam2026 import get_lam2026
 from .lazar1997 import get_lazar1997
 from .li2021 import get_li_2021
 from .lotka_volterra_v1 import get_lotka_volterra_v1
@@ -67,6 +68,8 @@ __all__ = [
     "get_tripartite_dynamics",
     "get_yokota1985",
     "get_zhu_2009",
+    "get_davis2017",
+    "get_lam2026",
     "mc",
     "mca",
     "plot",
