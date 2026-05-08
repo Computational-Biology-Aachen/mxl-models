@@ -7,33 +7,41 @@ from mxlpy import Model
 
 ############SUPPORT FUNCTION##############
 
+
+
+############DERIVED##############
+
+def moiety(Xtot, X):
+    return Xtot - X
+
+def P_free(Ptot, PV, PA, PZ, PL, QV, QA, QZ):
+    return Ptot - (PV + PA + PZ + PL + QV + QA + QZ)
+
+def V_free(Xtot, A, Z ,PV, PA, PZ, QV, QA, QZ):
+    return Xtot - (A + Z + PV + PA + PZ + QV + QA + QZ)
+
 def chlorophyll_fluo_lifetime(kappa_QV, QV,
                               kappa_QA, QA,
                               kappa_QZ, QZ,
                               kappa_QL, QL,
                               kappa_qZ, Z,
                               k_qI, PSIId,
-                              delta):
+                              kappa_r_nr):
     """
     Compute fluorescence lifetime from concentration time series.
     """
-    tau  = 1.0 / (delta
+    tau  = 1.0 / (kappa_r_nr
                   + kappa_QV * QV
                   + kappa_QA * QA
                   + kappa_QZ * QZ
                   + kappa_QL * QL
                   + kappa_qZ * Z
-                  + k_qI * PSIId)
+                  + k_qI * PSIId
+                  )
     return tau
 
-
-
-############DERIVED##############
-def P_free(Ptot, Xtot, V, A, Z):
-        return Ptot - Xtot + V + A + Z
-
-def moiety(Ptot, Xtot, V, A, Z):
-        return Ptot - Xtot + V + A + Z
+def kappa_r_nr(tau_0, kappa_qZ, Z_0):
+     return 1/tau_0 + kappa_qZ*Z_0
 
 ############RATES##############
 
@@ -52,12 +60,16 @@ def mass_action_light_dark_2s(ppfd, k_light, k_dark, s1, s2):
     if ppfd ==0:
         return k_dark*s1*s2
     return k_light*s1*s2
-# --- VDE enzyme activation ---
+# --- alpha_VDE enzyme activation ---
 
-def v_VDE(t, E):
-        li = I(t)
-        E_eq = [gamma, 1.0][li]
-        return k["vde"][li] * (E_eq - E)
+def v_alpha_VDE(ppfd, k_L_VDE, k_D_VDE, k_L_VA, k_D_VA, alpha_VDE):
+    if ppfd == 0:
+        k_VDE = k_D_VDE
+        alpha_VDE_eq = k_D_VA/k_L_VA
+    else:
+        k_VDE = k_L_VDE
+        alpha_VDE_eq = 1
+    return k_VDE * (alpha_VDE_eq - alpha_VDE)
 
 ############MODELS##############
 
@@ -65,7 +77,7 @@ def get_lam2026() -> Model:
     m = Model()
     m.add_parameters({
         "k_L_VA": 2.47,
-        "k_D_VA": 0.0014,
+        "k_D_VA": 0.014,
         "k_L_AZ": 0.5,
         "k_D_AZ": 0, # guess, no documentation
         "k_AV": 1.12,
@@ -74,7 +86,7 @@ def get_lam2026() -> Model:
         "k_PV_b": 9.43,
         "k_PA_f": 130,
         "k_PA_b": 254,
-        "k_PZ_f": 130,
+        "k_PZ_f": 295,
         "k_PZ_b": 126,
         "k_L_QV_f": 0.027,
         "k_QV_b": 0.066,
@@ -109,55 +121,73 @@ def get_lam2026() -> Model:
         "kappa_QZ": 0.177,
         "kappa_QL": 0.262,
         "kappa_qZ": 0.030,
-        "kappa_QI": 3.86,
-        "kappa_QI_double_mut": 7.05,
+        "kappa_qI": 3.86,
+        "kappa_qI_double_mut": 7.05,
         "ppfd":0,
+        "Z_0": 0,
+        "tau_0": 1,
     })
 
         # Variables and initial conditions
     m.add_variables(
                {
-                      "V": 1,
                       "A": 0,
                       "Z": 0,
-                      "PV": 1,
+                      "PV": 0,
                       "PA": 0,
                       "PZ": 0,
-                      "QV": 1,
+                      "QV": 0,
                       "QA": 0,
                       "QZ": 0,
+                      "QL": 0,
                       "PL": 0,
                       "qI": 0,
                       "PSIId": 0,
-                      "VDE": 0,
+                      "alpha_VDE": 0,
                }
         )
+    
+    m.add_derived("PSII_active", moiety, args=["P_tot", "PSIId"])
+    m.add_derived("P_free", P_free, args=["P_tot", "PV", "PA", "PZ", "PL", "QV","QA", "QZ"])
+    m.add_derived("V", V_free, args=["V_tot_WT", "A", "Z","PV", "PA", "PZ", "QV","QA", "QZ"])
+    m.add_derived("kappa_r_nr", kappa_r_nr, args= ["tau_0", "kappa_qZ", "Z_0"])
+    
+    m.add_derived("tau_Fluo", chlorophyll_fluo_lifetime, 
+                  args= ["kappa_QV", "QV",
+                         "kappa_QA", "QA",
+                         "kappa_QZ", "QZ",
+                         "kappa_QL", "QL",
+                         "kappa_qZ", "Z",
+                         "kappa_qI", "PSIId",
+                         "kappa_r_nr",
+                         ]
+                  )
 
-    m.add_reaction("VA",    mass_action_light_dark_2s,    stoichiometry={"V": -1, "A":  1}, args=["ppfd","k_L_VA", "k_D_VA", "VDE", "V"])
-    m.add_reaction("AV",    mass_action_1s,    stoichiometry={"A": -1, "V":  1}, args=["k_AV","A"])
-    m.add_reaction("AZ",    mass_action_light_dark_1s,    stoichiometry={"A": -1, "Z":  1}, args=["ppfd", "k_L_AZ", "k_D_AZ","VDE", "A"])
+    m.add_reaction("VA",    mass_action_light_dark_2s,    stoichiometry={"A":  1}, args=["ppfd","k_L_VA", "k_D_VA", "alpha_VDE", "V"])
+    m.add_reaction("AV",    mass_action_1s,    stoichiometry={"A": -1}, args=["k_AV","A"])
+    m.add_reaction("AZ",    mass_action_light_dark_2s,    stoichiometry={"A": -1, "Z":  1}, args=["ppfd", "k_L_AZ", "k_D_AZ","alpha_VDE", "A"])
     m.add_reaction("ZA",    mass_action_1s,    stoichiometry={"Z": -1, "A":  1}, args=["k_ZA","Z"])
 
-    m.add_reaction("PVf",   mass_action_2s,   stoichiometry={"V": -1, "PV":  1}, args=["k_PV_f", "V", "P"])
-    m.add_reaction("PVb",   mass_action_1s,   stoichiometry={"PV": -1, "V":  1}, args=["k_PV_b", "PV"])
-    m.add_reaction("PAf",   mass_action_2s,   stoichiometry={"A": -1, "PA":  1}, args=["k_PA_f", "A", "P"])
+    m.add_reaction("PVf",   mass_action_2s,   stoichiometry={ "PV":  1}, args=["k_PV_f", "V", "P_free"])
+    m.add_reaction("PVb",   mass_action_1s,   stoichiometry={"PV": -1}, args=["k_PV_b", "PV"])
+    m.add_reaction("PAf",   mass_action_2s,   stoichiometry={"A": -1, "PA":  1}, args=["k_PA_f", "A", "P_free"])
     m.add_reaction("PAb",   mass_action_1s,   stoichiometry={"PA": -1, "A":  1}, args=["k_PA_b", "PA"])
-    m.add_reaction("PZf",   mass_action_2s,   stoichiometry={"Z": -1, "PZ":  1}, args=["k_PZ_f", "Z", "P"])
+    m.add_reaction("PZf",   mass_action_2s,   stoichiometry={"Z": -1, "PZ":  1}, args=["k_PZ_f", "Z", "P_free"])
     m.add_reaction("PZb",   mass_action_1s,   stoichiometry={"PZ": -1, "Z":  1}, args=["k_PZ_b", "PZ"])
 
-    m.add_reaction("QVf",   mass_action_light_dark_1s,   stoichiometry={"PV": -1, "QV":  1}, args=["ppfd", "k_L_QV_f", "k_D_QV_f", "PV"])
+    m.add_reaction("QVf",   mass_action_light_dark_1s,   stoichiometry={"PV": -1, "QV":  1}, args=["ppfd", "k_L_QV_f", "k_D_QX_f", "PV"])
     m.add_reaction("QVb",   mass_action_1s,   stoichiometry={"QV": -1, "PV":  1}, args=["k_QV_b", "QV"])
-    m.add_reaction("QAf",   mass_action_light_dark_1s,   stoichiometry={"PA": -1, "QA":  1}, args=["ppfd", "k_L_QA_f", "k_D_QA_f", "PA"])
+    m.add_reaction("QAf",   mass_action_light_dark_1s,   stoichiometry={"PA": -1, "QA":  1}, args=["ppfd", "k_L_QA_f", "k_D_QX_f", "PA"])
     m.add_reaction("QAb",   mass_action_1s,   stoichiometry={"QA": -1, "PA":  1}, args=["k_QA_b", "QA"])
-    m.add_reaction("QZf",   mass_action_light_dark_1s,   stoichiometry={"PZ": -1, "QZ":  1}, args=["ppfd", "k_L_QZ_f", "k_D_QZ_f", "PZ"])
+    m.add_reaction("QZf",   mass_action_light_dark_1s,   stoichiometry={"PZ": -1, "QZ":  1}, args=["ppfd", "k_L_QZ_f", "k_D_QX_f", "PZ"])
     m.add_reaction("QZb",   mass_action_1s,   stoichiometry={"QZ": -1, "PZ":  1}, args=["k_QA_b", "QZ"])
 
-    m.add_reaction("QLf",   mass_action_light_dark_1s,   stoichiometry={"PL": -1, "QL":  1}, args=["ppfd", "k_L_QL_f", "k_D_QL_f", "PL"])
+    m.add_reaction("QLf",   mass_action_light_dark_1s,   stoichiometry={"PL": -1, "QL":  1}, args=["ppfd", "k_L_QL_f", "k_D_QX_f", "PL"])
     m.add_reaction("QLb",   mass_action_1s,   stoichiometry={"QL": -1, "PL":  1}, args=["k_QL_b", "QL"])
 
     m.add_reaction("damage", mass_action_light_dark_2s, stoichiometry={"PSIId": 1},
-                    args=["k_L_damage", "k_D_damage","tau_Fluo", "PSII_active"])
+                    args=["ppfd","k_L_damage", "k_D_damage","tau_Fluo", "PSII_active"])
 
-    m.add_reaction("VDE",   v_VDE,   stoichiometry={"VDE": 1}, args=["t", "VDE"])
+    m.add_reaction("v_alpha_VDE",   v_alpha_VDE,   stoichiometry={"alpha_VDE": 1}, args=["ppfd","k_L_VDE", "k_D_VDE", "k_L_VA", "k_D_VA" , "alpha_VDE"])
 
     return m
