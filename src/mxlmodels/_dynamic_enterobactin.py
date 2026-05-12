@@ -1,184 +1,183 @@
-"""Dynamic enterobactin competition model: E. coli vs C. glutamicum siderophore cross-feeding."""
+"""Dynamic enterobactin cross-feeding model: *E. coli* vs *C. glutamicum*.
 
-from mxlpy import Model
+Developed within the SFB MibiNet community to study how siderophore-mediated
+iron competition shapes the structure of synthetic microbial communities.
+
+Biological context
+------------------
+Enterobactin is a catecholate siderophore produced exclusively by *E. coli* (x1)
+under iron limitation. Once secreted into the medium, it chelates ferric iron (Fe³⁺)
+and is taken back up via specific receptors. *C. glutamicum* (x2) cannot synthesise
+enterobactin but expresses uptake machinery for it, enabling cross-feeding: it
+benefits from the iron chelated by *E. coli*'s siderophore without paying the
+metabolic production cost. Enterobactin therefore acts as a **public good** in the
+sense of evolutionary ecology — produced by one organism, exploitable by both.
+
+Model structure
+---------------
+Four state variables:
+
+* **x1** (g/L) — *E. coli* biomass
+* **x2** (g/L) — *C. glutamicum* biomass
+* **s1** (g/L) — shared carbon/energy substrate (e.g. glucose)
+* **p1** (g/L) — extracellular enterobactin concentration (siderophore proxy for
+  iron availability)
+
+Five reactions:
+
+* **mu1** — *E. coli* growth (double-Monod in s1 and p1)
+* **mu2** — *C. glutamicum* growth (double-Monod in s1 and p1)
+* **q_p1** — *E. coli* enterobactin production (growth-coupled)
+* **q_up1** — *E. coli* enterobactin re-uptake (growth-coupled)
+* **q_up2** — *C. glutamicum* enterobactin uptake (growth-coupled)
+
+ODEs
+----
+Growth kinetics follow a **double-Monod** form — growth requires both substrate
+and enterobactin simultaneously::
+
+    mu_i = mu_max_i * s1/(K_s_i + s1) * p1/(K_p_i + p1)
+
+Biomass and substrate::
+
+    dx1/dt = mu1 * x1
+    dx2/dt = mu2 * x2
+    ds1/dt = -mu1 * x1 / Y_X1_S  -  mu2 * x2 / Y_X2_S
+
+Enterobactin (production minus uptake by both species)::
+
+    dp1/dt = q_p1_max * (mu1/mu_max1) * x1       # E. coli secretes
+           - q_up_X1_max * (mu1/mu_max1) * x1     # E. coli re-uptakes
+           - q_up_X2_max * (mu2/mu_max2) * x2     # C. glutamicum uptakes
+
+The net specific enterobactin contribution of *E. coli* is
+``(q_p1_max - q_up_X1_max) = 0.010 g/(gCDW·h)``, equal in magnitude to
+C. glutamicum's uptake rate. At equal biomass the pool is therefore at
+steady state; *E. coli* dominance fills it, *C. glutamicum* dominance depletes it.
+
+Key assumptions
+---------------
+1. **Iron is implicit.** Enterobactin concentration p1 serves as a proxy for
+   bioavailable iron. No free Fe³⁺ is tracked; p1 lumps chelation and transport.
+
+2. **Growth requires enterobactin.** Both organisms depend on p1 for growth via
+   the Monod term. *E. coli* is modelled as highly sensitive (K_s_X1-P = 0.00001 g/L)
+   — it has evolved tight sensing for its own siderophore. *C. glutamicum* is less
+   sensitive (K_s_X2-P = 0.001 g/L), reflecting a looser dependence.
+
+3. **Production and uptake are growth-coupled.** Specific rates scale linearly with
+   mu/mu_max. No constitutive (growth-independent) production or uptake is included.
+
+4. **Only *E. coli* produces enterobactin.** *C. glutamicum* is a pure consumer
+   (q_p_X2 = 0). This encodes the public-goods asymmetry.
+
+5. **Batch culture — no dilution.** There is no washout term D·x or D·s, so this
+   describes a closed batch experiment, not a chemostat.
+
+6. **Constant, growth-independent yields.** Y_X1_S and Y_X2_S are fixed parameters;
+   no maintenance or overflow metabolism.
+
+7. **No enterobactin degradation.** p1 can only increase (production) or decrease
+   (uptake); no abiotic hydrolysis or photodegradation is modelled.
+
+8. **Well-mixed, spatially homogeneous.** All concentrations are bulk liquid values;
+   no diffusion, gradients, or biofilm structure.
+
+Parameter notes
+---------------
+* *E. coli* has higher substrate affinity (K_s1 = 0.0005 g/L) but a lower maximum
+  growth rate (mu_max1 = 0.22 h⁻¹) than *C. glutamicum* (K_s2 = 0.005 g/L,
+  mu_max2 = 0.45 h⁻¹). This captures the trade-off between high-affinity scavenging
+  and fast growth seen in the two organisms.
+* Initial conditions (x1 = x2 = 0.55 g/L) represent equal inoculation; the notebook
+  scans across different x1/x2 ratios at fixed total biomass to probe community
+  outcome sensitivity to inoculation ratio.
+"""
+
+from mxlpy import Derived, Model
 
 
-def _a_c(
-    a_e: float,
-) -> float:
-    """Affinity of C. glutamicum for enterobactin: conservation with E. coli affinity."""
-    return 10.0 - a_e
+def mul(x: float, y: float) -> float:
+    return x * y
 
 
-def _uptake_e_growth(
-    a_e: float,
-    enterobactin: float,
-    k_e: float,
-) -> float:
-    """Michaelis-Menten uptake of enterobactin by E. coli, scaled by E. coli affinity."""
-    return a_e * enterobactin / (k_e + enterobactin)
+def mu(s: float, p: float, mu_max: float, kms: float, kmp: float) -> float:
+    return mu_max * (s / (kms + s)) * (p / (kmp + p))
 
 
-def _uptake_c_growth(
-    enterobactin: float,
-    _a_c: float,
-    k_c: float,
-) -> float:
-    """Michaelis-Menten uptake of enterobactin by C. glutamicum, scaled by its affinity."""
-    return _a_c * enterobactin / (k_c + enterobactin)
+def q(q_max: float, mu: float, mu_max: float) -> float:
+    return q_max * mu / mu_max
 
 
-def _cons_term_e(
-    a_e: float,
-    e_coli: float,
-    k_e: float,
-    mu_e: float,
-) -> float:
-    """Enterobactin consumption term for E. coli: affinity * population * growth rate."""
-    return a_e * e_coli * mu_e / (k_e + a_e)
+def sub(x: float) -> float:
+    return -x
 
 
-def _cons_term_c(
-    mu_c: float,
-    _a_c: float,
-    k_c: float,
-    c_gluta: float,
-) -> float:
-    """Enterobactin consumption term for C. glutamicum: affinity * population * growth rate."""
-    return _a_c * c_gluta * mu_c / (k_c + _a_c)
+def minus_1_div(x: float) -> float:
+    return -1 / x
 
 
-def _d_edt(
-    mu_e: float,
-    e_coli: float,
-    _uptake_e_growth: float,
-) -> float:
-    """Net growth rate of E. coli population."""
-    return e_coli * mu_e * _uptake_e_growth
-
-
-def _d_cdt(
-    mu_c: float,
-    c_gluta: float,
-    _uptake_c_growth: float,
-    theta: float,
-) -> float:
-    """Net growth rate of C. glutamicum minus density-dependent death."""
-    return c_gluta * mu_c * _uptake_c_growth - c_gluta**2.0 * theta
-
-
-def _d_bdt(
-    enterobactin: float,
-    r_cons_e: float,
-    _cons_term_e: float,
-    r_prod: float,
-    _cons_term_c: float,
-    r_cons_c: float,
-) -> float:
-    """Net rate of change of enterobactin: production by E. coli minus consumption by both species."""
-    return -_cons_term_c * r_cons_c - _cons_term_e * r_cons_e + enterobactin * r_prod
+def minus_div(x: float, y: float) -> float:
+    return -x / y
 
 
 def get_dynamic_enterobactin() -> Model:
-    """Build the dynamic enterobactin cross-feeding model (E. coli / C. glutamicum)."""
-    return (
-        Model()
-        .add_variable(
-            "e_coli",
-            initial_value=5.0,
-        )
-        .add_variable(
-            "c_gluta",
-            initial_value=5.0,
-        )
-        .add_variable(
-            "enterobactin",
-            initial_value=1.0,
-        )
-        .add_parameter(
-            "mu_e",
-            value=0.4,
-        )
-        .add_parameter(
-            "mu_c",
-            value=0.3,
-        )
-        .add_parameter(
-            "a_e",
-            value=6.0,
-        )
-        .add_parameter(
-            "K_e",
-            value=0.5,
-        )
-        .add_parameter(
-            "K_c",
-            value=0.5,
-        )
-        .add_parameter(
-            "theta",
-            value=0.001,
-        )
-        .add_parameter(
-            "r_prod",
-            value=0.2,
-        )
-        .add_parameter(
-            "r_cons_e",
-            value=1.0,
-        )
-        .add_parameter(
-            "r_cons_c",
-            value=1.0,
-        )
-        .add_derived(
-            "a_c",
-            fn=_a_c,
-            args=["a_e"],
-        )
-        .add_derived(
-            "uptake_E_growth",
-            fn=_uptake_e_growth,
-            args=["a_e", "enterobactin", "K_e"],
-        )
-        .add_derived(
-            "uptake_C_growth",
-            fn=_uptake_c_growth,
-            args=["enterobactin", "a_c", "K_c"],
-        )
-        .add_derived(
-            "cons_term_E",
-            fn=_cons_term_e,
-            args=["a_e", "e_coli", "K_e", "mu_e"],
-        )
-        .add_derived(
-            "cons_term_C",
-            fn=_cons_term_c,
-            args=["mu_c", "a_c", "K_c", "c_gluta"],
-        )
-        .add_reaction(
-            "dEdt",
-            fn=_d_edt,
-            args=["mu_e", "e_coli", "uptake_E_growth"],
-            stoichiometry={"e_coli": 1.0},
-        )
-        .add_reaction(
-            "dCdt",
-            fn=_d_cdt,
-            args=["mu_c", "c_gluta", "uptake_C_growth", "theta"],
-            stoichiometry={"c_gluta": 1.0},
-        )
-        .add_reaction(
-            "dBdt",
-            fn=_d_bdt,
-            args=[
-                "enterobactin",
-                "r_cons_e",
-                "cons_term_E",
-                "r_prod",
-                "cons_term_C",
-                "r_cons_c",
-            ],
-            stoichiometry={"enterobactin": 1.0},
-        )
+    """Return the dynamic enterobactin cross-feeding model.
+
+    See module docstring for full biological context, ODEs, and assumptions.
+    """
+    m = Model()
+    m.add_variables({"x1": 0.55, "x2": 0.55, "s1": 10, "p1": 0.02})
+    m.add_parameters(
+        {
+            "Y_X1_S": 0.45,  # gCDW/gSubstrate
+            "Y_X2_S": 0.5,  # gCDW/gSubstrate
+            "mu_max1": 0.22,  # 1/h
+            "mu_max2": 0.45,  # 1/h
+            "K_s1": 0.0005,  # g/L
+            "K_s2": 0.005,  # g/L
+            "q_p1_max": 0.015,  # gProduct/[gCDW*h]
+            "q_up_X1_max": 0.005,  # gProduct/[gCDW*h]
+            "q_up_X2_max": 0.01,  # gProduct/[gCDW*h]
+            "K_s_X1-P": 0.00001,  # g/L
+            "K_s_X2-P": 0.001,  # g/L
+        }
     )
+    m.add_reaction(
+        "mu1",
+        mu,
+        args=["s1", "p1", "mu_max1", "K_s1", "K_s_X1-P"],
+        stoichiometry={
+            "x1": "x1",
+            "s1": Derived(fn=minus_div, args=["x1", "Y_X1_S"]),
+        },
+    )
+    m.add_reaction(
+        "mu2",
+        mu,
+        args=["s1", "p1", "mu_max2", "K_s2", "K_s_X2-P"],
+        stoichiometry={
+            "x2": "x2",
+            "s1": Derived(fn=minus_div, args=["x2", "Y_X2_S"]),
+        },
+    )
+
+    m.add_reaction(
+        "q_p1",
+        q,
+        args=["q_p1_max", "mu1", "mu_max1"],
+        stoichiometry={"p1": "x1"},
+    )
+    m.add_reaction(
+        "q_up1",
+        q,
+        args=["q_up_X1_max", "mu1", "mu_max1"],
+        stoichiometry={"p1": Derived(fn=sub, args=["x1"])},
+    )
+    m.add_reaction(
+        "q_up2",
+        q,
+        args=["q_up_X2_max", "mu2", "mu_max2"],
+        stoichiometry={"p1": Derived(fn=sub, args=["x2"])},
+    )
+    return m
