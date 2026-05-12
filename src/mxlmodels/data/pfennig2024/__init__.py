@@ -24,7 +24,7 @@ class Data:
 _default = Path(__file__).parent
 
 
-def load(data_dir: Path = _default) -> Data:
+def default(data_dir: Path = _default) -> Data:
     """Load default Pfennig 2024 data."""
     # relative pigment concentrations in a synechocystis cell (Zavrel2023)
     pigment_content: pd.Series = pd.Series(
@@ -93,4 +93,16 @@ def load(data_dir: Path = _default) -> Data:
         molar_masses=molar_masses,
         ps_comp=ps_comp,
         pigment_content=pigment_content,
+    )
+
+
+def lights(data_dir: Path = _default) -> pd.DataFrame:
+    return (
+        pd.DataFrame(
+            {
+                path.stem: pd.read_csv(path, index_col=0).squeeze(axis=1)
+                for path in sorted((data_dir / "lights/").glob("*.csv"))
+            }
+        )
+        * 100
     )

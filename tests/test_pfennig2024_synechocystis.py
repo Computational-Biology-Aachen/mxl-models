@@ -3,7 +3,7 @@ import pandas as pd
 import mxlmodels
 from mxlmodels import get_pfennig2024_synechocystis
 
-data = mxlmodels.data.pfennig2024.load()
+data = mxlmodels.data.pfennig2024.default()
 
 
 def test_rhs() -> None:
