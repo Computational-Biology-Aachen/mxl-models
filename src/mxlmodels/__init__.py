@@ -28,6 +28,7 @@ from .selkov1968_oscillator import get_selkov1968_glycolysis_oscillator
 from .yokota1985 import get_yokota1985
 from .davis2017 import get_davis2017
 from .lam2026 import get_lam2026
+from .zaks2012 import get_zaks2012
 __all__ = [
     "Simulator",
     "data",
@@ -51,6 +52,7 @@ __all__ = [
     "get_yokota1985",
     "get_davis2017",
     "get_lam2026",
+    "get_zaks2012",
     "mc",
     "mca",
     "plot",
