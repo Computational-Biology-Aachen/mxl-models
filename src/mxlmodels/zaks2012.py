@@ -263,8 +263,11 @@ def allratesRCC_sum(kC: float, kPCRCC: float, kqE: float) -> float:
 def safe_ratio(numerator: float, denominator: float) -> float:
     eps = np.finfo(float).eps
     if not np.isfinite(denominator) or abs(denominator) < eps:
-        return 100
+        return 1
     return numerator / denominator
+
+# def fluorescenceyieldRCC(kF_rate: float, kC_rate: float, kPC_rate: float, kqE_rate: float) -> float:
+#     return kF_rate /(kC_rate + kPC_rate + kqE_rate )
 
 # ---------------------------------------------------------------------------
 # Parameters & initial conditions
@@ -382,31 +385,47 @@ PARAMS = {
 }
 
 VARS = {
-    "PSIIChlEx": 1e-14,
-    "P680ex": 1e-14,
-    "P680plus": 1e-14,
-    "PheAnion": 1e-14,
-    "QAox": 0.9999999,
-    "LumenProtons": 1e-14,
-    "QBneut": 0.9999997,
-    "QBred1": 1e-7,
-    "QBred2": 1e-7,
-    "PQ": 8.999,
-    "PQH2": 0.001,
-    "PCr": 0.2,
-    "P700ox": 1e-14,
-    "P700r": 1.0,
-    "Fdxr": 1e-14,
-    "Fdxox": 1.0,
-    "TotalLEF": 1e-14,
     "ATP": 2.0,
     "ActiveATPs": 0.05,
-    "LumenMg": 0.01,
+    
+    "Antheraxanthin": 1e-14,
+    
+    "Fdxox": 1.0,
+    "Fdxr": 1e-14,
+    
     "LumenCl": 0.01,
     "LumenK": 0.01,
-    "Antheraxanthin": 1e-14,
-    "Zeaxanthin": 1e-14,
+    "LumenMg": 0.01,
+    "LumenProtons": 1e-14,
+    
+    "P680ex": 1e-14,
+    "P680plus": 1e-14,
+    
+    "P700ox": 1e-14,
+    "P700r": 1.0,
+    
+    "PCr": 0.2,
+
+    "PQ": 8.999,
+    "PQH2": 0.001,
+    
+    "PSIIChlEx": 1e-14,
+    
+    "PheAnion": 1e-14,
+    
     "PsbSQ": 1e-14,
+    
+    "QAox": 1,
+    
+    "QBneut": 1,
+    "QBred1": 1e-7,
+    "QBred2": 1e-7,
+
+    "Thrdx": 1e-14,
+    
+    "TotalLEF": 1e-14,
+    
+    "Zeaxanthin": 1e-14,
 }
 
 # ---------------------------------------------------------------------------
@@ -485,8 +504,6 @@ def get_zaks2012() -> Model:
                   args=["pH_lumen", "pKaC", "nC"])
     m.add_derived("frac_pq_red", fraction_pq_red, args=["PQH2", "PQ"])
     m.add_derived("frac_active_pc", fraction_active_pc, args=["PCr", "PCperPSI"])
-    m.add_derived("r_cyt_b6f", r_cyt,
-                  args=["QReoxidationRate", "frac_active_cyt", "frac_active_pc", "frac_pq_red"])
     m.add_derived("InactiveATPs", complement, args=["ActiveATPs"])
 
     #Output
@@ -708,14 +725,14 @@ def get_zaks2012() -> Model:
         "r_q4",
         fn=mass_action_1s_act,
         args=["kETQB1toQA", "QAox", "QBred1"],
-        stoichiometry={"QAox": -1, "QBred1": 1, "QBneut": -1},
+        stoichiometry={"QAox": -1, "QBred1": -1, "QBneut": 1},
     )
     # r_q5: reverse QB²⁻ → QA (second)
     m.add_reaction(
         "r_q5",
         fn=mass_action_1s_act,
         args=["kETQB2toQA", "QAox", "QBred2"],
-        stoichiometry={"QAox": -1, "QBred2": 1, "QBred1": -1},
+        stoichiometry={"QAox": -1, "QBred1": 1, "QBred2": -1},
     )
     # r_q6: PQ docking at QB site
     m.add_reaction(
@@ -746,9 +763,9 @@ def get_zaks2012() -> Model:
     # Stoichiometry: consumes PQH₂, produces PQ, reduces PC, pumps 4H⁺ into lumen.
 
     m.add_reaction(
-        "cyt_b6f",
-        fn=same,
-        args=["r_cyt_b6f"],
+        "r_cyt_b6f", 
+        fn = r_cyt,
+        args=["QReoxidationRate", "frac_active_cyt", "frac_active_pc", "frac_pq_red"],
         stoichiometry={
             "PQH2": -1,
             "PQ": 1,
@@ -839,4 +856,31 @@ def get_zaks2012() -> Model:
         stoichiometry={"LumenK": 1},
     )
 
+    # ------------------------------------------------------------------
+    # F9 – Methyl Viologen
+    # ------------------------------------------------------------------
+
+    m.add_reaction(
+        "mv_1",
+        fn=mass_action_1s,
+        args=["kETFdxMV", "Fdxr"],
+        stoichiometry={"Fdxr": -1},
+    )
+
+    m.add_reaction(
+        "mv_2",
+        fn=mass_action_1s,
+        args=["kETFdxThrdx", "Fdxr"],
+        stoichiometry={"Fdxox": 1, "Thrdx": 1},
+    )
+
+    m.add_reaction(
+        "mv_3",
+        fn=mass_action_1s,
+        args=["kETThrdxOx", "Thrdx"],
+        stoichiometry={"Thrdx": -1},
+    )
+
     return m
+
+    
