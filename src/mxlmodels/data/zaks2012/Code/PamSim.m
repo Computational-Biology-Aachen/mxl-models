@@ -5,19 +5,19 @@
 % actinic light input values
 %%
 
-act=[    100  500 1000  ]';
+act=[ 1000  ]';
 %act=500
 %%
 % Load Parameters
 %%
 params=getparamsfromfilename('params.txt');
 simnow=1;
-qtypes=[  0  1   ]; % quenching type
+qtypes=[ 1 ]; % quenching type
 ll=1;
 if simnow==1
     for k=1:length(qtypes)
         for kk=1:length(act)
-            simtype='PSII'
+            simtype='PSIITrapLake';
             tic
             %%
             % Load light  inputs for PAM experiment using
@@ -35,10 +35,10 @@ if simnow==1
             %%
             % Plot results of simulation
             %%
-            npq{k,kk}=plotNPQ(samplepam{kk,k}, ll*2, 'k')
-            figure(ll)
-            title(act(kk))
-            ll=ll+1;
+            npq{k,kk}=plotNPQ(samplepam{kk,k}, ll, act(kk), qtypes(k), 'k');
+            %figure(ll)
+            %title(act(kk))
+            ll=ll+2;
         end
         
     end
