@@ -6,6 +6,23 @@ use_directory_urls: false
 
 nav:
   - Home: index.md
+  - dynamic_enterobactin: _dynamic_enterobactin.ipynb
+  - population_dynamics: _population_dynamics.ipynb
+  - tripartite_dynamics: _tripartite_dynamics.ipynb
+  - davis2017: davis2017.ipynb
+  - ebeling2026: ebeling2026.ipynb
+  - elowitz2000_repressilator: elowitz2000_repressilator.ipynb
+  - lotka_volterra: lotka_volterra.ipynb
+  - matuszynska2016_npq: matuszynska2016_npq.ipynb
+  - matuszynska2016_phd: matuszynska2016_phd.ipynb
+  - matuszynska2019: matuszynska2019.ipynb
+  - nguyen2026_tomato: nguyen2026_tomato.ipynb
+  - pfennig2024_synechocystis: pfennig2024_synechocystis.ipynb
+  - poolman2000: poolman2000.ipynb
+  - prigogine1968_brusselator: prigogine1968_brusselator.ipynb
+  - saadat2021: saadat2021.ipynb
+  - selkov1968_oscillator: selkov1968_oscillator.ipynb
+  - yokota1985: yokota1985.ipynb
 
 theme:
   name: material
