@@ -28,6 +28,8 @@ Done. Simple as that.
 | Matuszyńska 2019     | Merges PETC (Ebenhöh 2014), NPQ (Matuszynska 2016) and CBB (Poolman 2000)   |
 | Saadat 2021          | 2019 + Mehler (Valero ?) & Thioredoxin & extendend PSI states & consumption |
 | Ebeling 2026         | unpublishd                                                                  |
+| Hahn 1987            | Photosynthesis and Photorespiration                                         |
+| Lazar 1997           | Fluorescence induction                                                      |
 
 
 ## Tool family 🏠
