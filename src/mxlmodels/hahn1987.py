@@ -5,6 +5,7 @@ Annals of Botany, 1987, 60. Jg., Nr. 2, S. 157-169.
 DOI: https://doi.org/10.1093/oxfordjournals.aob.a087432
 """
 
+from mxlbricks.fns import moiety_1
 from mxlpy import Model
 
 parameters = {
@@ -219,8 +220,12 @@ def get_hahn1987():
                 "O2": 0.245,
                 "Ci": 0.400,
                 "Oi": 101.0,
+                "AP_tot": 11,
+                "UP_tot": 20,
             }
         )
+        .add_derived(name="ATP", fn=moiety_1, args=["ADP", "AP_tot"])
+        .add_derived(name="UTP", fn=moiety_1, args=["UDP", "UP_tot"])
         .add_reaction(
             name="v1",
             fn=v1,
@@ -405,6 +410,4 @@ def get_hahn1987():
         .add_reaction(
             name="vphio", fn=vphio, args=["phio", "Oa", "Oi"], stoichiometry={"Oi": 1}
         )
-        .add_derived(name="ATP", fn=lambda ADP: 11 - ADP, args=["ADP"])
-        .add_derived(name="UTP", fn=lambda UDP: 20 - UDP, args=["UDP"])
     )
