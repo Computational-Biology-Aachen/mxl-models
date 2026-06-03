@@ -12,9 +12,14 @@ from . import data
 from ._dynamic_enterobactin import get_dynamic_enterobactin
 from ._population_dynamics import get_population_dynamics
 from ._tripartite_dynamics import get_tripartite_dynamics
+from .bellasio2019 import get_bellasio_2019
 from .davis2017 import get_davis2017
 from .ebeling2026 import get_ebeling_2026
 from .elowitz2000_repressilator import get_elowitz2000_repressilator
+from .fuente2024 import get_fuente_2024
+from .hahn1987 import get_hahn1987
+from .lazar1997 import get_lazar1997
+from .li2021 import get_li_2021
 from .lotka_volterra_v1 import get_lotka_volterra_v1
 from .lotka_volterra_v2 import get_lotka_volterra_v2
 from .matuszynska2016_npq import get_matuszynska2016_npq
@@ -28,17 +33,20 @@ from .saadat2021 import get_saadat2021 as get_saadat2021
 from .selkov1968_oscillator import get_selkov1968_glycolysis_oscillator
 from .sir import get_sir, get_sird
 from .yokota1985 import get_yokota1985
-from .hahn1987 import get_hahn1987
-from .lazar1997 import get_lazar1997
 
 __all__ = [
     "Simulator",
     "data",
     "fit",
+    "get_bellasio_2019",
     "get_davis2017",
     "get_dynamic_enterobactin",
     "get_ebeling_2026",
     "get_elowitz2000_repressilator",
+    "get_fuente_2024",
+    "get_hahn1987",
+    "get_lazar1997",
+    "get_li_2021",
     "get_lotka_volterra_v1",
     "get_lotka_volterra_v2",
     "get_matuszynska2016_npq",
@@ -55,8 +63,6 @@ __all__ = [
     "get_sird",
     "get_tripartite_dynamics",
     "get_yokota1985",
-    "get_hahn1987",
-    "get_lazar1997",
     "mc",
     "mca",
     "plot",
