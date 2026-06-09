@@ -1,3 +1,10 @@
+# temporary files and folders
+papers/
+*temp*
+tmp
+src/mxlbricks
+src/mxlweb
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -102,11 +109,6 @@ venv.bak/
 # mypy
 .mypy_cache/
 
-# temporary files and folders
-*temp*
-tmp
-src/mxlbricks
-src/mxlweb
 
 # pixi environments
 .pixi
