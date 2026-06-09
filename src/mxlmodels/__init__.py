@@ -15,6 +15,7 @@ from ._tripartite_dynamics import get_tripartite_dynamics
 from .bellasio2019 import get_bellasio_2019
 from .davis2017 import get_davis2017
 from .ebeling2026 import get_ebeling_2026
+from .ebenhoeh2014 import get_ebenhoeh2014
 from .elowitz2000_repressilator import get_elowitz2000_repressilator
 from .fuente2024 import get_fuente_2024
 from .hahn1987 import get_hahn1987
@@ -43,6 +44,7 @@ __all__ = [
     "get_davis2017",
     "get_dynamic_enterobactin",
     "get_ebeling_2026",
+    "get_ebenhoeh2014",
     "get_elowitz2000_repressilator",
     "get_fuente_2024",
     "get_hahn1987",

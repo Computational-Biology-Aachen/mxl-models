@@ -4,6 +4,7 @@ import mxlmodels
 def test_import() -> None:
     assert mxlmodels.get_dynamic_enterobactin()
     assert mxlmodels.get_ebeling_2026()
+    assert mxlmodels.get_ebenhoeh2014()
     assert mxlmodels.get_elowitz2000_repressilator()
     assert mxlmodels.get_lotka_volterra_v1()
     assert mxlmodels.get_lotka_volterra_v2()
