@@ -73,28 +73,6 @@ def moiety(Xtot, X):
 #     tau  = 1.0 / (kappa_r_nr + kappa_QV * QV  + kappa_QA * QA + kappa_QZ * QZ + kappa_QL * QL + kappa_qZ * Z + k_qI * PSIId )
 #     return tau
 
-def tau_inv(kappa_QV, QV, kappa_QA, QA, kappa_QZ, QZ,
-            kappa_QL, QL, kappa_qZ, Z, k_qI, PSIId, kappa_r_nr):
-    
-    terms = {
-        "kappa_r_nr": kappa_r_nr,
-        "kappa_QV*QV": kappa_QV * QV,
-        "kappa_QA*QA": kappa_QA * QA,
-        "kappa_QZ*QZ": kappa_QZ * QZ,
-        "kappa_QL*QL": kappa_QL * QL,
-        "kappa_qZ*Z":  kappa_qZ * Z,
-        "k_qI*PSIId":  k_qI * PSIId,
-    }
-    
-    for name, val in terms.items():
-        if val < 0:
-            print(f"  NEGATIVE TERM: {name} = {val:.6f}")
-    
-    tau = sum(terms.values())
-    if tau < 0:
-        print(f"  NEGATIVE tau_inv = {tau:.6f}")
-    return tau
-
 def kappa_r_nr(tau_0, kappa_qZ, Z_0):
      return 1/tau_0 - kappa_qZ*Z_0
 
@@ -147,15 +125,6 @@ def chlorophyll_fluo_lifetime(kappa_QV, QV, kappa_QA, QA,
              + kappa_qZ * max(Z,  0)
              + k_qI     * max(PSIId, 0))
     return 1.0 / max(denom, 1e-10)
-
-# def v_alpha_VDE(ppfd, k_L_VDE, k_D_VDE, k_L_VA, k_D_VA, alpha_VDE):
-#     alpha_VDE_eq = k_D_VA/k_L_VA if ppfd == 0 else 1.0
-#     # print(k_VDE * (alpha_VDE_eq - alpha_VDE))
-#     k_VDE = k_D_VDE if ppfd == 0 else k_L_VDE
-#     print((k_VDE * (alpha_VDE_eq - alpha_VDE)))
-#     print(alpha_VDE)
-#     return k_VDE * (alpha_VDE_eq - alpha_VDE)
-
 ############MODELS##############
 
 def get_lam2026() -> Model:
@@ -233,7 +202,7 @@ def get_lam2026() -> Model:
                   args=["P_tot", "V_tot_WT", "Keq_pv", "Keq_pa", "Keq_a", "Keq_pz", "Keq_z", "Keq_qv", "Keq_qa", "Keq_qz"]
                   )
 
-        # Variables and initial conditions
+    # Variables and initial conditions
     m.add_variables(
                {      "V": InitialAssignment(fn=same, args=["V_tot_WT"]),
                       "A": InitialAssignment(fn=A0, args=["Keq_a", "V_tot_WT"]),
@@ -252,7 +221,6 @@ def get_lam2026() -> Model:
         )
     
     
-    
     m.add_derived("PSII_active", moiety, args=["PSII_tot", "PSIId"])
     # m.add_derived("X_tot", X_tot, args=["V_tot_WT", "A", "Z","PV", "PA", "PZ", "QV","QA", "QZ"])
     # m.add_derived("V", V_free, args=["X_tot", "A", "Z","PV", "PA", "PZ", "QV","QA", "QZ"])
@@ -261,17 +229,6 @@ def get_lam2026() -> Model:
     m.add_derived("kappa_r_nr", kappa_r_nr, args= ["tau_0", "kappa_qZ", "Z_0"])
     
     m.add_derived("tau_Fluo", chlorophyll_fluo_lifetime, 
-                  args= ["kappa_QV", "QV",
-                         "kappa_QA", "QA",
-                         "kappa_QZ", "QZ",
-                         "kappa_QL", "QL",
-                         "kappa_qZ", "Z",
-                         "kappa_qI", "PSIId",
-                         "kappa_r_nr",
-                         ]
-                  )
-    
-    m.add_derived("tau_inv", tau_inv, 
                   args= ["kappa_QV", "QV",
                          "kappa_QA", "QA",
                          "kappa_QZ", "QZ",
