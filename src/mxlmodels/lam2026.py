@@ -23,7 +23,7 @@ def Keq_light_dark(kf_light, kr_light, kf_dark, kr_dark, ppfd):
     if ppfd == 0:
         return kf_dark/kr_dark
     else:
-        return kf_light/kr_light
+        return kf_dark/kr_dark #kf_light/kr_light
     
 def P0(Ptot, V0, Kpv, Kpa, Ka, Kpz, Kz, Kqv, Kqa, Kqz):
     return Ptot / (1 + V0*(Kpv + Kpa*Ka + Kpz*Kz*Ka + Kqv*Kpv + Kqa*Kpa*Ka + Kqz*Kpz*Kz*Ka))
@@ -55,23 +55,13 @@ def QZ0(Kqz, Kpz, Kz, Ka, P0, V0):
 def E0(kva_d, kva_l):
     return kva_d/kva_l
 
+def X_tot(V0, Z0, A0, PV0, PA0, PZ0, QV0, QA0, QZ0):
+    return V0 + Z0 + A0 + PV0 + PZ0 + PA0 + QA0 + QV0 + QZ0
+
 ############DERIVED##############
 
 def moiety(Xtot, X):
     return Xtot - X
-
-# def chlorophyll_fluo_lifetime(kappa_QV, QV,
-#                               kappa_QA, QA,
-#                               kappa_QZ, QZ,
-#                               kappa_QL, QL,
-#                               kappa_qZ, Z,
-#                               k_qI, PSIId,
-#                               kappa_r_nr):
-#     """
-#     Compute fluorescence lifetime from concentration time series.
-#     """
-#     tau  = 1.0 / (kappa_r_nr + kappa_QV * QV  + kappa_QA * QA + kappa_QZ * QZ + kappa_QL * QL + kappa_qZ * Z + k_qI * PSIId )
-#     return tau
 
 def kappa_r_nr(tau_0, kappa_qZ, Z_0):
      return 1/tau_0 - kappa_qZ*Z_0
@@ -80,6 +70,9 @@ def kappa_r_nr(tau_0, kappa_qZ, Z_0):
 
 def same(x):
     return x
+
+def mul(x,y):
+    return x*y
 
 def mass_action_2s(k, s1, s2):
       return k*s1*s2
@@ -182,7 +175,7 @@ def get_lam2026() -> Model:
         "ppfd":0,
         "tau_0": 1.73089079100000, # from the paper WT tau_0 for 5-10-5 dataset 
         "PSII_tot": 1,
-        "X_tot": 77.023655, #need proper implementation later
+        # "X_tot": 77.023655, #need proper implementation later
     })
 
     m.add_derived("gamma", E0, args=["k_D_VA", "k_L_VA"])
@@ -201,6 +194,19 @@ def get_lam2026() -> Model:
     m.add_derived("P0", P0, 
                   args=["P_tot", "V_tot_WT", "Keq_pv", "Keq_pa", "Keq_a", "Keq_pz", "Keq_z", "Keq_qv", "Keq_qa", "Keq_qz"]
                   )
+    
+    m.add_derived("A_0", fn=A0, args=["Keq_a", "V_tot_WT"])
+    m.add_derived("Z_0", fn=Z0, args=["Keq_a", "Keq_z", "V_tot_WT"])
+    m.add_derived("PV_0", fn=PV0, args=["Keq_pv", "V_tot_WT", "P0"])
+    m.add_derived("PA_0", fn=PA0, args=["Keq_pa", "Keq_a", "V_tot_WT", "P0"])
+    m.add_derived("PZ_0", fn=PZ0, args=["Keq_pz", "Keq_z", "Keq_a", "P0", "V_tot_WT"])
+    m.add_derived("QV_0", fn=QV0, args=[ "P0","V_tot_WT", "Keq_pv", "Keq_qv"])
+    m.add_derived("QA_0", fn=QA0, args=["P0","V_tot_WT", "Keq_pa", "Keq_a", "Keq_qa"])
+    m.add_derived("QZ_0", fn=QZ0, args=["Keq_qz", "Keq_pz", "Keq_z", "Keq_a", "P0", "V_tot_WT"])
+
+    m.add_derived("X_tot", fn=X_tot, args=["V_tot_WT", "A_0", "Z_0", "PV_0", "PA_0", "PZ_0", "QV_0", "QA_0", "QZ_0"])
+    
+    m.add_derived("kappa_r_nr", kappa_r_nr, args= ["tau_0", "kappa_qZ", "Z_0"])
 
     # Variables and initial conditions
     m.add_variables(
@@ -222,11 +228,7 @@ def get_lam2026() -> Model:
     
     
     m.add_derived("PSII_active", moiety, args=["PSII_tot", "PSIId"])
-    # m.add_derived("X_tot", X_tot, args=["V_tot_WT", "A", "Z","PV", "PA", "PZ", "QV","QA", "QZ"])
-    # m.add_derived("V", V_free, args=["X_tot", "A", "Z","PV", "PA", "PZ", "QV","QA", "QZ"])
     m.add_derived("P_free", P_free, args=["P_tot", "X_tot", "V", "A", "Z",])
-    m.add_derived("Z_0", Z0, args=["Keq_a", "Keq_z", "V_tot_WT"])
-    m.add_derived("kappa_r_nr", kappa_r_nr, args= ["tau_0", "kappa_qZ", "Z_0"])
     
     m.add_derived("tau_Fluo", chlorophyll_fluo_lifetime, 
                   args= ["kappa_QV", "QV",
@@ -266,4 +268,11 @@ def get_lam2026() -> Model:
 
     m.add_reaction("v_alpha_VDE",   v_alpha_VDE,   stoichiometry={"alpha_VDE": 1}, args=["ppfd","k_L_VDE", "k_D_VDE", "k_L_VA", "k_D_VA" , "alpha_VDE"])
 
+    
+    m.add_readout("NPQ_V", mul, args = ["kappa_QV", "QV"])
+    m.add_readout("NPQ_A", mul, args = ["kappa_QA", "QA"])
+    m.add_readout("NPQ_Z_qE", mul, args = ["kappa_QZ", "QZ"])
+    m.add_readout("NPQ_L", mul, args = ["kappa_QL", "QL"])
+    m.add_readout("NPQ_Z_qZ", mul, args = ["kappa_qZ", "Z"])
+    m.add_readout("NPQ_qI", mul, args = ["kappa_qI", "PSIId"])
     return m
