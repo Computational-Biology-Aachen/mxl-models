@@ -1,0 +1,127 @@
+# MxlModels
+
+> MxlModels is a Python package of **reference mechanistic models** for photosynthesis, metabolic pathways, and classic dynamical systems. Each model is a single, flat `.py` file generated from [MxlBricks](https://github.com/Computational-Biology-Aachen/mxl-bricks) via codegen, making inspection and adaptation easy. Maintained by the Computational Biology group at RWTH Aachen.
+
+Targets Python 3.13+. Depends only on [MxlPy](https://github.com/Computational-Biology-Aachen/mxl-py) (`>=0.38.0`), which it re-exports for convenience.
+
+## Available models
+
+All models follow the same pattern: `from mxlmodels import get_<name>; model = get_<name>()`. No arguments needed — defaults are baked in. The returned `mxlpy.Model` is fully configured with variables, parameters, and reactions.
+
+### Photosynthesis & photoprotection
+
+| Factory function | Description |
+|---|---|
+| `get_yokota1985` | Photorespiration |
+| `get_poolman2000` | Calvin–Benson–Bassham cycle (Pettersson & Ryde-Pettersson 1988) |
+| `get_ebenhoeh2014` | PETC, state transitions & ATP synthase |
+| `get_matuszynska2016_npq` | PSII & four-state quencher |
+| `get_matuszynska2016_phd` | Photosynthesis + NPQ |
+| `get_matuszynska2019` | Combined CBB + NPQ |
+| `get_saadat2021` | 2019 + Mehler + Thioredoxin |
+| `get_ebeling_2026` | Unpublished extension |
+| `get_hahn1987` | Photosynthesis and photorespiration |
+| `get_lazar1997` | Fluorescence induction |
+| `get_davis2017` | (see source for description) |
+| `get_bellasio_2019` | (see source for description) |
+| `get_fuente_2024` | (see source for description) |
+| `get_li_2021` | (see source for description) |
+| `get_nguyen2026_tomato` | (see source for description) |
+| `get_pfennig2024_synechocystis` | (see source for description) |
+| `get_zhu_2009` | (see source for description) |
+
+### Classic dynamical systems
+
+| Factory function | Description |
+|---|---|
+| `get_sir` / `get_sird` | SIR / SIRD epidemic model |
+| `get_lotka_volterra_v1` / `get_lotka_volterra_v2` | Predator–prey |
+| `get_prigogine1968_brusselator` | Brusselator oscillator |
+| `get_selkov1968_glycolysis_oscillator` | Glycolysis oscillator |
+| `get_elowitz2000_repressilator` | Repressilator |
+| `get_population_dynamics` | Two-species competition |
+| `get_tripartite_dynamics` | Three-strain public-goods game |
+| `get_dynamic_enterobactin` | Dynamic enterobactin |
+
+## Quick start
+
+> Load a model, simulate it, and plot the result.
+
+```python
+from mxlmodels import Simulator, plot, get_poolman2000
+
+model = get_poolman2000()
+
+variables, fluxes = (
+    Simulator(model)
+    .simulate(t_end=100)
+    .get_result()
+    .unwrap_or_err()
+)
+
+fig, ax = plot.lines(variables)
+ax.set(xlabel="time / s", ylabel="concentration / mM")
+plot.show()
+```
+
+## Data subpackage
+
+`mxlmodels.data` provides bundled experimental data. Currently contains `pfennig2024`:
+
+```python
+from mxlmodels.data import pfennig2024
+
+# Load all experimental data as a typed container
+data = pfennig2024.default()
+# data.light_spectrum, data.ocp_absorption_per_wavelength, data.ps_comp, ...
+
+# Load just light source spectra
+lights_df = pfennig2024.lights()
+```
+
+Available data: OCP absorption, photosystem composition, pigment concentrations, per-pigment absorption coefficients, and light source spectra (warm/cool white LED, fluorescent, halogen, incandescent, solar).
+
+## Using MxlPy tools with MxlModels
+
+Since `mxlmodels` re-exports the MxlPy analysis tools, you can work with models without importing MxlPy directly:
+
+```python
+from mxlmodels import Simulator, scan, mca, plot, get_ebenhoeh2014
+
+model = get_ebenhoeh2014()
+
+# Parameter scan
+scan_result = scan.steady_state(model, parameter="k_ATPase", values=[0.5, 1.0, 2.0])
+
+# Metabolic Control Analysis
+elasticities, response_coefficients = mca.elasticities(model), mca.response_coefficients(model)
+
+# Monte Carlo analysis
+mc_result = mc.steady_state(model, n_samples=100)
+```
+
+For fitting, scanning protocols, and mechanistic learning (surrogates, UDEs), see the [MxlPy documentation](https://github.com/Computational-Biology-Aachen/mxl-py).
+
+## Installation
+
+```bash
+pip install mxlmodels
+# or
+uv add mxlmodels
+```
+
+Requires Python 3.13+ and `mxlpy>=0.38.0`.
+
+## Tool use with mxl-mcp
+
+For programmatic access to MxlModels from LLM agents, see [mxl-mcp](https://computational-biology-aachen.github.io/mxl-mcp/mxlpy/latest) — an MCP server that exposes MxlPy/MxlModels tools.
+
+## Tool family
+
+MxlModels is part of a tool family for mechanistic modeling and simulation:
+
+- [**MxlPy**](https://github.com/Computational-Biology-Aachen/mxl-py) — Core mechanistic learning library (Python ODEs + ML)
+- [**MxlBricks**](https://github.com/Computational-Biology-Aachen/mxl-bricks) — Composable reaction building blocks (source for MxlModels via codegen)
+- [**MxlWeb**](https://github.com/Computational-Biology-Aachen/mxl-web) — Browser-based ODE solver (SvelteKit + WebWorkers)
+- [**PySBML**](https://github.com/Computational-Biology-Aachen/pysbml) — SBML import/export bridge
+- [**Parameteriser**](https://github.com/Computational-Biology-Aachen/parameteriser) — Kinetic parameter lookup (BRENDA DB)
