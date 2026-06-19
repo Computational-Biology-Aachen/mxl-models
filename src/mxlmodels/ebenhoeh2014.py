@@ -16,8 +16,6 @@ LHCII state transitions. Non-photochemical quenching is a constant base term
 (kH0); the xanthophyll/PsbS machinery of the later Matuszynska models is absent.
 ATP and NADPH are consumed by lumped linear sinks instead of a Calvin cycle.
 
-This is the aerobic (constant oxygen supply) configuration; the anoxia switch of
-the original code is not reproduced.
 """
 
 import math
@@ -181,9 +179,10 @@ def _ps1states(
     keq_pcp700: float,
     k_pc_ox: float,
     pfd: float,
+    cPFD: float,
 ) -> float:
     """QSSA open state of PSI as a function of PC and Fd redox states."""
-    L = (1 - ps2cs) * pfd
+    L = (1 - ps2cs) * cPFD *pfd
     return psi_tot / (
         1
         + L / (k_fd_red * fd_ox)
@@ -289,9 +288,10 @@ def _rate_ps1(
     a: float,
     ps2cs: float,
     pfd: float,
+    cPFD:float
 ) -> float:
     """PSI electron transfer rate: open PSI centres (a) * light absorbed by PSI antenna."""
-    return (1 - ps2cs) * pfd * a
+    return (1 - ps2cs) * cPFD* pfd * a
 
 
 def _rate_leak(
@@ -327,6 +327,7 @@ def _ps2states_surrogate(
     keq_pq_red: float,
     k_pq_red: float,
     pfd: float,
+    cPFD: float,
     k_h0: float,
 ) -> tuple[float, float, float, float]:
     """PSII state populations via the analytical closed-form of the 4-state QSSA.
@@ -351,7 +352,7 @@ def _ps2states_surrogate(
     x13 = k_pq_red * keq_pq_red * pq_ox
     x14 = k_pq_red * pq_red
     x15 = k2 * x14
-    x16 = pfd * ps2cs
+    x16 = pfd*cPFD* ps2cs
     x17 = k_f * x14
     x18 = k_h0 * x14
     x19 = x14 * x6
@@ -374,7 +375,7 @@ def _ps2states_surrogate(
     x23 = psii_tot / (
         k_f * x20
         + k_h0 * x20
-        + pfd**2 * ps2cs**2 * x12
+        + (cPFD*pfd)**2 * ps2cs**2 * x12
         + x0 * x13
         + x1 * x13
         + x10 * x13
@@ -449,6 +450,7 @@ def get_ebenhoeh2014() -> Model:
     # Stroma pH (constant) and light
     m = m.add_parameter("pH", value=7.8)
     m = m.add_parameter("PPFD", value=100.0)
+    m = m.add_parameter("cPPFD", value=1/3) # incorporate this into the other equations
     # Total pool sizes
     m = m.add_parameter("PSII_total", value=2.5)
     m = m.add_parameter("PSI_total", value=2.5)
@@ -475,7 +477,7 @@ def get_ebenhoeh2014() -> Model:
     m = m.add_parameter("kH0", value=500000000.0)
     m = m.add_parameter("kH", value=0.0)
     m = m.add_parameter("kF", value=62500000.0)
-    m = m.add_parameter("k2", value=5000000000.0)
+    m = m.add_parameter("k2", value=1200000000.0)
     m = m.add_parameter("Q", value=0.0)
     # Cross-section partitioning
     m = m.add_parameter("staticAntI", value=0.2)
@@ -488,7 +490,7 @@ def get_ebenhoeh2014() -> Model:
     m = m.add_parameter("HPR", value=14.0 / 3.0)
     m = m.add_parameter("kf_nadph_consumption", value=15.0)
     # Proton leak / membrane
-    m = m.add_parameter("kf_proton_leak", value=0.01)
+    m = m.add_parameter("kf_proton_leak", value=0.01) # this value is not specified in the paper
     # Electron transfer rate constants
     m = m.add_parameter("kPQred", value=250.0)
     m = m.add_parameter("kcat_b6f", value=2.5)
@@ -501,7 +503,7 @@ def get_ebenhoeh2014() -> Model:
     m = m.add_parameter("km_fnr_NADP", value=0.22)
     m = m.add_parameter("kf_cyclic_electron_flow", value=1.0)
     m = m.add_parameter("O2 (dissolved)_lumen", value=8.0)
-    m = m.add_parameter("kf_ndh", value=0.002)
+    m = m.add_parameter("kf_ndh", value=0.004)
     # State transitions
     m = m.add_parameter("kStt7", value=0.0035)
     m = m.add_parameter("kPph1", value=0.0013)
@@ -608,6 +610,7 @@ def get_ebenhoeh2014() -> Model:
             "keq_PCP700",
             "kPCox",
             "PPFD",
+            "cPPFD"
         ],
     )
     # Reactions
@@ -623,7 +626,7 @@ def get_ebenhoeh2014() -> Model:
     m = m.add_reaction(
         "PSI",
         fn=_rate_ps1,
-        args=["A1", "PSII_cross_section", "PPFD"],
+        args=["A1", "PSII_cross_section", "PPFD", "cPPFD"],
         stoichiometry={
             "Ferredoxine (oxidised)": -1,
             "Plastocyanine (oxidised)": 1,
@@ -751,6 +754,7 @@ def get_ebenhoeh2014() -> Model:
                 "keq_Plastoquinone (reduced)",
                 "kPQred",
                 "PPFD",
+                "cPPFD",
                 "kH0",
             ],
             outputs=["B0", "B1", "B2", "B3"],
@@ -786,4 +790,4 @@ def get_ebenhoeh2014() -> Model:
         fn=_rate_fluorescence,
         args=["B0", "B2", "PSII_cross_section", "k2", "kF", "kH0", "kH"],
     )
-    return m  # noqa: RET504
+    return m
