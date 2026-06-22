@@ -38,6 +38,7 @@ from .sir import get_sir, get_sird
 from .yokota1985 import get_yokota1985
 from .zaks2012 import get_zaks2012
 from .zhu2009 import get_zhu_2009
+from .johnson2021 import get_johnson2021
 
 __all__ = [
     "Simulator",
@@ -74,6 +75,7 @@ __all__ = [
     "get_yokota1985",
     "get_zaks2012",
     "get_zhu_2009",
+    "get_johnson2021",
     "mc",
     "mca",
     "plot",
