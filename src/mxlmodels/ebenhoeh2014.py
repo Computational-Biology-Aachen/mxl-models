@@ -62,7 +62,9 @@ def _ph_lumen(
     protons: float,
 ) -> float:
     """Lumenal pH from proton concentration in mmol/mmol_Chl (conversion factor 0.00025)."""
-    return -np.log10(protons * 0.00025)
+    # Guard log from negative numbers. -log10(1e-14) is pH 14, which is well outside the
+    # physiological range and certainly a sufficient upper bound
+    return -np.log10(max(protons * 0.00025, 1e-14))
 
 
 def _protons_stroma(
@@ -182,7 +184,7 @@ def _ps1states(
     cPFD: float,
 ) -> float:
     """QSSA open state of PSI as a function of PC and Fd redox states."""
-    L = (1 - ps2cs) * cPFD *pfd
+    L = (1 - ps2cs) * cPFD * pfd
     return psi_tot / (
         1
         + L / (k_fd_red * fd_ox)
@@ -284,14 +286,9 @@ def _rate_ps2(
     return 0.5 * k2 * b1
 
 
-def _rate_ps1(
-    a: float,
-    ps2cs: float,
-    pfd: float,
-    cPFD:float
-) -> float:
+def _rate_ps1(a: float, ps2cs: float, pfd: float, cPFD: float) -> float:
     """PSI electron transfer rate: open PSI centres (a) * light absorbed by PSI antenna."""
-    return (1 - ps2cs) * cPFD* pfd * a
+    return (1 - ps2cs) * cPFD * pfd * a
 
 
 def _rate_leak(
@@ -352,7 +349,7 @@ def _ps2states_surrogate(
     x13 = k_pq_red * keq_pq_red * pq_ox
     x14 = k_pq_red * pq_red
     x15 = k2 * x14
-    x16 = pfd*cPFD* ps2cs
+    x16 = pfd * cPFD * ps2cs
     x17 = k_f * x14
     x18 = k_h0 * x14
     x19 = x14 * x6
@@ -375,7 +372,7 @@ def _ps2states_surrogate(
     x23 = psii_tot / (
         k_f * x20
         + k_h0 * x20
-        + (cPFD*pfd)**2 * ps2cs**2 * x12
+        + (cPFD * pfd) ** 2 * ps2cs**2 * x12
         + x0 * x13
         + x1 * x13
         + x10 * x13
@@ -450,7 +447,9 @@ def get_ebenhoeh2014() -> Model:
     # Stroma pH (constant) and light
     m = m.add_parameter("pH", value=7.8)
     m = m.add_parameter("PPFD", value=100.0)
-    m = m.add_parameter("cPPFD", value=1/3) # incorporate this into the other equations
+    m = m.add_parameter(
+        "cPPFD", value=1 / 3
+    )  # incorporate this into the other equations
     # Total pool sizes
     m = m.add_parameter("PSII_total", value=2.5)
     m = m.add_parameter("PSI_total", value=2.5)
@@ -490,7 +489,9 @@ def get_ebenhoeh2014() -> Model:
     m = m.add_parameter("HPR", value=14.0 / 3.0)
     m = m.add_parameter("kf_nadph_consumption", value=15.0)
     # Proton leak / membrane
-    m = m.add_parameter("kf_proton_leak", value=0.01) # this value is not specified in the paper
+    m = m.add_parameter(
+        "kf_proton_leak", value=0.01
+    )  # this value is not specified in the paper
     # Electron transfer rate constants
     m = m.add_parameter("kPQred", value=250.0)
     m = m.add_parameter("kcat_b6f", value=2.5)
@@ -610,7 +611,7 @@ def get_ebenhoeh2014() -> Model:
             "keq_PCP700",
             "kPCox",
             "PPFD",
-            "cPPFD"
+            "cPPFD",
         ],
     )
     # Reactions
