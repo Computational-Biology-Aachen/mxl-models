@@ -37,7 +37,10 @@ def _ph_lumen(
     protons: float,
 ) -> float:
     """Lumenal pH from proton concentration in mmol/mmol_Chl (conversion factor 0.00025)."""
-    return -np.log10(protons * 0.00025)
+    protons_mmc = protons * 0.00025
+    # Clamp log to physiological state & prevent numerical instabilities
+    # -log10(1e-14) = pH 14 <= protons <= -log10(1e-11) = pH 1
+    return -np.log10(min(max(protons_mmc, 1e-14), 1e-1))
 
 
 def _moiety_1(

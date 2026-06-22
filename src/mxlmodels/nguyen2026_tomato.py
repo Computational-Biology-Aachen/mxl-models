@@ -233,7 +233,9 @@ def _calculate_p_h(
         volume_per_area_membrane,
         chl_per_area_membrane,
     )
-    return -np.log10(H_conc)
+    # Clamp log to physiological state & prevent numerical instabilities
+    # -log10(1e-14) = pH 14 <= protons <= -log10(1e-11) = pH 1
+    return -np.log10(min(max(H_conc, 1e-14), 1e-1))
 
 
 def _moiety(
