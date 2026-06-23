@@ -25,6 +25,8 @@ from mxlpy import Model
 def moiety_1(concentration: float, total: float) -> float:
     return total - concentration
 
+def PAn(h, k1, co2, rubp, k20, gn, rd, gf):
+    return 36000 * 44 * h * (k1 * co2 * rubp - k20 * gn**2 - 12 * rd * gf)
 
 def v1(k1: float, CO2: float, RuBP: float) -> float:
     return k1 * CO2 * RuBP
@@ -243,6 +245,7 @@ def get_hahn1987():
         )
         .add_derived(name="ATP", fn=moiety_1, args=["ADP", "AP_tot"])
         .add_derived(name="UTP", fn=moiety_1, args=["UDP", "UP_tot"])
+        .add_derived(name="PAn", fn=PAn, args=["h", "k1", "CO2", "RuBP", "k20", "Gn", "rd", "GF"])
         .add_reaction(
             name="v1",
             fn=v1,
