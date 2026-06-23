@@ -49,21 +49,21 @@ def get_zhu_2009() -> Model:
             "V2_max": 11.75,  # [mM/S] Zhu et al 2009
             "V3_max": 5.04,  # [mM/S] Zhu et al 2009
             "V4_max": 3.05,  # [mM/S] estimate by Zhu et al.
-            "V5_max": 3,  # [mM/S] Zhu et al 2009
+            "V5_max": 3.0,  # [mM/S] Zhu et al 2009
             "V6_max": 0.1,  # [mM/S] estimate by Zhu et al.
-            "V13_max": 8,
+            "V13_max": 8.0,
             # Km:
-            "K_m1": 1,  # [mM] Zhu et al 2009
+            "K_m1": 1.0,  # [mM] Zhu et al 2009
             "K_m21": 0.24,  # [mM] Zhu et al 2009
             "K_m22": 0.39,  # [mM] Zhu et al 2009
             "K_m3": 0.5,  # [mM] Zhu et al 2009
             "K_m4": 0.84,  # [mM] Zhu et al 2009
             "K_m51": 0.75,  # [mM] Zhu et al 2009
-            "K_m52": 0.275,  # [mM] not specified in the paper but fitted by us to match the figure
-            "K_m6": 5,  # [mM] Zhu et al 2009
+            #"K_m52": 0.0,  # [mM] not specified in the paper and fitted value is 0
+            "K_m6": 5.0,  # [mM] Zhu et al 2009
             "K_m131": 0.15,  # [mM] Zhu et al 2009
             "K_m132": 0.059,  # [mM] Zhu et al 2009
-            "ATP": 0.2,  # [mM]Not in Zhu et al 2009 but in the  reference [9] in the paper
+            "ATP": 0.609,  # [mM]Not in Zhu et al 2009 but fitted
         }
     )
     m.add_variables(
@@ -105,11 +105,11 @@ def get_zhu_2009() -> Model:
     )
     m.add_reaction(
         "v5",
-        fn=_enzyme_atp_dependent,
+        fn=michaelis_menten_1s, # changing this for a better fit (maybe thats why only one parameter is specified in the paper)
         stoichiometry={
             "PGA": -1,
         },
-        args=["PGA", "ATP", "V5_max", "K_m51", "K_m52"],
+        args=["PGA", "V5_max", "K_m51",],
     )
     m.add_reaction(
         "v6",

@@ -16,8 +16,6 @@ LHCII state transitions. Non-photochemical quenching is a constant base term
 (kH0); the xanthophyll/PsbS machinery of the later Matuszynska models is absent.
 ATP and NADPH are consumed by lumped linear sinks instead of a Calvin cycle.
 
-This is the aerobic (constant oxygen supply) configuration; the anoxia switch of
-the original code is not reproduced.
 """
 
 import math
@@ -183,7 +181,7 @@ def _ps1states(
     pfd: float,
 ) -> float:
     """QSSA open state of PSI as a function of PC and Fd redox states."""
-    L = (1 - ps2cs) * pfd
+    L = (1 - ps2cs) *pfd
     return psi_tot / (
         1
         + L / (k_fd_red * fd_ox)
@@ -351,7 +349,7 @@ def _ps2states_surrogate(
     x13 = k_pq_red * keq_pq_red * pq_ox
     x14 = k_pq_red * pq_red
     x15 = k2 * x14
-    x16 = pfd * ps2cs
+    x16 = pfd* ps2cs
     x17 = k_f * x14
     x18 = k_h0 * x14
     x19 = x14 * x6
@@ -374,7 +372,7 @@ def _ps2states_surrogate(
     x23 = psii_tot / (
         k_f * x20
         + k_h0 * x20
-        + pfd**2 * ps2cs**2 * x12
+        + (pfd)**2 * ps2cs**2 * x12
         + x0 * x13
         + x1 * x13
         + x10 * x13
@@ -449,6 +447,7 @@ def get_ebenhoeh2014() -> Model:
     # Stroma pH (constant) and light
     m = m.add_parameter("pH", value=7.8)
     m = m.add_parameter("PPFD", value=100.0)
+    #m = m.add_parameter("cPPFD", value=1/3) # incorporate this into the other equations
     # Total pool sizes
     m = m.add_parameter("PSII_total", value=2.5)
     m = m.add_parameter("PSI_total", value=2.5)
@@ -488,7 +487,7 @@ def get_ebenhoeh2014() -> Model:
     m = m.add_parameter("HPR", value=14.0 / 3.0)
     m = m.add_parameter("kf_nadph_consumption", value=15.0)
     # Proton leak / membrane
-    m = m.add_parameter("kf_proton_leak", value=0.01)
+    m = m.add_parameter("kf_proton_leak", value=0.01) # this value is not specified in the paper
     # Electron transfer rate constants
     m = m.add_parameter("kPQred", value=250.0)
     m = m.add_parameter("kcat_b6f", value=2.5)
@@ -623,7 +622,7 @@ def get_ebenhoeh2014() -> Model:
     m = m.add_reaction(
         "PSI",
         fn=_rate_ps1,
-        args=["A1", "PSII_cross_section", "PPFD"],
+        args=["A1", "PSII_cross_section", "PPFD", ],
         stoichiometry={
             "Ferredoxine (oxidised)": -1,
             "Plastocyanine (oxidised)": 1,
@@ -786,4 +785,4 @@ def get_ebenhoeh2014() -> Model:
         fn=_rate_fluorescence,
         args=["B0", "B2", "PSII_cross_section", "k2", "kF", "kH0", "kH"],
     )
-    return m  # noqa: RET504
+    return m
