@@ -1,11 +1,41 @@
+"""Johnson 2021 model.
+
+|             |                                                                                                                        |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------- |
+| doi         | 10.1007/s11120-021-00840-4                                                                                              |
+| main author | Chandra Bellasio                                                                                                       |
+| paper title | A generalised dynamic model of leaf-level C3 photosynthesis combining light and dark reactions with stomatal behaviour |
+| published   | January 2019                                                                                                           |
+| journal     | Photosynthesis Research                                                                                                |
+| organism    | C3 leaf                                                                                                                |
+
+The [Johnson2021] (https://doi.org/10.1007/s11120-021-00840-4) model is a
+generalized C3 leaf-photosynthesis model, that operates in steady-state. Therefore, it
+is not an ODE model and is made from two functions, a solving function and the function,
+calling the model. The model function takes, so called environmental variables as input. 
+They are Light, Temperature, CO2 and O2 concentration. Based on those input, the outputs 
+of the model are calculated. For the publication the most important outputs are 
+Linear and Cyclic Electron Flow, NPQ and Net carbon assimilation. The goal of the model is 
+to investigate how photosynthesis is mainly controlled in steady-state conditions. It is built 
+around the idea that control is shared between CBB and b6f, but with a special focus on b6f as 
+the main regulatory bottleneck. For the analysis, the simulations are mainly performed under light 
+intensities from 0-2400 and an additional perturbation of a model parameter to investigate 
+scenarios of cytb6f and rubisco limitation.
+
+The reproduction of the model was straightforward, but their github only included two example
+simulation, which had no connection to the respective publication. It is not disclosed how the 
+model perturbations are performed and one has to derive it from the publication, which for some of 
+the cases can be difficult as the model to publication connection is not clear from time to time. 
+"""
+
+
+
+
+
 import numpy as np
 
 
 def solve_xcs(Abs, CB6F, Kd, Kf, Kp2, Ku2, Q, eta, kq, phi1P_max):
-    """
-    Direct translation of the R solve_xcs() function.
-    All arguments are scalars; Q can be scalar or array.
-    """
 
     Q = np.array(Q, dtype=float)
 
@@ -120,10 +150,7 @@ def get_johnson2021(
     nc=1.00,
     case_id=0
 ):
-    """
-    Direct Python translation of the R 'model' function.
-    Returns a Python dict with all outputs.
-    """
+
         
     # Ensure arrays
     PAR = np.atleast_1d(np.array(PAR, dtype=float))
