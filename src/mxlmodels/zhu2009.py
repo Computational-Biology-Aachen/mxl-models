@@ -38,6 +38,8 @@ def _enzyme_atp_dependent(
 ) -> float:
     return vmax * s1 * atp / ((s1 + km_s1) * (atp + km_atp))
 
+def _calculate_A(v1: float) -> float:
+    return v1 * 33.33
 
 def get_zhu_2009() -> Model:
     """Simple Calvin Cycle Model developed by Zhu et al. (2009)."""
@@ -124,5 +126,10 @@ def get_zhu_2009() -> Model:
         fn=_enzyme_atp_dependent,
         stoichiometry={"Ru5P": -1, "RuBP": 1},
         args=["Ru5P", "ATP", "V13_max", "K_m131", "K_m132"],
+    )
+    m.add_derived(
+        "A",
+        fn=_calculate_A,
+        args=["v1"]
     )
     return m
