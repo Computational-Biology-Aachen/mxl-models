@@ -18,6 +18,7 @@ from .ebeling2026 import get_ebeling_2026
 from .ebenhoeh2014 import get_ebenhoeh2014
 from .elowitz2000_repressilator import get_elowitz2000_repressilator
 from .fuente2024 import get_fuente_2024
+from .gu_2023 import get_gu_2023
 from .hahn1987 import get_hahn1987
 from .lam2026 import get_lam2026
 from .lazar1997 import get_lazar1997
@@ -52,6 +53,7 @@ __all__ = [
     "get_ebenhoeh2014",
     "get_elowitz2000_repressilator",
     "get_fuente_2024",
+    "get_gu_2023",
     "get_hahn1987",
     "get_lam2026",
     "get_lazar1997",
