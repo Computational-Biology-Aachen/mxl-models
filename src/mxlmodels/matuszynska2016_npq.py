@@ -424,51 +424,81 @@ def _ps2states_2016a_analytical(
     psii_tot: float,
 ) -> tuple[float, float, float, float]:
     """PSII state populations (Matuszynska 2016 NPQ, analytical closed-form variant)."""
-    x0 = kf**2
-    x1 = kf * kp
-    x2 = kh * quencher
-    x3 = kp * x2
-    x4 = 2 * x2
-    x5 = kf * x4
-    x6 = kh**2 * quencher**2
-    x7 = keq_qapq * kp
-    x8 = k_pqh2 * pq_ox
-    x9 = keq_qapq * x8
-    x10 = k_pqh2 * pq_red
-    x11 = kf * x10
-    x12 = kp * x10
-    x13 = pfd * x9
-    x14 = x10 * x2
-    x15 = pfd * x7
-    x16 = (
-        keq_qapq * pfd * x1
-        + x0 * x10
-        + x1 * x10
-        + x10 * x3
-        + x10 * x6
-        + x11 * x4
-        + x15 * x2
-    )
-    x17 = psii_tot / (
-        kf * x13
-        + pfd**2 * x7
-        + pfd * x11
-        + pfd * x12
-        + pfd * x14
-        + x0 * x9
-        + x1 * x9
-        + x13 * x2
-        + x16
-        + x2 * x7 * x8
-        + x5 * x9
-        + x6 * x9
-    )
-    x18 = pfd * x17
-    _B0 = x17 * x9 * (x0 + x1 + x3 + x5 + x6)
-    _B1 = x18 * x9 * (kf + x2)
-    _B2 = x16 * x17
-    _B3 = x18 * (x11 + x12 + x14 + x15)
-    return _B0, _B1, _B2, _B3
+    # x0 = kf**2
+    # x1 = kf * kp
+    # x2 = kh * quencher
+    # x3 = kp * x2
+    # x4 = 2 * x2
+    # x5 = kf * x4
+    # x6 = kh**2 * quencher**2
+    # x7 = keq_qapq * kp
+    # x8 = k_pqh2 * pq_ox
+    # x9 = keq_qapq * x8
+    # x10 = k_pqh2 * pq_red
+    # x11 = kf * x10
+    # x12 = kp * x10
+    # x13 = pfd * x9
+    # x14 = x10 * x2
+    # x15 = pfd * x7
+    # x16 = (
+    #     keq_qapq * pfd * x1
+    #     + x0 * x10
+    #     + x1 * x10
+    #     + x10 * x3
+    #     + x10 * x6
+    #     + x11 * x4
+    #     + x15 * x2
+    # )
+    # x17 = psii_tot / (
+    #     kf * x13
+    #     + pfd**2 * x7
+    #     + pfd * x11
+    #     + pfd * x12
+    #     + pfd * x14
+    #     + x0 * x9
+    #     + x1 * x9
+    #     + x13 * x2
+    #     + x16
+    #     + x2 * x7 * x8
+    #     + x5 * x9
+    #     + x6 * x9
+    # )
+    # x18 = pfd * x17
+    # _B0 = x17 * x9 * (x0 + x1 + x3 + x5 + x6)
+    # _B1 = x18 * x9 * (kf + x2)
+    # _B2 = x16 * x17
+    # _B3 = x18 * (x11 + x12 + x14 + x15)
+    # print(f"PSII states in mxlmodels: B0={_B0}, B1={_B1}, B2={_B2}, B3={_B3}")
+    
+    # FIXME: The above commented out part was the prior version that did not work with some steady-state scans. Will it be with assimulo or other solvers. Can the next be kept?
+    
+    k_PQH2 = k_pqh2
+    PQH_2 = pq_red
+    K_QAPQ = keq_qapq
+    k_H = kh
+    Q = quencher
+    k_F = kf
+    k_P = kp
+    PQ = pq_ox
+    PSII_tot = psii_tot
+    
+    b0 = pfd + k_PQH2 * PQH_2 / K_QAPQ
+    b1 = k_H * Q + k_F
+    b2 = k_H * Q + k_F + k_P
+    
+    M = np.array(
+            [
+                [-b0, b1, k_PQH2 * PQ, 0],  # B0
+                [pfd, -b2, 0, 0],  # B1
+                [0, 0, pfd, -b1],  # B3
+                [1, 1, 1, 1],
+            ]
+        )
+
+    A = np.array([0, 0, 0, PSII_tot])
+    B0, B1, B2, B3 = np.linalg.solve(M, A)
+    
+    return B0, B1, B2, B3
 
 
 def get_matuszynska2016_npq() -> Model:
