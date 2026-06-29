@@ -1,14 +1,15 @@
 """Poolman 2000 Calvin-Benson-Bassham cycle model.
 
-|  |  |
-| --- | --- |
-| doi | 10.1093/jexbot/51.suppl_1.319 |
-| main author | Mark G. Poolman |
+|             |                                          |
+| ----------- | ---------------------------------------- |
+| doi         | 10.1093/jexbot/51.suppl_1.319            |
+| main author | Mark G. Poolman                          |
 | paper title | Modelling photosynthesis and its control |
-| published | February 2000 |
-| journal | Journal of Experimental Botany |
-| organism | C3 plant (chloroplast) |
-| biomodels | BIOMD0000000013 |
+| published   | February 2000                            |
+| journal     | Journal of Experimental Botany           |
+| organism    | C3 plant (chloroplast)                   |
+| biomodels   | BIOMD0000000013                          |
+
 """
 
 from mxlpy import Model

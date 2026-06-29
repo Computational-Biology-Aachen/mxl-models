@@ -1,13 +1,14 @@
 """Matuszynska 2019 photosynthesis model with NPQ, state transitions, and Calvin cycle.
 
-|  |  |
-| --- | --- |
-| doi | 10.1111/ppl.12962 |
-| main author | Anna Matuszyńska |
+|             |                                                                           |
+| ----------- | ------------------------------------------------------------------------- |
+| doi         | 10.1111/ppl.12962                                                         |
+| main author | Anna Matuszyńska                                                          |
 | paper title | Balancing energy supply during photosynthesis – a theoretical perspective |
-| published | May 2019 |
-| journal | Physiologia Plantarum |
-| organism | higher plants |
+| published   | May 2019                                                                  |
+| journal     | Physiologia Plantarum                                                     |
+| organism    | higher plants                                                             |
+
 """
 
 import math

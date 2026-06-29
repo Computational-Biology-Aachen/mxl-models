@@ -1,13 +1,13 @@
 """Saadat 2021 chloroplast model with ROS scavenging, Calvin cycle, and thioredoxin regulation.
 
-|  |  |
-| --- | --- |
-| doi | 10.3389/fpls.2021.750580 |
-| main author | Nima P. Saadat |
+|             |                                                                                                  |
+| ----------- | ------------------------------------------------------------------------------------------------ |
+| doi         | 10.3389/fpls.2021.750580                                                                         |
+| main author | Nima P. Saadat                                                                                   |
 | paper title | Computational Analysis of Alternative Photosynthetic Electron Flows Linked With Oxidative Stress |
-| published | October 2021 |
-| journal | Frontiers in Plant Science |
-| organism | higher plants |
+| published   | October 2021                                                                                     |
+| journal     | Frontiers in Plant Science                                                                       |
+| organism    | higher plants                                                                                    |
 """
 
 import math

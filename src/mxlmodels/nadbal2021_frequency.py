@@ -1,5 +1,14 @@
 """Nedbal and Lazár (2021) photosynthesis dynamics model.
 
+|             |       |
+| ----------- | ----- |
+| doi         | FIXME |
+| main author | FIXME |
+| paper title | FIXME |
+| published   | FIXME |
+| journal     | FIXME |
+| organism    | FIXME |
+
 The model represents chlorophyll-fluorescence responses to constant and
 sinusoidally modulated light using harmonic and induction kinetics.
 Figures F1, F2, F4, F5, and F6A reproduce the reported time- and
@@ -11,11 +20,9 @@ Figure F6B-C is omitted because the complete validated 42-state model,
 direct-CET coefficient, and light-scaling parameters are not reported.
 """
 
-import numpy as np
 import matplotlib.pyplot as plt
-
+import numpy as np
 from mxlpy import Model, Simulator, unwrap
-
 
 RNG = np.random.default_rng(7)
 
@@ -33,11 +40,13 @@ COLORS = {
     "blue": "#2475b5",
 }
 
-plt.rcParams.update({
-    "font.size": 9,
-    "axes.linewidth": 1.0,
-    "figure.dpi": 120,
-})
+plt.rcParams.update(
+    {
+        "font.size": 9,
+        "axes.linewidth": 1.0,
+        "figure.dpi": 120,
+    }
+)
 
 
 # ------------------------------------------------------------------
@@ -46,25 +55,18 @@ plt.rcParams.update({
 
 
 def simulate(model, time):
-    time = np.unique(
-        np.r_[0.0, np.asarray(time, dtype=float)]
-    )
+    time = np.unique(np.r_[0.0, np.asarray(time, dtype=float)])
 
-    result = (
-        Simulator(model)
-        .simulate_time_course(time)
-        .get_result()
-    )
+    result = Simulator(model).simulate_time_course(time).get_result()
 
     variables, _ = unwrap(result)
     data = variables.reset_index()
 
     if "time" not in data.columns:
-        data = data.rename(
-            columns={data.columns[0]: "time"}
-        )
+        data = data.rename(columns={data.columns[0]: "time"})
 
     return data
+
 
 def log_interpolate(x, xp, yp):
     return np.interp(
@@ -78,6 +80,7 @@ def log_interpolate(x, xp, yp):
 # Harmonic model
 # ------------------------------------------------------------------
 
+
 def harmonic_value(
     time,
     offset,
@@ -86,14 +89,7 @@ def harmonic_value(
     lag,
     harmonic,
 ):
-    angle = (
-        harmonic
-        * 2.0
-        * np.pi
-        * time
-        / period
-        - lag
-    )
+    angle = harmonic * 2.0 * np.pi * time / period - lag
 
     return offset - amplitude * np.cos(angle)
 
@@ -112,15 +108,7 @@ def harmonic_sum(
     p4,
 ):
     return offset - sum(
-        amplitude
-        * np.cos(
-            harmonic
-            * 2.0
-            * np.pi
-            * time
-            / period
-            - lag
-        )
+        amplitude * np.cos(harmonic * 2.0 * np.pi * time / period - lag)
         for harmonic, amplitude, lag in zip(
             [1, 2, 3, 4],
             [a1, a2, a3, a4],
@@ -132,11 +120,7 @@ def harmonic_sum(
 def light_rate(time, amplitude, period):
     omega = 2.0 * np.pi / period
 
-    return (
-        amplitude
-        * omega
-        * np.sin(omega * time)
-    )
+    return amplitude * omega * np.sin(omega * time)
 
 
 def harmonic_rate(
@@ -148,14 +132,7 @@ def harmonic_rate(
 ):
     omega = 2.0 * np.pi / period
 
-    return (
-        amplitude
-        * harmonic
-        * omega
-        * np.sin(
-            harmonic * omega * time - lag
-        )
-    )
+    return amplitude * harmonic * omega * np.sin(harmonic * omega * time - lag)
 
 
 def harmonic_sum_rate(
@@ -192,15 +169,9 @@ def get_harmonic_model(config):
     amplitudes = config["amplitudes"]
     lags = config["lags"]
 
-    light_offset = (
-        config["light_min"]
-        + config["light_max"]
-    ) / 2.0
+    light_offset = (config["light_min"] + config["light_max"]) / 2.0
 
-    light_amplitude = (
-        config["light_max"]
-        - config["light_min"]
-    ) / 2.0
+    light_amplitude = (config["light_max"] - config["light_min"]) / 2.0
 
     variables = {
         "Light": light_offset - light_amplitude,
@@ -227,18 +198,9 @@ def get_harmonic_model(config):
     parameters = {
         "period": period,
         "light_amplitude": light_amplitude,
-        **{
-            f"a{i}": amplitudes[i - 1]
-            for i in range(1, 5)
-        },
-        **{
-            f"p{i}": lags[i - 1]
-            for i in range(1, 5)
-        },
-        **{
-            f"n{i}": float(i)
-            for i in range(1, 5)
-        },
+        **{f"a{i}": amplitudes[i - 1] for i in range(1, 5)},
+        **{f"p{i}": lags[i - 1] for i in range(1, 5)},
+        **{f"n{i}": float(i) for i in range(1, 5)},
     }
 
     model = (
@@ -295,6 +257,7 @@ def get_harmonic_model(config):
 # Fluorescence-induction models
 # ------------------------------------------------------------------
 
+
 def induction_rate(
     time,
     rise,
@@ -302,13 +265,8 @@ def induction_rate(
     decline,
     tau_decline,
 ):
-    return (
-        rise
-        / tau_rise
-        * np.exp(-time / tau_rise)
-        - decline
-        / tau_decline
-        * np.exp(-time / tau_decline)
+    return rise / tau_rise * np.exp(-time / tau_rise) - decline / tau_decline * np.exp(
+        -time / tau_decline
     )
 
 
@@ -321,15 +279,19 @@ def get_induction_model(
 ):
     return (
         Model()
-        .add_variables({
-            "Signal": baseline,
-        })
-        .add_parameters({
-            "rise": rise,
-            "tau_rise": tau_rise,
-            "decline": decline,
-            "tau_decline": tau_decline,
-        })
+        .add_variables(
+            {
+                "Signal": baseline,
+            }
+        )
+        .add_parameters(
+            {
+                "rise": rise,
+                "tau_rise": tau_rise,
+                "decline": decline,
+                "tau_decline": tau_decline,
+            }
+        )
         .add_reaction(
             "induction",
             fn=induction_rate,
@@ -372,17 +334,21 @@ def get_ojip_model(
 ):
     return (
         Model()
-        .add_variables({
-            "ChlF": fluorescence_0,
-        })
-        .add_parameters({
-            "j": j,
-            "i": i,
-            "p": p,
-            "tau_j": tau_j,
-            "tau_i": tau_i,
-            "tau_p": tau_p,
-        })
+        .add_variables(
+            {
+                "ChlF": fluorescence_0,
+            }
+        )
+        .add_parameters(
+            {
+                "j": j,
+                "i": i,
+                "p": p,
+                "tau_j": tau_j,
+                "tau_i": tau_i,
+                "tau_p": tau_p,
+            }
+        )
         .add_reaction(
             "ojip",
             fn=ojip_rate,
@@ -501,13 +467,10 @@ FIG1_CONFIG = {
 
 
 def plot_f1_signal(axis, data, config, label):
-    experimental = (
-        data["Fit"].to_numpy()
-        + RNG.normal(
-            0.0,
-            config["noise"],
-            len(data),
-        )
+    experimental = data["Fit"].to_numpy() + RNG.normal(
+        0.0,
+        config["noise"],
+        len(data),
     )
 
     axis.scatter(
@@ -592,10 +555,7 @@ for name, config in FIG1_CONFIG.items():
         time,
     )
 
-    data["plot_time"] = (
-        data["time"]
-        + config["time_offset"]
-    )
+    data["plot_time"] = data["time"] + config["time_offset"]
 
     figure1_data[name] = data
 
@@ -677,28 +637,252 @@ high_light = simulate(
     time,
 )
 
-periods = np.array([
-    0.001, 0.0018, 0.0032, 0.0056,
-    0.010, 0.018, 0.032, 0.056,
-    0.100, 0.180, 0.320, 0.560,
-    1.000, 1.800, 3.200, 5.600,
-    10.0, 18.0, 32.0, 56.0,
-    100.0, 178.0, 316.0, 512.0,
-])
+periods = np.array(
+    [
+        0.001,
+        0.0018,
+        0.0032,
+        0.0056,
+        0.010,
+        0.018,
+        0.032,
+        0.056,
+        0.100,
+        0.180,
+        0.320,
+        0.560,
+        1.000,
+        1.800,
+        3.200,
+        5.600,
+        10.0,
+        18.0,
+        32.0,
+        56.0,
+        100.0,
+        178.0,
+        316.0,
+        512.0,
+    ]
+)
 
-low_harmonics = np.array([
-    [0.001,0.003,0.006,0.010,0.014,0.019,0.025,0.031,0.037,0.042,0.046,0.049,0.052,0.050,0.045,0.036,0.027,0.023,0.022,0.025,0.028,0.031,0.034,0.036],
-    [0.0005,0.0006,0.0008,0.0010,0.0011,0.0012,0.0014,0.0016,0.0020,0.0028,0.0040,0.0052,0.0065,0.0080,0.0095,0.0105,0.0110,0.0110,0.0115,0.0125,0.0140,0.0160,0.0180,0.0200],
-    [0.0003,0.0003,0.0004,0.0005,0.0006,0.0007,0.0008,0.0010,0.0013,0.0018,0.0025,0.0033,0.0040,0.0048,0.0054,0.0058,0.0060,0.0060,0.0063,0.0070,0.0080,0.0090,0.0100,0.0110],
-    [0.0002,0.0002,0.0002,0.0003,0.0003,0.0004,0.0005,0.0007,0.0009,0.0012,0.0017,0.0022,0.0028,0.0032,0.0035,0.0037,0.0038,0.0038,0.0040,0.0046,0.0053,0.0060,0.0068,0.0075],
-])
+low_harmonics = np.array(
+    [
+        [
+            0.001,
+            0.003,
+            0.006,
+            0.010,
+            0.014,
+            0.019,
+            0.025,
+            0.031,
+            0.037,
+            0.042,
+            0.046,
+            0.049,
+            0.052,
+            0.050,
+            0.045,
+            0.036,
+            0.027,
+            0.023,
+            0.022,
+            0.025,
+            0.028,
+            0.031,
+            0.034,
+            0.036,
+        ],
+        [
+            0.0005,
+            0.0006,
+            0.0008,
+            0.0010,
+            0.0011,
+            0.0012,
+            0.0014,
+            0.0016,
+            0.0020,
+            0.0028,
+            0.0040,
+            0.0052,
+            0.0065,
+            0.0080,
+            0.0095,
+            0.0105,
+            0.0110,
+            0.0110,
+            0.0115,
+            0.0125,
+            0.0140,
+            0.0160,
+            0.0180,
+            0.0200,
+        ],
+        [
+            0.0003,
+            0.0003,
+            0.0004,
+            0.0005,
+            0.0006,
+            0.0007,
+            0.0008,
+            0.0010,
+            0.0013,
+            0.0018,
+            0.0025,
+            0.0033,
+            0.0040,
+            0.0048,
+            0.0054,
+            0.0058,
+            0.0060,
+            0.0060,
+            0.0063,
+            0.0070,
+            0.0080,
+            0.0090,
+            0.0100,
+            0.0110,
+        ],
+        [
+            0.0002,
+            0.0002,
+            0.0002,
+            0.0003,
+            0.0003,
+            0.0004,
+            0.0005,
+            0.0007,
+            0.0009,
+            0.0012,
+            0.0017,
+            0.0022,
+            0.0028,
+            0.0032,
+            0.0035,
+            0.0037,
+            0.0038,
+            0.0038,
+            0.0040,
+            0.0046,
+            0.0053,
+            0.0060,
+            0.0068,
+            0.0075,
+        ],
+    ]
+)
 
-high_harmonics = np.array([
-    [0.040,0.025,0.012,0.016,0.022,0.030,0.038,0.045,0.052,0.057,0.060,0.058,0.052,0.046,0.039,0.032,0.026,0.024,0.025,0.030,0.034,0.038,0.041,0.043],
-    [0.0010,0.0011,0.0012,0.0013,0.0015,0.0017,0.0020,0.0025,0.0032,0.0045,0.0065,0.0088,0.0110,0.0130,0.0145,0.0155,0.0160,0.0160,0.0165,0.0180,0.0200,0.0220,0.0240,0.0260],
-    [0.0005,0.0005,0.0006,0.0007,0.0009,0.0011,0.0014,0.0018,0.0023,0.0032,0.0045,0.0060,0.0073,0.0084,0.0090,0.0093,0.0094,0.0095,0.0098,0.0108,0.0120,0.0130,0.0140,0.0150],
-    [0.0003,0.0003,0.0004,0.0005,0.0006,0.0008,0.0010,0.0013,0.0017,0.0023,0.0032,0.0042,0.0050,0.0057,0.0062,0.0065,0.0066,0.0067,0.0070,0.0080,0.0090,0.0100,0.0110,0.0120],
-])
+high_harmonics = np.array(
+    [
+        [
+            0.040,
+            0.025,
+            0.012,
+            0.016,
+            0.022,
+            0.030,
+            0.038,
+            0.045,
+            0.052,
+            0.057,
+            0.060,
+            0.058,
+            0.052,
+            0.046,
+            0.039,
+            0.032,
+            0.026,
+            0.024,
+            0.025,
+            0.030,
+            0.034,
+            0.038,
+            0.041,
+            0.043,
+        ],
+        [
+            0.0010,
+            0.0011,
+            0.0012,
+            0.0013,
+            0.0015,
+            0.0017,
+            0.0020,
+            0.0025,
+            0.0032,
+            0.0045,
+            0.0065,
+            0.0088,
+            0.0110,
+            0.0130,
+            0.0145,
+            0.0155,
+            0.0160,
+            0.0160,
+            0.0165,
+            0.0180,
+            0.0200,
+            0.0220,
+            0.0240,
+            0.0260,
+        ],
+        [
+            0.0005,
+            0.0005,
+            0.0006,
+            0.0007,
+            0.0009,
+            0.0011,
+            0.0014,
+            0.0018,
+            0.0023,
+            0.0032,
+            0.0045,
+            0.0060,
+            0.0073,
+            0.0084,
+            0.0090,
+            0.0093,
+            0.0094,
+            0.0095,
+            0.0098,
+            0.0108,
+            0.0120,
+            0.0130,
+            0.0140,
+            0.0150,
+        ],
+        [
+            0.0003,
+            0.0003,
+            0.0004,
+            0.0005,
+            0.0006,
+            0.0008,
+            0.0010,
+            0.0013,
+            0.0017,
+            0.0023,
+            0.0032,
+            0.0042,
+            0.0050,
+            0.0057,
+            0.0062,
+            0.0065,
+            0.0066,
+            0.0067,
+            0.0070,
+            0.0080,
+            0.0090,
+            0.0100,
+            0.0110,
+            0.0120,
+        ],
+    ]
+)
 
 fig, axes = plt.subplots(
     2,
@@ -848,11 +1032,7 @@ for index, config in enumerate(FIG4_CONFIG):
         linewidth=4.0,
     )
 
-    components = (
-        ["H1"]
-        if index == 0
-        else ["H1", "H2", "H3", "H4"]
-    )
+    components = ["H1"] if index == 0 else ["H1", "H2", "H3", "H4"]
 
     for component, color in zip(
         components,
@@ -882,11 +1062,7 @@ for index, config in enumerate(FIG4_CONFIG):
     light_axis.set_ylim(0, 105)
 
     axes[index].set_xlim(19.8, 20.0)
-    axes[index].set_ylim(
-        (0.04, 0.06)
-        if index == 0
-        else (0.06, 0.08)
-    )
+    axes[index].set_ylim((0.04, 0.06) if index == 0 else (0.06, 0.08))
     axes[index].set_title(
         "A" if index == 0 else "B",
         loc="left",
@@ -902,40 +1078,110 @@ plt.show()
 # F5 – Harmonic amplitude and phase
 # ------------------------------------------------------------------
 
-period_anchor = np.array([
-    0.001, 0.0032, 0.006, 0.010,
-    0.018, 0.032, 0.056, 0.100,
-    0.180, 0.320, 0.560, 1.000,
-    3.200, 10.00, 32.00, 100.0,
-])
+period_anchor = np.array(
+    [
+        0.001,
+        0.0032,
+        0.006,
+        0.010,
+        0.018,
+        0.032,
+        0.056,
+        0.100,
+        0.180,
+        0.320,
+        0.560,
+        1.000,
+        3.200,
+        10.00,
+        32.00,
+        100.0,
+    ]
+)
 
-amplitude_model = np.array([
-    0.00, 0.05, 0.12, 0.20,
-    0.35, 0.55, 0.85, 1.20,
-    1.80, 2.50, 3.00, 3.25,
-    3.75, 4.05, 4.15, 4.25,
-])
+amplitude_model = np.array(
+    [
+        0.00,
+        0.05,
+        0.12,
+        0.20,
+        0.35,
+        0.55,
+        0.85,
+        1.20,
+        1.80,
+        2.50,
+        3.00,
+        3.25,
+        3.75,
+        4.05,
+        4.15,
+        4.25,
+    ]
+)
 
-amplitude_experiment = np.array([
-    np.nan, 0.50, 0.85, 1.10,
-    1.35, 1.70, 2.05, 2.40,
-    2.85, 3.25, 3.55, 4.05,
-    np.nan, np.nan, np.nan, np.nan,
-])
+amplitude_experiment = np.array(
+    [
+        np.nan,
+        0.50,
+        0.85,
+        1.10,
+        1.35,
+        1.70,
+        2.05,
+        2.40,
+        2.85,
+        3.25,
+        3.55,
+        4.05,
+        np.nan,
+        np.nan,
+        np.nan,
+        np.nan,
+    ]
+)
 
-phase_model = np.array([
-    0.20, 0.18, 0.17, 0.16,
-    0.145, 0.130, 0.115, 0.100,
-    0.085, 0.075, 0.090, 0.110,
-    0.105, 0.080, 0.045, 0.000,
-])
+phase_model = np.array(
+    [
+        0.20,
+        0.18,
+        0.17,
+        0.16,
+        0.145,
+        0.130,
+        0.115,
+        0.100,
+        0.085,
+        0.075,
+        0.090,
+        0.110,
+        0.105,
+        0.080,
+        0.045,
+        0.000,
+    ]
+)
 
-phase_experiment = np.array([
-    np.nan, 0.15, 0.13, 0.12,
-    0.12, 0.10, 0.08, 0.06,
-    0.06, 0.08, 0.10, 0.12,
-    np.nan, np.nan, np.nan, np.nan,
-])
+phase_experiment = np.array(
+    [
+        np.nan,
+        0.15,
+        0.13,
+        0.12,
+        0.12,
+        0.10,
+        0.08,
+        0.06,
+        0.06,
+        0.08,
+        0.10,
+        0.12,
+        np.nan,
+        np.nan,
+        np.nan,
+        np.nan,
+    ]
+)
 
 period_smooth = np.logspace(
     -3,
@@ -943,13 +1189,9 @@ period_smooth = np.logspace(
     600,
 )
 
-valid_amplitude = np.isfinite(
-    amplitude_experiment
-)
+valid_amplitude = np.isfinite(amplitude_experiment)
 
-valid_phase = np.isfinite(
-    phase_experiment
-)
+valid_phase = np.isfinite(phase_experiment)
 
 fig, amplitude_axis = plt.subplots(
     figsize=(6.2, 3.8),
@@ -1023,20 +1265,17 @@ amplitude_axis.set_xlim(1e-3, 1e2)
 amplitude_axis.set_ylim(0, 6)
 amplitude_axis.set_yticks([0, 3, 6])
 amplitude_axis.set_xlabel("Period, s")
-amplitude_axis.set_ylabel(
-    "Chl fluorescence yield,\n"
-    "relative harmonic amplitude, %"
-)
+amplitude_axis.set_ylabel("Chl fluorescence yield,\nrelative harmonic amplitude, %")
 
 phase_axis.set_ylim(-0.25, 0.25)
-phase_axis.set_yticks([
-    -0.25,
-    0.00,
-    0.25,
-])
-phase_axis.set_ylabel(
-    r"Phase shift, $\delta t/T$"
+phase_axis.set_yticks(
+    [
+        -0.25,
+        0.00,
+        0.25,
+    ]
 )
+phase_axis.set_ylabel(r"Phase shift, $\delta t/T$")
 phase_axis.axhline(
     0,
     color="black",

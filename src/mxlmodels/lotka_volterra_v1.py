@@ -1,13 +1,14 @@
 """Lotka-Volterra predator-prey model (v1): explicit prey growth and predation reactions.
 
-|  |  |
-| --- | --- |
-| doi | N/A |
+|             |                                |
+| ----------- | ------------------------------ |
+| doi         | N/A                            |
 | main author | Alfred J. Lotka; Vito Volterra |
-| paper title | classic predator–prey model |
-| published | 1925 / 1926 |
-| journal | N/A |
-| organism | N/A (abstract predator–prey) |
+| paper title | classic predator-prey model    |
+| published   | 1925 / 1926                    |
+| journal     | N/A                            |
+| organism    | N/A (abstract predator-prey)   |
+
 """
 
 from mxlpy import Model

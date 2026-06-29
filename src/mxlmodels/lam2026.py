@@ -1,3 +1,16 @@
+"""Lam 2026 model
+
+|             |       |
+| ----------- | ----- |
+| doi         | FIXME |
+| main author | FIXME |
+| paper title | FIXME |
+| published   | FIXME |
+| journal     | FIXME |
+| organism    | FIXME |
+
+"""
+
 from __future__ import annotations
 
 from mxlpy import InitialAssignment, Model

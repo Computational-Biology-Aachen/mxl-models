@@ -1,13 +1,14 @@
 """Pfennig 2024 cyanobacteria model.
 
-|  |  |
-| --- | --- |
-| doi | 10.1371/journal.pcbi.1012445 |
-| main author | Tobias Pfennig |
+|             |                                                                                                                                        |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------------- |
+| doi         | 10.1371/journal.pcbi.1012445                                                                                                           |
+| main author | Tobias Pfennig                                                                                                                         |
 | paper title | Shedding light on blue-green photosynthesis: A wavelength-dependent mathematical model of photosynthesis in Synechocystis sp. PCC 6803 |
-| published | September 2024 |
-| journal | PLOS Computational Biology |
-| organism | Synechocystis sp. PCC 6803 |
+| published   | September 2024                                                                                                                         |
+| journal     | PLOS Computational Biology                                                                                                             |
+| organism    | Synechocystis sp. PCC 6803                                                                                                             |
+
 
 Terms
 -----

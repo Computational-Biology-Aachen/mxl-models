@@ -1,12 +1,12 @@
 """Sel'kov glycolysis oscillator (Sel'kov 1968): autocatalytic ADP activation of PFK drives sustained oscillations.
 
-|  |  |
-| --- | --- |
-| doi | 10.1111/j.1432-1033.1968.tb00175.x |
-| main author | E. E. Sel'kov |
+|             |                                                            |
+| ----------- | ---------------------------------------------------------- |
+| doi         | 10.1111/j.1432-1033.1968.tb00175.x                         |
+| main author | E. E. Sel'kov                                              |
 | paper title | Self-Oscillations in Glycolysis. 1. A Simple Kinetic Model |
-| published | 1968 |
-| journal | European Journal of Biochemistry |
+| published   | 1968                                                       |
+| journal     | European Journal of Biochemistry                           |
 """
 
 from mxlpy import Model

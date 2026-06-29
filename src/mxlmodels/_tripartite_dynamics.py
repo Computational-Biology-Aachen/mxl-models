@@ -1,4 +1,15 @@
-"""Three-strain public-goods game: cooperators, cheaters, and private-goods producers."""
+"""Three-strain public-goods game: cooperators, cheaters, and private-goods producers.
+
+|             |       |
+| ----------- | ----- |
+| doi         | FIXME |
+| main author | FIXME |
+| paper title | FIXME |
+| published   | FIXME |
+| journal     | FIXME |
+| organism    | FIXME |
+
+"""
 
 from mxlpy import Model
 

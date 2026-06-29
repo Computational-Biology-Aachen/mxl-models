@@ -1,13 +1,14 @@
 """Davis 2017 model of pmf-induced photosystem II photodamage.
 
-|  |  |
-| --- | --- |
-| doi | 10.7554/eLife.16921 |
-| main author | Geoffry A. Davis |
+|             |                                                                                         |
+| ----------- | --------------------------------------------------------------------------------------- |
+| doi         | 10.7554/eLife.16921                                                                     |
+| main author | Geoffry A. Davis                                                                        |
 | paper title | Limitations to photosynthesis by proton motive force-induced photosystem II photodamage |
-| published | October 2016 |
-| journal | eLife |
-| organism | higher plants (thylakoid) |
+| published   | October 2016                                                                            |
+| journal     | eLife                                                                                   |
+| organism    | higher plants (thylakoid)                                                               |
+
 
 A mechanistic model of the photosynthetic electron transport chain and thylakoid
 proton motive force (pmf) that resolves the pmf into its two thermodynamically

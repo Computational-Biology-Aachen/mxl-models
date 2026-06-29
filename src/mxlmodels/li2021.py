@@ -1,13 +1,14 @@
 """Li 2021 model.
 
-|  |  |
-| --- | --- |
-| doi | 10.1038/s41477-021-00947-5 |
-| main author | Meng Li |
+|             |                                                                                                          |
+| ----------- | -------------------------------------------------------------------------------------------------------- |
+| doi         | 10.1038/s41477-021-00947-5                                                                               |
+| main author | Meng Li                                                                                                  |
 | paper title | Impact of ion fluxes across thylakoid membranes on photosynthetic electron transport and photoprotection |
-| published | June 2021 |
-| journal | Nature Plants |
-| organism | Arabidopsis thaliana |
+| published   | June 2021                                                                                                |
+| journal     | Nature Plants                                                                                            |
+| organism    | Arabidopsis thaliana                                                                                     |
+
 
 The Li2021 model is a kinetic model of photosynthesis that focuses on
 ion fluxes across the thylakoid membrane and their effects on the

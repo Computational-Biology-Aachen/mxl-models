@@ -1,5 +1,13 @@
-"""
-Complete mxlpy port of the Zaks et al. photosynthesis model.
+"""Complete mxlpy port of the Zaks et al. photosynthesis model.
+
+|             |       |
+| ----------- | ----- |
+| doi         | FIXME |
+| main author | FIXME |
+| paper title | FIXME |
+| published   | FIXME |
+| journal     | FIXME |
+| organism    | FIXME |
 
 Sections:
   F1 - PSII (antenna + reaction centre)

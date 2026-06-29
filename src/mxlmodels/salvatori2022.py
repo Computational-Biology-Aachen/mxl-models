@@ -1,14 +1,15 @@
 """
 Salvatori 2022 model
 
-|             |                                                                                                                        |
-| ----------- | ---------------------------------------------------------------------------------------------------------------------- |
-| doi         | 10.3389/fpls.2021.787877                                                                                               |
-| main author | Nicole Salvatori                                                                                                       |
-| paper title | A System Dynamics Approach to Model Photosynthesis at Leaf Level Under Fluctuating Light                               |
-| published   | January 2022                                                                                                           |
-| journal     | Frontiers Plant Science                                                                                                |
-| organism    | soybean, leaf, c3 photosynthesis                                                                                       |
+|             |                                                                                          |
+| ----------- | ---------------------------------------------------------------------------------------- |
+| doi         | 10.3389/fpls.2021.787877                                                                 |
+| main author | Nicole Salvatori                                                                         |
+| paper title | A System Dynamics Approach to Model Photosynthesis at Leaf Level Under Fluctuating Light |
+| published   | January 2022                                                                             |
+| journal     | Frontiers Plant Science                                                                  |
+| organism    | soybean, leaf, c3 photosynthesis                                                         |
+
 
 The Salvatori 2022 model is a soybean leaf C3 photosynthesis model, developed to investigate the effect of
 fluctuating light on two soybean varients: Eiko (WT) and MinnGold (chlorophyll deficient mutant). The goal

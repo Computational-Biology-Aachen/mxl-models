@@ -1,5 +1,14 @@
 """Dynamic enterobactin cross-feeding model: *E. coli* vs *C. glutamicum*.
 
+|             |       |
+| ----------- | ----- |
+| doi         | FIXME |
+| main author | FIXME |
+| paper title | FIXME |
+| published   | FIXME |
+| journal     | FIXME |
+| organism    | FIXME |
+
 Developed within the SFB MibiNet community to study how siderophore-mediated
 iron competition shapes the structure of synthetic microbial communities.
 

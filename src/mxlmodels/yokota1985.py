@@ -1,13 +1,13 @@
 """Yokota 1985 photorespiratory carbon oxidation cycle model.
 
-|  |  |
-| --- | --- |
-| doi | 10.1080/00021369.1985.10867259 |
-| main author | Akiho Yokota |
+|             |                                                                             |
+| ----------- | --------------------------------------------------------------------------- |
+| doi         | 10.1080/00021369.1985.10867259                                              |
+| main author | Akiho Yokota                                                                |
 | paper title | Refixation of Photorespired CO2 during Photosynthesis in Euglena gracilis z |
-| published | 1985 |
-| journal | Agricultural and Biological Chemistry |
-| organism | Euglena gracilis |
+| published   | 1985                                                                        |
+| journal     | Agricultural and Biological Chemistry                                       |
+| organism    | Euglena gracilis                                                            |
 """
 
 from mxlpy import Model

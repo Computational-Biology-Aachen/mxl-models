@@ -1,12 +1,13 @@
 """Brusselator (Prigogine 1968): autocatalytic chemical oscillator with limit cycle dynamics.
 
-|  |  |
-| --- | --- |
-| doi | 10.1063/1.1668896 |
-| main author | Ilya Prigogine |
+|             |                                                            |
+| ----------- | ---------------------------------------------------------- |
+| doi         | 10.1063/1.1668896                                          |
+| main author | Ilya Prigogine                                             |
 | paper title | Symmetry Breaking Instabilities in Dissipative Systems. II |
-| published | February 1968 |
-| journal | The Journal of Chemical Physics |
+| published   | February 1968                                              |
+| journal     | The Journal of Chemical Physics                            |
+
 """
 
 from mxlpy import Model
