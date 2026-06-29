@@ -8,12 +8,12 @@ but written as single, flat files to make inspection easier.
 # Re-export mxlpy modules for easy access
 from mxlpy import Simulator, fit, mc, mca, plot, scan
 
-from . import data
+# from . import data
 from ._dynamic_enterobactin import get_dynamic_enterobactin
 from ._population_dynamics import get_population_dynamics
 from ._tripartite_dynamics import get_tripartite_dynamics
 from .bellasio2019 import get_bellasio_2019
-from .bernacchi2013_c3ps import get_bernacchi2013
+# from .bernacchi2013_c3ps import get_bernacchi2013
 from .davis2017 import get_davis2017
 from .ebeling2026 import get_ebeling_2026
 from .ebenhoeh2014 import get_ebenhoeh2014
