@@ -1,6 +1,5 @@
-from . import matuszynska2016_npq, pfennig2024
+from . import matuszynska2016_npq
 
 __all__ = [
-    "pfennig2024",
     "matuszynska2016_npq",
 ]

@@ -1,12 +1,15 @@
-"""Sel'kov glycolysis oscillator (Sel'kov 1968): autocatalytic ADP activation of PFK drives sustained oscillations.
+"""Sel'kov glycolysis oscillator (Sel'kov 1968).
 
-|  |  |
-| --- | --- |
-| doi | 10.1111/j.1432-1033.1968.tb00175.x |
-| main author | E. E. Sel'kov |
+Autocatalytic ADP activation of PFK drives sustained oscillations.
+
+|             |                                                            |
+| ----------- | ---------------------------------------------------------- |
+| doi         | 10.1111/j.1432-1033.1968.tb00175.x                         |
+| main author | E. E. Sel'kov                                              |
 | paper title | Self-Oscillations in Glycolysis. 1. A Simple Kinetic Model |
-| published | 1968 |
-| journal | European Journal of Biochemistry |
+| published   | 1968                                                       |
+| journal     | European Journal of Biochemistry                           |
+| Ported by   | Marvin van Aalst ( @marvinvanaalst )                       |
 """
 
 from mxlpy import Model
@@ -36,7 +39,9 @@ def _f6p_influx(
 
 
 def get_selkov1968_glycolysis_oscillator() -> Model:
-    """Build the Sel'kov oscillator: two-variable dimensionless model of glycolytic oscillations via autocatalytic PFK activation."""
+    """Build the Sel'kov oscillator: two-variable dimensionless model of glycolytic
+    oscillations via autocatalytic PFK activation.
+    """
     return (
         Model()
         .add_variable("X", initial_value=0.5)

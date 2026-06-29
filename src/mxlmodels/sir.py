@@ -1,13 +1,14 @@
 """Compartmental models of infectious disease spread.
 
-|  |  |
-| --- | --- |
-| doi | 10.1098/rspa.1927.0118 |
-| main author | William Ogilvy Kermack |
+|             |                                                        |
+| ----------- | ------------------------------------------------------ |
+| doi         | 10.1098/rspa.1927.0118                                 |
+| main author | William Ogilvy Kermack                                 |
 | paper title | A Contribution to the Mathematical Theory of Epidemics |
-| published | August 1927 |
-| journal | Proceedings of the Royal Society A |
-| organism | N/A (epidemiological compartments) |
+| published   | August 1927                                            |
+| journal     | Proceedings of the Royal Society A                     |
+| organism    | N/A (epidemiological compartments)                     |
+| Ported by   | Marvin van Aalst ( @marvinvanaalst )                   |
 
 These models are based on the SIR (Susceptible-Infectious-Recovered) framework,
 which is commonly used to model the spread of infectious diseases.

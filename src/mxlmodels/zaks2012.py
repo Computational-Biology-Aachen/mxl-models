@@ -1,14 +1,18 @@
-"""
-Complete mxlpy port of the Zaks et al. photosynthesis model.
+r"""Complete mxlpy port of the Zaks et al. photosynthesis model.
 
-Sections:
-  F1 - PSII (antenna + reaction centre)
-  F2 - qE / xanthophyll cycle
-  F3 - PQ pool (QB site + plastoquinone)
-  F4 - Cytochrome b6f
-  F5 - PSI
-  F7 - ATP synthase
-  F8 - Lumen ion fluxes (Mg, Cl, K)
+|             |                                            |
+| ----------- | ------------------------------------------ |
+| doi         | FIXME                                      |
+| main author | FIXME                                      |
+| paper title | FIXME                                      |
+| published   | FIXME                                      |
+| journal     | FIXME                                      |
+| organism    | FIXME                                      |
+| Ported by   | Quang Huy Nguyen ( @PhotosyntheticBatman ) |
+
+Sections: F1 - PSII (antenna + reaction centre) F2 - qE / xanthophyll cycle F3
+\- PQ pool (QB site + plastoquinone) F4 - Cytochrome b6f F5 - PSI F7 - ATP
+synthase F8 - Lumen ion fluxes (Mg, Cl, K)
 """
 
 import numpy as np
@@ -109,7 +113,7 @@ def V_from_AZ(Xtot, A, Z):
 
 
 def complement(c1):
-    """1 – c1  (used for moiety complements)."""
+    """1 - c1 (used for moiety complements)."""
     return 1.0 - c1
 
 
@@ -633,7 +637,7 @@ def get_zaks2012() -> Model:
     m.add_readout("phi_npq", safe_ratio, args=["kqE_obs", "allrates"])
 
     # ------------------------------------------------------------------
-    # F2 – Xanthophyll cycle & PsbS
+    # F2 - Xanthophyll cycle & PsbS
     # ------------------------------------------------------------------
 
     m.add_reaction(
@@ -674,7 +678,7 @@ def get_zaks2012() -> Model:
     )
 
     # ------------------------------------------------------------------
-    # F1 – PSII
+    # F1 - PSII
     # ------------------------------------------------------------------
 
     # v1: light absorption → antenna singlet
@@ -740,21 +744,21 @@ def get_zaks2012() -> Model:
         args=["kNRP680", "P680ex"],
         stoichiometry={"P680ex": -1},
     )
-    # v12: primary charge separation – open RC (QA oxidised)
+    # v12: primary charge separation - open RC (QA oxidised)
     m.add_reaction(
         "v12",
         fn=v12_13,
         args=["kETP680PheOpenRC", "P680ex", "Pheneut", "QAox", "efield_slowdown_r"],
         stoichiometry={"P680ex": -1, "P680plus": 1, "PheAnion": 1},
     )
-    # v13: primary charge separation – closed RC (QA reduced)
+    # v13: primary charge separation - closed RC (QA reduced)
     m.add_reaction(
         "v13",
         fn=v12_13,
         args=["kETP680PheClosedRC", "P680ex", "Pheneut", "QAred", "efield_slowdown_r"],
         stoichiometry={"P680ex": -1, "P680plus": 1, "PheAnion": 1},
     )
-    # v14: Phe⁻ → QA electron transfer (QA becomes reduced, tracked as –QAox)
+    # v14: Phe⁻ → QA electron transfer (QA becomes reduced, tracked as -QAox)
     m.add_reaction(
         "v14",
         fn=v14,
@@ -806,7 +810,7 @@ def get_zaks2012() -> Model:
     )
 
     # ------------------------------------------------------------------
-    # F3 – PQ pool / QB site
+    # F3 - PQ pool / QB site
     # ------------------------------------------------------------------
 
     # r_q2: QA⁻ → QB (first reduction)
@@ -860,7 +864,7 @@ def get_zaks2012() -> Model:
     )
 
     # ------------------------------------------------------------------
-    # F4 – Cytochrome b6f
+    # F4 - Cytochrome b6f
     # ------------------------------------------------------------------
     # r_cyt_b6f is pre-computed as a derived quantity above.
     # Stoichiometry: consumes PQH₂, produces PQ, reduces PC, pumps 4H⁺ into lumen.
@@ -878,7 +882,7 @@ def get_zaks2012() -> Model:
     )  # CHECK
 
     # ------------------------------------------------------------------
-    # F5 – PSI
+    # F5 - PSI
     # ------------------------------------------------------------------
 
     # r_psi_1: PC reduction of P700+
@@ -897,7 +901,7 @@ def get_zaks2012() -> Model:
     )
 
     # ------------------------------------------------------------------
-    # F7 – ATP synthase + leak
+    # F7 - ATP synthase + leak
     # ------------------------------------------------------------------
 
     m.add_reaction(
@@ -936,7 +940,7 @@ def get_zaks2012() -> Model:
     )
 
     # ------------------------------------------------------------------
-    # F8 – Lumen ion fluxes
+    # F8 - Lumen ion fluxes
     # ------------------------------------------------------------------
 
     m.add_reaction(
@@ -981,7 +985,7 @@ def get_zaks2012() -> Model:
     )
 
     # ------------------------------------------------------------------
-    # F9 – Methyl Viologen
+    # F9 - Methyl Viologen
     # ------------------------------------------------------------------
 
     m.add_reaction(

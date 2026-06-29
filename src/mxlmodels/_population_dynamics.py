@@ -1,4 +1,14 @@
-"""Two-species population dynamics: E. coli and C. glutamicum with fixed affinities."""
+"""Two-species population dynamics: E. coli and C. glutamicum with fixed affinities.
+
+|             |       |
+| ----------- | ----- |
+| doi         | FIXME |
+| main author | FIXME |
+| paper title | FIXME |
+| published   | FIXME |
+| journal     | FIXME |
+| organism    | FIXME |
+"""
 
 from mxlpy import Model
 

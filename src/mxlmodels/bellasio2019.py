@@ -8,36 +8,37 @@
 | published   | January 2019                                                                                                           |
 | journal     | Photosynthesis Research                                                                                                |
 | organism    | C3 leaf                                                                                                                |
+| Ported by   | Marvin van Aalst ( @marvinvanaalst )                                                                                   |
 
 The [Bellasio2019](https://doi.org/10.1007/s11120-018-0601-1) model is a
 generalized C3 leaf-photosynthesis model that includes simplified
 representations of the light and dark reactions and a stomatal behavior
-submodule. A lot of its implementation is based on past work by the same
-author and is mainly inspired by the common
-Farquhar-von Caemmerer-Berry model. The light reactions are modified from Yin
-et al. (2004) and include the potential rates of ATP and NADPH production
-based on light intensity. This model has been created with the simple user in
-mind, and the author has made an effort to show its simplicity by giving
-access to a Microsoft Excel Workbook containing the entire model. To showcase
-the model's capabilities, the author creates common steady-state carbon
-assimilation curves against intercellular CO2 concentration and light
-intensity, and compares them to experimental data from the literature. As many
-models of photosynthesis rely on purely stead-state assumptions, this model is
-also validated in dynamic conditions, showing for example the response of the
-model to a fluctuation of ambient oxygen concentration.
+submodule. A lot of its implementation is based on past work by the same author
+and is mainly inspired by the common Farquhar-von Caemmerer-Berry model. The
+light reactions are modified from Yin et al. (2004) and include the potential
+rates of ATP and NADPH production based on light intensity. This model has been
+created with the simple user in mind, and the author has made an effort to show
+its simplicity by giving access to a Microsoft Excel Workbook containing the
+entire model. To showcase the model's capabilities, the author creates common
+steady-state carbon assimilation curves against intercellular CO2 concentration
+and light intensity, and compares them to experimental data from the
+literature. As many models of photosynthesis rely on purely stead-state
+assumptions, this model is also validated in dynamic conditions, showing for
+example the response of the model to a fluctuation of ambient oxygen
+concentration.
 
-This model was created to stay as simple as possible, while still being able
-to accurately represent the main features of C<sub>3</sub> photosynthesis. As
+This model was created to stay as simple as possible, while still being able to
+accurately represent the main features of C<sub>3</sub> photosynthesis. As
 such, it can be used as a base for more complex models, or as a starting block
 in larger models of plant physiology. While giving access to the entire model
 in an Excel Workbook format is transparent and great, the execution of said
 practice has been inefficient in this instance. The entire mathematical
 description of the model is also given in the Appendix of the publication,
 however there are missing or different equations between the publication and
-the Excel Workbook, which can lead to confusion. On top of that, the
-simulation protocols used for each figure are only given in small details,
-which leads to further confusion when trying to reproduce the results and see
-which equations are correct or not.
+the Excel Workbook, which can lead to confusion. On top of that, the simulation
+protocols used for each figure are only given in small details, which leads to
+further confusion when trying to reproduce the results and see which equations
+are correct or not.
 """
 
 import numpy as np
@@ -539,6 +540,7 @@ def _stom_diff(
 def get_bellasio_2019() -> Model:
     """Bellassio 2019 model
 
+    ```
     The [Bellasio2019](https://doi.org/10.1007/s11120-018-0601-1) model is a
     generalized C3 leaf-photosynthesis model that includes simplified
     representations of the light and dark reactions and a stomatal behavior
@@ -568,6 +570,7 @@ def get_bellasio_2019() -> Model:
     simulation protocols used for each figure are only given in small details,
     which leads to further confusion when trying to reproduce the results and see
     which equations are correct or not.
+    ```
     """
     m = Model()
 

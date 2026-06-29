@@ -1,16 +1,17 @@
 """NPQ model for tomato.
 
-|  |  |
-| --- | --- |
-| doi | tbd |
-| main author | tbd |
-| paper title | tbd |
-| published | tbd |
-| journal | tbd |
-| organism | tomato (Solanum lycopersicum) |
+|             |                                            |
+| ----------- | ------------------------------------------ |
+| doi         | tbd                                        |
+| main author | tbd                                        |
+| paper title | tbd                                        |
+| published   | tbd                                        |
+| journal     | tbd                                        |
+| organism    | tomato (Solanum lycopersicum)              |
+| Ported by   | Quang Huy Nguyen ( @PhotosyntheticBatman ) |
 
-Adapted from the original NPQ model for Arabidopsis - without the light conversion fn.
-Rewritten for better implementation.
+Adapted from the original NPQ model for Arabidopsis - without the light
+conversion fn. Rewritten for better implementation.
 """
 
 import numpy as np
@@ -278,7 +279,9 @@ def _keq_cytb6f(
 ) -> float:
     """Equilibrium constant of cytb6f.
 
+    ```
     Adjusted from Matuszynska et al 2019 - calculated from pmf instead of deltapH
+    ```
     """
     return np.exp(
         -(
@@ -301,7 +304,9 @@ def _keq_at_psyn(
 ) -> float:
     """Equilibrium constant of ATP synthase. Adjusted for pmf description.
 
+    ```
     For more information see Matuszynska et al 2016 or Ebenhöh et al. 2011,2014
+    ```
     """
     DG = delta_g0_atp - f * pmf * hpr
     return pi_mol * np.exp(-DG / (r * t))
@@ -356,9 +361,11 @@ def _quencher(
 ) -> float:
     """Quencher mechanism - Anna 2016 model
 
+    ```
     accepts:
     Pr: fraction of non-protonated PsbS protein
     V: fraction of Violaxanthin
+    ```
     """
     Z = xtot - vx
     P = psb_stot - psb_s
@@ -434,14 +441,14 @@ def _delta_ph(
     p_h_lumen: float,
     p_h_stoma: float,
 ) -> float:
-    """
+    """```
     Calculation of pH difference between stroma and thylakoid lumen
 
     Accepts:
 
     pH_lumen: thylakoid lumen pH
     pH_stroma: stroma pH
-
+    ```
     """
     return p_h_lumen - p_h_stoma
 
@@ -461,7 +468,9 @@ def _initial_delta_psi(
     f: float,
     t: float,
 ) -> float:
-    """Estimation of delta psi in the dark - assuming delta_pH and delta_psi have equal contribution to pmf"""
+    """Estimation of delta psi in the dark - assuming delta_pH and delta_psi have
+    equal contribution to pmf
+    """
     return -np.log(10) * ((r * t) / f) * delta_p_h
 
 
@@ -474,6 +483,7 @@ def _proton_motive_force(
 ) -> float:
     """Proton motive force formula - taken from Lowe & Jones (1984).
 
+    ```
     https://doi.org/10.1016/0968-0004(84)90038-0
 
     Accepts:
@@ -482,6 +492,7 @@ def _proton_motive_force(
     F: Faraday constant
     R: gas constant
     T: temperature (K)
+    ```
     """
     return delta_psi - np.log(10) * ((r * t) / f) * _delta_ph
 
@@ -671,7 +682,9 @@ def _v_psb_sp(
 ) -> float:
     """Protonation of PsbS protein - Modified for Zx inhibition effect.
 
+    ```
     Zx is assmuned to inhibit the deprotonation of PsbS
+    ```
     """
     a = h**n_hl / (
         h**n_hl
@@ -701,7 +714,9 @@ def _v_psb_s(
 ) -> float:
     """Deprotonation of PsbS protein - Modified for Zx inhibition effect.
 
+    ```
     Zx is assmuned to inhibit the deprotonation of PsbS
+    ```
     """
     return k_deprot * psbs_deprot_act * psb_sp
 
@@ -713,8 +728,10 @@ def _ql(b1: float, b2: float, psii_tot: float) -> float:
 def get_nguyen2026_tomato() -> Model:
     """NPQ model for tomato.
 
+    ```
     Adapted from the original NPQ model for Arabidopsis - without the light conversion fn
     Rewritten for better implentation
+    ```
     """
     m = Model()
 

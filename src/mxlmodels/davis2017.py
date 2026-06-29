@@ -1,27 +1,29 @@
-"""Davis 2017 model of pmf-induced photosystem II photodamage.
+r"""Davis 2017 model of pmf-induced photosystem II photodamage.
 
-|  |  |
-| --- | --- |
-| doi | 10.7554/eLife.16921 |
-| main author | Geoffry A. Davis |
+|             |                                                                                         |
+| ----------- | --------------------------------------------------------------------------------------- |
+| doi         | 10.7554/eLife.16921                                                                     |
+| main author | Geoffry A. Davis                                                                        |
 | paper title | Limitations to photosynthesis by proton motive force-induced photosystem II photodamage |
-| published | October 2016 |
-| journal | eLife |
-| organism | higher plants (thylakoid) |
+| published   | October 2016                                                                            |
+| journal     | eLife                                                                                   |
+| organism    | higher plants (thylakoid)                                                               |
+| Ported by   | Quang Huy Nguyen ( @PhotosyntheticBatman )                                              |
 
-A mechanistic model of the photosynthetic electron transport chain and thylakoid
-proton motive force (pmf) that resolves the pmf into its two thermodynamically
-distinct components: the transmembrane electric field (Dpsi) and the lumen pH
-gradient (delta_pH). The central result is that the Dpsi component, rather than
-lumen acidification, drives elevated PSII charge recombination, which produces
-singlet oxygen (singO2) and subsequent PSII photodamage.
+A mechanistic model of the photosynthetic electron transport chain and
+thylakoid proton motive force (pmf) that resolves the pmf into its two
+thermodynamically distinct components: the transmembrane electric field (Dpsi)
+and the lumen pH gradient (delta_pH). The central result is that the Dpsi
+component, rather than lumen acidification, drives elevated PSII charge
+recombination, which produces singlet oxygen (singO2) and subsequent PSII
+photodamage.
 
 Electron transport runs PSII -> PQ pool -> cytochrome b6f -> plastocyanin ->
 PSI -> ferredoxin -> FNR -> NADPH -> CBB. Proton accumulation in the lumen and
 charge separation across the membrane build the pmf, which drives ATP synthase.
 Counter-ion fluxes (KEA3 K+/H+ antiport, VKC K+ channel) partition the pmf
 between Dpsi and delta_pH. NPQ is modelled via PsbS protonation and the
-xanthophyll cycle (violaxanthin <-> zeaxanthin).
+xanthophyll cycle (violaxanthin \<-> zeaxanthin).
 """
 
 import numpy as np
@@ -204,6 +206,9 @@ def vCBB(NADPH, kCBB):  # checked
 def get_davis2017() -> Model:
     """Build the Davis 2017 pmf / PSII photodamage model.
 
+    `````
+    ````
+    ```
     Assembles the photosynthetic electron transport chain, thylakoid proton
     motive force, and photoprotection machinery into a single mxlpy Model.
 
@@ -226,6 +231,9 @@ def get_davis2017() -> Model:
     Returns
     -------
         Model: the configured mxlpy model.
+    ```
+    ````
+    `````
     """
     m = Model()
 

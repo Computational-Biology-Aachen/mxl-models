@@ -1,14 +1,17 @@
-"""Repressilator (Elowitz 2000): synthetic genetic oscillator with three cyclically repressing genes.
+"""Repressilator (Elowitz 2000).
 
-|  |  |
-| --- | --- |
-| doi | 10.1038/35002125 |
-| main author | Michael B. Elowitz |
+Ssynthetic genetic oscillator with three cyclically repressing genes.
+
+|             |                                                               |
+| ----------- | ------------------------------------------------------------- |
+| doi         | 10.1038/35002125                                              |
+| main author | Michael B. Elowitz                                            |
 | paper title | A synthetic oscillatory network of transcriptional regulators |
-| published | January 2000 |
-| journal | Nature |
-| organism | Escherichia coli (synthetic circuit) |
-| biomodels | BIOMD0000000012 |
+| published   | January 2000                                                  |
+| journal     | Nature                                                        |
+| organism    | Escherichia coli (synthetic circuit)                          |
+| biomodels   | BIOMD0000000012                                               |
+| Ported by   | Marvin van Aalst ( @marvinvanaalst )                          |
 """
 
 from mxlpy import Model
@@ -68,7 +71,9 @@ def _protein_degradation(
 
 
 def get_elowitz2000_repressilator() -> Model:
-    """Build the Repressilator model: synthetic three-gene ring oscillator where each repressor cyclically inhibits the next."""
+    """Build the Repressilator model: synthetic three-gene ring oscillator where each
+    repressor cyclically inhibits the next.
+    """
     return (
         Model()
         .add_variable("MlacI", initial_value=0.0)
