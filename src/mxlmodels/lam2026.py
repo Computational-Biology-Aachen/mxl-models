@@ -1,14 +1,20 @@
-"""Lam 2026 model
+r"""Lam 2026 model
 
 |             |                                            |
 | ----------- | ------------------------------------------ |
-| doi         | FIXME                                      |
-| main author | FIXME                                      |
-| paper title | FIXME                                      |
-| published   | FIXME                                      |
-| journal     | FIXME                                      |
-| organism    | FIXME                                      |
+| doi         | 10.1038/s41467-026-70414-2                 |
+| main author | Lam Lam, Rebecca Lee                       |
+| paper title | Dissecting the contributions to non-photochemical quenching in a land plant under ﬂuctuating light                                      |
+| published   | 09 March 2026                                     |
+| journal     | Nature Communications                                     |
+| organism    | Higher plants (Nicotiana benthamiana)                                     |
 | Ported by   | Quang Huy Nguyen ( @PhotosyntheticBatman ) |
+
+The model provide a detailed, up-to-date descriptions regarding NPQ compoents within higher plants, along with detailed dataset of fluorescence lifetime and pigment qunatification from mutants that 
+lacks one or more compoents of NPQ. Combined with a rigorous fitting and optimization schedule for parameters, the model brings up quantified contributions of different NPQ components and how it changes overtime. 
+
+Compoents: energy-depedent quenching (qE), zeaxanthin-depdent quenching (qZ) and photoinhibition (qI)
+
 """
 
 from __future__ import annotations
