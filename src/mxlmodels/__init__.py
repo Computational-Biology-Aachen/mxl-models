@@ -54,7 +54,6 @@ __all__ = [
     "data",
     "fit",
     "get_bellasio_2019",
-    "get_bernacchi2013",
     "get_davis2017",
     "get_davis2017",
     "get_dynamic_enterobactin",

@@ -28,7 +28,7 @@ def _ph(
 def _ph_inv(
     ph: float,
 ) -> float:
-    """Convert pH to lumenal proton concentration (inverse of \_ph)."""
+    r"""Convert pH to lumenal proton concentration (inverse of \_ph)."""
     return 3.2e4 * 10**-ph
 
 
