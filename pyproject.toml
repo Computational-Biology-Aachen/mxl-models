@@ -1,6 +1,6 @@
 [build-system]
 build-backend = "hatchling.build"
-requires = ["hatchling"]
+requires      = ["hatchling"]
 
 [dependency-groups]
 dev = [
@@ -15,6 +15,7 @@ dev = [
   "pytest-cov>=5.0.0",
   "pytest>=8.3.3",
   "ruff>=0.15.11",
+  "typer>=0.24.1",
 ]
 
 [project]
@@ -48,7 +49,7 @@ requires-python = ">=3.13"
 version = "1.3.0"
 
 [tool.hatchling]
-from = "src"
+from    = "src"
 include = ["mxlmodels"]
 
 [tool.pyright]
@@ -68,7 +69,7 @@ strict = []
 
 [tool.ruff]
 indent-width = 4
-line-length = 88
+line-length  = 88
 
 [tool.ruff.lint]
 fixable = ["ALL"]
@@ -94,7 +95,6 @@ ignore = [
   "PLR0913", # max num of arguments
   "PLR0915", # too many lines
   "PT011",   # pytest.raises is too broad
-  "RUF022",  # unsorted all
   "S110",    # try-except-pass
   "S301",    # pickle usage
   "TC006",   # cast("type")
@@ -131,12 +131,12 @@ convention = "numpy"
 
 [tool.tomlsort]
 spaces_before_inline_comment = 2
-spaces_indent_inline_array = 2
-trailing_comma_inline_array = true
+spaces_indent_inline_array   = 2
+trailing_comma_inline_array  = true
 
 [tool.uv]
-package = true
 exclude-newer = "3 days"
+package       = true
 
 [tool.uv.sources]
 mxlmodels = { workspace = true }
