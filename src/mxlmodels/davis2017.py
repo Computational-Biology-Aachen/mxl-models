@@ -2,11 +2,14 @@ r"""Davis 2017 model of pmf-induced photosystem II photodamage.
 
 |             |                                                                                         |
 | ----------- | --------------------------------------------------------------------------------------- |
-| doi         | 10.7554/eLife.16921                                                                     |
+| doi         | 10.1098/rstb.2016.0381                                                                     |
 | main author | Geoffry A. Davis                                                                        |
-| paper title | Limitations to photosynthesis by proton motive force-induced photosystem II photodamage |
-| published   | October 2016                                                                            |
-| journal     | eLife                                                                                   |
+| paper title | Hacking the thylakoid proton motive force
+for improved photosynthesis: modulating
+ion flux rates that control proton motive
+force partitioning into Dpsi and DpH |
+| published   | 31 May 2017                                                                           |
+| journal     |  Philosophical Transactions of the Royal Society B |
 | organism    | higher plants (thylakoid)                                                               |
 | Ported by   | Quang Huy Nguyen ( @PhotosyntheticBatman )                                              |
 
