@@ -9,7 +9,7 @@
 | journal     | Journal of Experimental Botany           |
 | organism    | C3 plant (chloroplast)                   |
 | biomodels   | BIOMD0000000013                          |
-
+| Ported by   | Marvin van Aalst ( @marvinvanaalst )     |
 """
 
 from mxlpy import Model
@@ -42,7 +42,9 @@ def _pi_cbb(
     ru5p: float,
     atp: float,
 ) -> float:
-    """Free orthophosphate from total minus all phosphorylated CBB intermediates (bisphosphates count twice)."""
+    """Free orthophosphate from total minus all phosphorylated CBB intermediates
+    (bisphosphates count twice).
+    """
     return phosphate_total - (
         pga
         + 2 * bpga
@@ -83,7 +85,9 @@ def _rate_translocator(
     k_gap: float,
     k_dhap: float,
 ) -> float:
-    """Denominator term N for the phosphate translocator shared by all triose-P export reactions."""
+    """Denominator term N for the phosphate translocator shared by all triose-P export
+    reactions.
+    """
     return 1 + (1 + k_pxt / p_ext) * (
         pi / k_pi + pga / k_pga + gap / k_gap + dhap / k_dhap
     )
@@ -107,7 +111,9 @@ def _rate_poolman_5i(
     nadph: float,
     ki_nadph: float,
 ) -> float:
-    """Rubisco carboxylation rate (Poolman 2000): bi-substrate with 5 competitive inhibitors."""
+    """Rubisco carboxylation rate (Poolman 2000): bi-substrate with 5 competitive
+    inhibitors.
+    """
     top = vmax * rubp * co2
     btm = (
         rubp
@@ -211,7 +217,9 @@ def _rate_prk(
     ki134: float,
     ki135: float,
 ) -> float:
-    """Phosphoribulokinase rate: ordered bi-substrate kinetics with PGA, RuBP, Pi and ADP inhibition."""
+    """Phosphoribulokinase rate: ordered bi-substrate kinetics with PGA, RuBP, Pi and
+    ADP inhibition.
+    """
     return (
         v13
         * ru5p
@@ -249,7 +257,9 @@ def _rate_starch(
     kast2: float,
     kast3: float,
 ) -> float:
-    """Starch synthesis rate via G1P+ATP with ADP inhibition and allosteric activation by PGA/F6P/FBP."""
+    """Starch synthesis rate via G1P+ATP with ADP inhibition and allosteric activation
+    by PGA/F6P/FBP.
+    """
     return (
         v_st
         * g1p
@@ -278,9 +288,11 @@ def _rate_atp_synthase_2000(
 def get_poolman2000() -> Model:
     """Poolman 2000 Calvin-Benson-Bassham cycle model.
 
+    ```
     Reference: Poolman, Mark G., David A. Fell, and Simon Thomas.
     "Modelling photosynthesis and its control."
     Journal of experimental botany 51.suppl_1 (2000): 319-328
+    ```
     """
     m: Model = Model()
     m = m.add_variable("3PGA", initial_value=0.6387788347932627)

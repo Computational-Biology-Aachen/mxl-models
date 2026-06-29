@@ -8,7 +8,6 @@
 | published   | FIXME |
 | journal     | FIXME |
 | organism    | FIXME |
-
 """
 
 from mxlpy import Model

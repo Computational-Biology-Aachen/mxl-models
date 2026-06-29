@@ -8,6 +8,7 @@
 | published   | August 1927                                            |
 | journal     | Proceedings of the Royal Society A                     |
 | organism    | N/A (epidemiological compartments)                     |
+| Ported by   | Marvin van Aalst ( @marvinvanaalst )                   |
 
 These models are based on the SIR (Susceptible-Infectious-Recovered) framework,
 which is commonly used to model the spread of infectious diseases.

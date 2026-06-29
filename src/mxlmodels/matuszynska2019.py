@@ -1,14 +1,16 @@
-"""Matuszynska 2019 photosynthesis model with NPQ, state transitions, and Calvin cycle.
+"""Matuszynska 2019.
+
+Photosynthesis model with NPQ, state transitions, and Calvin cycle.
 
 |             |                                                                           |
 | ----------- | ------------------------------------------------------------------------- |
 | doi         | 10.1111/ppl.12962                                                         |
 | main author | Anna Matuszyńska                                                          |
-| paper title | Balancing energy supply during photosynthesis – a theoretical perspective |
+| paper title | Balancing energy supply during photosynthesis - a theoretical perspective |
 | published   | May 2019                                                                  |
 | journal     | Physiologia Plantarum                                                     |
 | organism    | higher plants                                                             |
-
+| Ported by   | Marvin van Aalst ( @marvinvanaalst )                                      |
 """
 
 import math
@@ -30,14 +32,16 @@ def _dg_ph(
     r: float,
     t: float,
 ) -> float:
-    """Thermodynamic coefficient dG/dpH = RT*ln(10) in kJ/mol."""
+    """Thermodynamic coefficient dG/dpH = RT\*ln(10) in kJ/mol."""
     return np.log(10) * r * t
 
 
 def _ph_lumen(
     protons: float,
 ) -> float:
-    """Lumenal pH from proton concentration in mmol/mmol_Chl (conversion factor 0.00025)."""
+    """Lumenal pH from proton concentration in mmol/mmol_Chl (conversion factor
+    0.00025).
+    """
     protons_mmc = protons * 0.00025
     # Clamp log to physiological state & prevent numerical instabilities
     # -log10(1e-14) = pH 14 <= protons <= -log10(1e-11) = pH 1
@@ -65,10 +69,12 @@ def _quencher(
 ) -> float:
     """co-operative 4-state quenching mechanism.
 
+    ```
     gamma0: slow quenching of (Vx - protonation)
     gamma1: fast quenching (Vx + protonation)
     gamma2: fastest possible quenching (Zx + protonation)
     gamma3: slow quenching of Zx present (Zx - protonation).
+    ```
     """
     ZAnt = zx / (zx + k_z_sat)
     return y0 * vx * psbs + y1 * vx * psbsp + y2 * ZAnt * psbsp + y3 * ZAnt * psbs
@@ -82,7 +88,9 @@ def _keq_pq_red(
     d_g_p_h: float,
     rt: float,
 ) -> float:
-    """Equilibrium constant for PQ reduction by QA, pH-corrected via stroma proton contribution."""
+    """Equilibrium constant for PQ reduction by QA, pH-corrected via stroma proton
+    contribution.
+    """
     dg1 = -e0_qa * f
     dg2 = -2 * e0_pq * f
     dg = -2 * dg1 + dg2 + 2 * p_hstroma * d_g_p_h
@@ -94,7 +102,9 @@ def _ps2_crosssection(
     static_ant_ii: float,
     static_ant_i: float,
 ) -> float:
-    """Equilibrium constant for PQ reduction by QA, pH-corrected via stroma proton contribution."""
+    """Equilibrium constant for PQ reduction by QA, pH-corrected via stroma proton
+    contribution.
+    """
     return static_ant_ii + (1 - static_ant_ii - static_ant_i) * lhc
 
 
@@ -117,7 +127,9 @@ def _pi_cbb(
     ru5p: float,
     atp: float,
 ) -> float:
-    """Free orthophosphate from total minus all phosphorylated CBB intermediates (bisphosphates count twice)."""
+    """Free orthophosphate from total minus all phosphorylated CBB intermediates
+    (bisphosphates count twice).
+    """
     return phosphate_total - (
         pga
         + 2 * bpga
@@ -147,7 +159,9 @@ def _keq_atp(
     pi_mol: float,
     rt: float,
 ) -> float:
-    """Equilibrium constant for ATP synthase, driven by the transmembrane proton gradient."""
+    """Equilibrium constant for ATP synthase, driven by the transmembrane proton
+    gradient.
+    """
     delta_g = delta_g0_atp - d_g_p_h * hpr * (p_hstroma - p_h)
     return pi_mol * math.exp(-delta_g / rt)
 
@@ -161,7 +175,9 @@ def _keq_cytb6f(
     rt: float,
     d_g_p_h: float,
 ) -> float:
-    """Equilibrium constant of cytochrome b6f from redox potentials and transmembrane pH gradient."""
+    """Equilibrium constant of cytochrome b6f from redox potentials and transmembrane
+    pH gradient.
+    """
     DG1 = -2 * f * e0_pq
     DG2 = -f * e0_pc
     DG = -(DG1 + 2 * d_g_p_h * p_h) + 2 * DG2 + 2 * d_g_p_h * (p_hstroma - p_h)
@@ -189,7 +205,9 @@ def _keq_pcp700(
     eo_p700: float,
     rt: float,
 ) -> float:
-    """Equilibrium constant for PC -> P700 electron transfer from standard redox potentials."""
+    """Equilibrium constant for PC -> P700 electron transfer from standard redox
+    potentials.
+    """
     dg1 = -e0_pc * f
     dg2 = -eo_p700 * f
     dg = -dg1 + dg2
@@ -202,7 +220,9 @@ def _keq_faf_d(
     e0_fd: float,
     rt: float,
 ) -> float:
-    """Equilibrium constant for FA -> Fd electron transfer from standard redox potentials."""
+    """Equilibrium constant for FA -> Fd electron transfer from standard redox
+    potentials.
+    """
     dg1 = -e0_fa * f
     dg2 = -e0_fd * f
     dg = -dg1 + dg2
@@ -224,8 +244,10 @@ def _ps1states_2019(
 ) -> float:
     """QSSA calculates open state of PSI.
 
+    ```
     depends on reduction states of plastocyanin and ferredoxin
     C = [PC], F = [Fd] (ox. forms).
+    ```
     """
     L = (1 - ps2cs) * pfd
     return psi_tot / (
@@ -248,7 +270,9 @@ def _rate_translocator(
     k_gap: float,
     k_dhap: float,
 ) -> float:
-    """Denominator term N for the phosphate translocator shared by all triose-P export reactions."""
+    """Denominator term N for the phosphate translocator shared by all triose-P export
+    reactions.
+    """
     return 1 + (1 + k_pxt / p_ext) * (
         pi / k_pi + pga / k_pga + gap / k_gap + dhap / k_dhap
     )
@@ -288,7 +312,9 @@ def _b6f(
     keq_b6f: float,
     k_cytb6f: float,
 ) -> float:
-    """Cytochrome b6f rate: reversible mass action clamped to -kCytb6f to avoid runaway reverse flux."""
+    """Cytochrome b6f rate: reversible mass action clamped to -kCytb6f to avoid
+    runaway reverse flux.
+    """
     return max(
         k_cytb6f * (pq_red * pc_ox**2 - pq_ox * pc_red**2 / keq_b6f),
         -k_cytb6f,
@@ -298,7 +324,9 @@ def _b6f(
 def _four_div_by(
     x: float,
 ) -> float:
-    """Return 4/x; used for the 4-proton stoichiometry of b6f scaled by buffering capacity."""
+    """Return 4/x; used for the 4-proton stoichiometry of b6f scaled by buffering
+    capacity.
+    """
     return 4.0 / x
 
 
@@ -307,7 +335,9 @@ def _protons_stroma_2016(
 ) -> float:
     """Convert stromal pH to proton concentration (µmol/L).
 
+    ```
     Introduced by the Matuszynska 2016 PhD model.
+    ```
     """
     return 4000.0 * 10 ** (-ph)
 
@@ -354,7 +384,9 @@ def _rate_fnr_2019(
     keq_fnr: float,
     convf: float,
 ) -> float:
-    """FNR rate (2019 formulation): same as 2016 but NADP/H concentrations scaled by convf."""
+    """FNR rate (2019 formulation): same as 2016 but NADP/H concentrations scaled by
+    convf.
+    """
     fdred = fd_red / km_fnr_f
     fdox = fd_ox / km_fnr_f
     nadph = nadph / convf / km_fnr_n
@@ -370,14 +402,18 @@ def _rate_ps2(
     b1: float,
     k2: float,
 ) -> float:
-    """PSII electron transfer rate from the open-excited state B1 and photochemistry rate constant k2."""
+    """PSII electron transfer rate from the open-excited state B1 and photochemistry
+    rate constant k2.
+    """
     return 0.5 * k2 * b1
 
 
 def _two_div_by(
     x: float,
 ) -> float:
-    """Return 2/x; used for the 2-proton stoichiometry of PSII scaled by buffering capacity."""
+    """Return 2/x; used for the 2-proton stoichiometry of PSII scaled by buffering
+    capacity.
+    """
     return 2.0 / x
 
 
@@ -386,7 +422,9 @@ def _rate_ps1(
     ps2cs: float,
     pfd: float,
 ) -> float:
-    """PSI electron transfer rate: open PSI centers (a) * light absorbed by PSI antenna."""
+    """PSI electron transfer rate: open PSI centers (a) * light absorbed by PSI
+    antenna.
+    """
     return (1 - ps2cs) * pfd * a
 
 
@@ -395,7 +433,9 @@ def _rate_leak(
     ph_stroma: float,
     k_leak: float,
 ) -> float:
-    """Passive proton leak across the thylakoid membrane, proportional to the proton gradient."""
+    """Passive proton leak across the thylakoid membrane, proportional to the proton
+    gradient.
+    """
     return k_leak * (protons_lumen - _protons_stroma_2016(ph_stroma))
 
 
@@ -423,7 +463,9 @@ def _rate_state_transition_ps1_ps2(
     km_st: float,
     n_st: float,
 ) -> float:
-    """STT7-kinase phosphorylation of LHC; inhibited by oxidised PQ (state 1 → 2 transition)."""
+    """STT7-kinase phosphorylation of LHC; inhibited by oxidised PQ (state 1 → 2
+    transition).
+    """
     return k_stt7 * (1 / (1 + (pox / p_tot / km_st) ** n_st)) * ant
 
 
@@ -445,7 +487,9 @@ def _rate_poolman_5i(
     nadph: float,
     ki_nadph: float,
 ) -> float:
-    """Rubisco carboxylation rate (Poolman 2000): bi-substrate with 5 competitive inhibitors."""
+    """Rubisco carboxylation rate (Poolman 2000): bi-substrate with 5 competitive
+    inhibitors.
+    """
     top = vmax * rubp * co2
     btm = (
         rubp
@@ -549,7 +593,9 @@ def _rate_prk(
     ki134: float,
     ki135: float,
 ) -> float:
-    """Phosphoribulokinase rate: ordered bi-substrate kinetics with PGA, RuBP, Pi and ADP inhibition."""
+    """Phosphoribulokinase rate: ordered bi-substrate kinetics with PGA, RuBP, Pi and
+    ADP inhibition.
+    """
     return (
         v13
         * ru5p
@@ -587,7 +633,9 @@ def _rate_starch(
     kast2: float,
     kast3: float,
 ) -> float:
-    """Starch synthesis rate via G1P+ATP with ADP inhibition and allosteric activation by PGA/F6P/FBP."""
+    """Starch synthesis rate via G1P+ATP with ADP inhibition and allosteric activation
+    by PGA/F6P/FBP.
+    """
     return (
         v_st
         * g1p
@@ -616,7 +664,9 @@ def _ps2states_2016_phd_surrogate(
     pfd: float,
     k_h0: float,
 ) -> tuple[float, float, float, float]:
-    """PSII state populations (PHD quenching model, 2016) via analytical closed-form surrogate."""
+    """PSII state populations (PHD quenching model, 2016) via analytical closed-form
+    surrogate.
+    """
     x0 = k_f**2
     x1 = k_h0**2
     x2 = k2 * k_f
@@ -703,11 +753,14 @@ def _rate_fluorescence(
 
 
 def get_matuszynska2019() -> Model:
-    """Matuszynska 2019 photosynthesis model with NPQ, state transitions, and Calvin cycle.
+    """Matuszynska 2019 photosynthesis model with NPQ, state transitions, and Calvin
+    cycle.
 
+    ```
     Reference: Matuszyńska, Anna, Nima P. Saadat, and Oliver Ebenhöh.
     "Balancing energy supply during photosynthesis - a theoretical perspective."
     Physiologia plantarum 166.1 (2019): 392-402.
+    ```
     """
     m: Model = Model()
     m = m.add_variable("3PGA", initial_value=0.9928653922138561)

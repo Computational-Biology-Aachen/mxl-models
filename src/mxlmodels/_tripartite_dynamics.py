@@ -8,7 +8,6 @@
 | published   | FIXME |
 | journal     | FIXME |
 | organism    | FIXME |
-
 """
 
 from mxlpy import Model
@@ -23,7 +22,9 @@ def _d_pdt(
     cheater: float,
     private: float,
 ) -> float:
-    """Net growth rate of public-goods producers; lost to cheaters and private producers."""
+    """Net growth rate of public-goods producers; lost to cheaters and private
+    producers.
+    """
     return (
         -cheater * public * alpha
         - private * public * beta
@@ -49,7 +50,9 @@ def _d_mdt(
     r_m: float,
     private: float,
 ) -> float:
-    """Net growth rate of private-goods producers; grows on public goods, density-limited."""
+    """Net growth rate of private-goods producers; grows on public goods,
+    density-limited.
+    """
     return -private * public * beta + private * r_m - private**2.0 * gamma
 
 

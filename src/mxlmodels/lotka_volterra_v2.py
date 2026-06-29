@@ -1,14 +1,16 @@
-"""Lotka-Volterra predator-prey model (v2): predation uses derived stoichiometry.
+"""Lotka-Volterra predator-prey model (v2).
 
-|             |                                |
-| ----------- | ------------------------------ |
-| doi         | N/A                            |
-| main author | Alfred J. Lotka; Vito Volterra |
-| paper title | classic predator-prey model    |
-| published   | 1925 / 1926                    |
-| journal     | N/A                            |
-| organism    | N/A (abstract predator-prey)   |
+Predation uses derived stoichiometry.
 
+|             |                                      |
+| ----------- | ------------------------------------ |
+| doi         | N/A                                  |
+| main author | Alfred J. Lotka; Vito Volterra       |
+| paper title | classic predator-prey model          |
+| published   | 1925 / 1926                          |
+| journal     | N/A                                  |
+| organism    | N/A (abstract predator-prey)         |
+| Ported by   | Marvin van Aalst ( @marvinvanaalst ) |
 """
 
 from mxlpy import Model, fns

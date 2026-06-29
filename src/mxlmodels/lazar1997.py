@@ -8,7 +8,7 @@
 | published   | 1997                                                                                        |
 | journal     | Pesticide Biochemistry and Physiology                                                       |
 | organism    | plants (chlorophyll fluorescence)                                                           |
-
+| Ported by   | ElouenCorvest ( @ElouenCorvest )                                                            |
 """
 
 from mxlpy import Model

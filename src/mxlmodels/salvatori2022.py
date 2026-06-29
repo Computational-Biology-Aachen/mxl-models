@@ -1,5 +1,4 @@
-"""
-Salvatori 2022 model
+"""Salvatori 2022 model
 
 |             |                                                                                          |
 | ----------- | ---------------------------------------------------------------------------------------- |
@@ -9,24 +8,30 @@ Salvatori 2022 model
 | published   | January 2022                                                                             |
 | journal     | Frontiers Plant Science                                                                  |
 | organism    | soybean, leaf, c3 photosynthesis                                                         |
+| Ported by   | Joshua Ebeling ( @pmfjosh )                                                              |
 
+The Salvatori 2022 model is a soybean leaf C3 photosynthesis model, developed
+to investigate the effect of fluctuating light on two soybean varients: Eiko
+(WT) and MinnGold (chlorophyll deficient mutant). The goal was to investigate
+the role of the chlorophyll content to adjust to light fluctuations. It is a
+simple, small model, only including the important processes for the goal of the
+study. As RuBisCO activation is known to be the main limitation in dark-light
+transition, and stomal conductance is the same in both varients, RuBisCO is
+included but stomatal conductance not. CBB is also not included as the focus
+lies on fluctuations, which makes CBB irrelevant. Only light harvesting around
+PSII is included for simplicity, but represented as ETR, that produces NADPH.
+The NADP+ to NADPH ratio determines the delta pH in the model, which activates
+RuBisCO. In case of excess energy, energy can be dissipated through NPQ, here
+only qE, as it is the fastest responding NPQ mechanism and the rest are
+irrelevant for the study. CEF is inlcuded only as a regulator of qE, as it is
+described to be only relevant in stress conditions when delta pH generation,
+without NADPH production is necessary.
 
-The Salvatori 2022 model is a soybean leaf C3 photosynthesis model, developed to investigate the effect of
-fluctuating light on two soybean varients: Eiko (WT) and MinnGold (chlorophyll deficient mutant). The goal
-was to investigate the role of the chlorophyll content to adjust to light fluctuations. It is a simple,
-small model, only including the important processes for the goal of the study. As RuBisCO activation is
-known to be the main limitation in dark-light transition, and stomal conductance is the same in both varients,
-RuBisCO is included but stomatal conductance not. CBB is also not included as the focus lies on fluctuations, which
-makes CBB irrelevant. Only light harvesting around PSII is included for simplicity, but represented as ETR,
-that produces NADPH. The NADP+ to NADPH ratio determines the delta pH in the model, which activates RuBisCO.
-In case of excess energy, energy can be dissipated through NPQ, here only qE, as it is the fastest responding
-NPQ mechanism and the rest are irrelevant for the study. CEF is inlcuded only as a regulator of qE, as it is
-described to be only relevant in stress conditions when delta pH generation, without NADPH production is necessary.
-
-The model is easy to reproduce, but their figure timescale is in minutes, even though simulation results differe strongly when performed
-over the same timescale. If reduced to seconds the simulations are 1:1. So either they used different units for their simulations without
-a parameter change or put the wrong labels on their figures.
-
+The model is easy to reproduce, but their figure timescale is in minutes, even
+though simulation results differe strongly when performed over the same
+timescale. If reduced to seconds the simulations are 1:1. So either they used
+different units for their simulations without a parameter change or put the
+wrong labels on their figures.
 """
 
 import numpy as np

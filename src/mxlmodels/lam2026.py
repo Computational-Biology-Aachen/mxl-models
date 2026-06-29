@@ -1,14 +1,14 @@
 """Lam 2026 model
 
-|             |       |
-| ----------- | ----- |
-| doi         | FIXME |
-| main author | FIXME |
-| paper title | FIXME |
-| published   | FIXME |
-| journal     | FIXME |
-| organism    | FIXME |
-
+|             |                                            |
+| ----------- | ------------------------------------------ |
+| doi         | FIXME                                      |
+| main author | FIXME                                      |
+| paper title | FIXME                                      |
+| published   | FIXME                                      |
+| journal     | FIXME                                      |
+| organism    | FIXME                                      |
+| Ported by   | Quang Huy Nguyen ( @PhotosyntheticBatman ) |
 """
 
 from __future__ import annotations

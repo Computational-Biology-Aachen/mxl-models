@@ -1,8 +1,8 @@
 """MxlModels is a Python package of reference mechanistic models.
 
-It contains the same models as in the [MxlBricks](https://github.com/Computational-Biology-Aachen/mxl-bricks) repo,
+It contains the same models as in the
+[MxlBricks](https://github.com/Computational-Biology-Aachen/mxl-bricks) repo,
 but written as single, flat files to make inspection easier.
-
 """
 
 # Re-export mxlpy modules for easy access

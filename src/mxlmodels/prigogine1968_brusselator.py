@@ -1,4 +1,6 @@
-"""Brusselator (Prigogine 1968): autocatalytic chemical oscillator with limit cycle dynamics.
+"""Brusselator (Prigogine 1968).
+
+Autocatalytic chemical oscillator with limit cycle dynamics.
 
 |             |                                                            |
 | ----------- | ---------------------------------------------------------- |
@@ -7,7 +9,7 @@
 | paper title | Symmetry Breaking Instabilities in Dissipative Systems. II |
 | published   | February 1968                                              |
 | journal     | The Journal of Chemical Physics                            |
-
+| Ported by   | Marvin van Aalst ( @marvinvanaalst )                       |
 """
 
 from mxlpy import Model
@@ -44,7 +46,9 @@ def _removal(
 
 
 def get_prigogine1968_brusselator() -> Model:
-    """Build the Brusselator model: two-variable autocatalytic oscillator exhibiting limit cycle behavior."""
+    """Build the Brusselator model: two-variable autocatalytic oscillator exhibiting
+    limit cycle behavior.
+    """
     return (
         Model()
         .add_variable("X", initial_value=1.5)

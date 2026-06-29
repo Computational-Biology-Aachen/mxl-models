@@ -8,19 +8,21 @@
 | published   | June 2009                                                                                                                |
 | journal     | Nonlinear Analysis: Real World Applications                                                                              |
 | organism    | C3 plant (Calvin cycle)                                                                                                  |
+| Ported by   | ElouenCorvest ( @ElouenCorvest )                                                                                         |
 
 Note: dynamics do not yet perfectly reproduce the published figures.
 
-The [Zhu 2009](https://doi.org/10.1016/j.nonrwa.2008.01.021) model is a deliberately
-simplified kinetic model of the Calvin-Benson-Bassham (CBB) cycle, the carbon-fixing
-dark reactions of photosynthesis. It tracks only five metabolites -
- ribulose-1,5-bisphosphate (RuBP), 3-phosphoglycerate (PGA), 1,3-bisphosphoglycerate (DPGA),
- glyceraldehyde-3-phosphate (GAP), and ribulose-5-phosphate (Ru5P) - and lumps the
- many intermediate steps of the cycle into a handful of Michaelis-Menten reactions,
- with ATP supplied as a fixed external parameter rather than a dynamic variable.
- This reduction keeps the system small enough to be analysed mathematically while
- still capturing the essential autocatalytic structure of carbon fixation,
- where RuBP is both consumed by RuBisCO and regenerated downstream.
+The [Zhu 2009](https://doi.org/10.1016/j.nonrwa.2008.01.021) model is a
+deliberately simplified kinetic model of the Calvin-Benson-Bassham (CBB) cycle,
+the carbon-fixing dark reactions of photosynthesis. It tracks only five
+metabolites - ribulose-1,5-bisphosphate (RuBP), 3-phosphoglycerate (PGA),
+1,3-bisphosphoglycerate (DPGA), glyceraldehyde-3-phosphate (GAP), and
+ribulose-5-phosphate (Ru5P) - and lumps the many intermediate steps of the
+cycle into a handful of Michaelis-Menten reactions, with ATP supplied as a
+fixed external parameter rather than a dynamic variable. This reduction keeps
+the system small enough to be analysed mathematically while still capturing the
+essential autocatalytic structure of carbon fixation, where RuBP is both
+consumed by RuBisCO and regenerated downstream.
 """
 
 from mxlpy import Model
@@ -38,8 +40,10 @@ def _enzyme_atp_dependent(
 ) -> float:
     return vmax * s1 * atp / ((s1 + km_s1) * (atp + km_atp))
 
+
 def _calculate_A(v1: float) -> float:
     return v1 * 33.33
+
 
 def get_zhu_2009() -> Model:
     """Simple Calvin Cycle Model developed by Zhu et al. (2009)."""
@@ -127,9 +131,5 @@ def get_zhu_2009() -> Model:
         stoichiometry={"Ru5P": -1, "RuBP": 1},
         args=["Ru5P", "ATP", "V13_max", "K_m131", "K_m132"],
     )
-    m.add_derived(
-        "A",
-        fn=_calculate_A,
-        args=["v1"]
-    )
+    m.add_derived("A", fn=_calculate_A, args=["v1"])
     return m

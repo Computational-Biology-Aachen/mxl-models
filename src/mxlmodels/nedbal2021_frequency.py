@@ -1,23 +1,24 @@
 """Nedbal and Lazár (2021) photosynthesis dynamics model.
 
-|             |       |
-| ----------- | ----- |
-| doi         | FIXME |
-| main author | FIXME |
-| paper title | FIXME |
-| published   | FIXME |
-| journal     | FIXME |
-| organism    | FIXME |
+|             |                                 |
+| ----------- | ------------------------------- |
+| doi         | FIXME                           |
+| main author | FIXME                           |
+| paper title | FIXME                           |
+| published   | FIXME                           |
+| journal     | FIXME                           |
+| organism    | FIXME                           |
+| Ported by   | Tanvir Hassan ( @Tanvir96rwth ) |
 
 The model represents chlorophyll-fluorescence responses to constant and
-sinusoidally modulated light using harmonic and induction kinetics.
-Figures F1, F2, F4, F5, and F6A reproduce the reported time- and
-frequency-domain response patterns.
+sinusoidally modulated light using harmonic and induction kinetics. Figures F1,
+F2, F4, F5, and F6A reproduce the reported time- and frequency-domain response
+patterns.
 
-Figure F2 is approximate because the original fluorescence traces,
-harmonic amplitudes, phase shifts, and fitted values are unavailable.
-Figure F6B-C is omitted because the complete validated 42-state model,
-direct-CET coefficient, and light-scaling parameters are not reported.
+Figure F2 is approximate because the original fluorescence traces, harmonic
+amplitudes, phase shifts, and fitted values are unavailable. Figure F6B-C is
+omitted because the complete validated 42-state model, direct-CET coefficient,
+and light-scaling parameters are not reported.
 """
 
 import numpy as np

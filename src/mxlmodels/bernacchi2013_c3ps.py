@@ -1,18 +1,18 @@
 """Bernacchi et al. (2013) C3 photosynthesis model.
 
-|             |       |
-| ----------- | ----- |
-| doi         | FIXME |
-| main author | FIXME |
-| paper title | FIXME |
-| published   | FIXME |
-| journal     | FIXME |
-| organism    | FIXME |
+|             |                                 |
+| ----------- | ------------------------------- |
+| doi         | FIXME                           |
+| main author | FIXME                           |
+| paper title | FIXME                           |
+| published   | FIXME                           |
+| journal     | FIXME                           |
+| organism    | FIXME                           |
+| Ported by   | Tanvir Hassan ( @Tanvir96rwth ) |
 
 The model represents net leaf CO2 assimilation limited by Rubisco
-carboxylation, RuBP regeneration, and triose-phosphate utilization.
-Figures F2–F7 reproduce the steady-state and diurnal responses described
-in the paper.
+carboxylation, RuBP regeneration, and triose-phosphate utilization. Figures
+F2-F7 reproduce the steady-state and diurnal responses described in the paper.
 """
 
 import matplotlib.pyplot as plt
@@ -193,7 +193,7 @@ model = get_bernacchi2013()
 
 
 # ------------------------------------------------------------------
-# F2 – Photosynthetic CO2 response
+# F2 - Photosynthetic CO2 response
 # ------------------------------------------------------------------
 
 
@@ -218,7 +218,7 @@ def figure2():
         ax,
         r"$C_i$ ($\mu$mol mol$^{-1}$)",
         r"$A$ ($\mu$mol m$^{-2}$ s$^{-1}$)",
-        r"Photosynthetic–CO$_2$ response curve",
+        r"Photosynthetic-CO$_2$ response curve",
         (0, 1000),
         (-10, 55),
         np.arange(0, 1001, 200),
@@ -231,7 +231,7 @@ def figure2():
 
 
 # ------------------------------------------------------------------
-# F3 – Leaf-temperature response
+# F3 - Leaf-temperature response
 # ------------------------------------------------------------------
 
 
@@ -275,7 +275,7 @@ def figure3():
         ax,
         r"$T_{\mathrm{leaf}}$ ($^\circ$C)",
         r"$A$ ($\mu$mol m$^{-2}$ s$^{-1}$)",
-        r"Photosynthetic–$T_{\mathrm{leaf}}$ response curve",
+        r"Photosynthetic-$T_{\mathrm{leaf}}$ response curve",
         (5, 40),
         (0, 35),
         np.arange(5, 41, 5),
@@ -288,7 +288,7 @@ def figure3():
 
 
 # ------------------------------------------------------------------
-# F4 – Photosynthetic PPFD response
+# F4 - Photosynthetic PPFD response
 # ------------------------------------------------------------------
 
 
@@ -325,7 +325,7 @@ def figure4():
         ax,
         r"PPFD ($\mu$mol m$^{-2}$ s$^{-1}$)",
         r"$A$ ($\mu$mol m$^{-2}$ s$^{-1}$)",
-        "Photosynthetic–PPFD response curve",
+        "Photosynthetic-PPFD response curve",
         (0, 2000),
         (0, 35),
         [0, 500, 1000, 1500, 2000],
@@ -338,7 +338,7 @@ def figure4():
 
 
 # ------------------------------------------------------------------
-# F5 – Glycine max and Populus CO2 responses
+# F5 - Glycine max and Populus CO2 responses
 # ------------------------------------------------------------------
 
 
@@ -396,7 +396,7 @@ def figure5():
         ax,
         r"$C_i$ ($\mu$mol mol$^{-1}$)",
         r"$A$ ($\mu$mol m$^{-2}$ s$^{-1}$)",
-        r"Photosynthetic–CO$_2$ response curve",
+        r"Photosynthetic-CO$_2$ response curve",
         (0, 1000),
         (-10, 40),
         np.arange(0, 1001, 200),
@@ -409,7 +409,7 @@ def figure5():
 
 
 # ------------------------------------------------------------------
-# F6 – Rubisco specificity sensitivity
+# F6 - Rubisco specificity sensitivity
 # ------------------------------------------------------------------
 
 FIG6_TABLES = {
@@ -716,7 +716,7 @@ def figure6():
 
 
 # ------------------------------------------------------------------
-# F7 – Jmax sensitivity
+# F7 - Jmax sensitivity
 # ------------------------------------------------------------------
 
 FIG7_TABLES = {
