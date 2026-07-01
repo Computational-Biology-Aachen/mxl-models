@@ -30,177 +30,188 @@ import numpy as np
 from mxlpy import Derived, Model, Variable
 
 
-def neg_div(x: float, y: float) -> float:
+def _neg_div(x: float, y: float) -> float:
     return -x / y
 
 
-def mul(x: float, y: float) -> float:
+def _mul(x: float, y: float) -> float:
     return x * y
 
 
-def value(x: float) -> float:
+def _value(x: float) -> float:
     return x
 
 
-def moiety_1(concentration: float, total: float) -> float:
+def _moiety_1(concentration: float, total: float) -> float:
     return total - concentration
 
 
-def twice(x: float) -> float:
+def _twice(x: float) -> float:
     return x * 2
 
 
-def div(x: float, y: float) -> float:
+def _div(x: float, y: float) -> float:
     return x / y
 
 
-def neg(x: float) -> float:
+def _neg(x: float) -> float:
     return -x
 
 
-def neg_point_one_val(x: float):
+def _neg_point_one_val(x: float) -> float:
     return -0.1 * x
 
 
-def neg_point_two_val(x: float):
+def _neg_point_two_val(x: float) -> float:
     return -0.2 * x
 
 
-def neg_proportional(x, y):
+def _neg_proportional(x: float, y: float) -> float:
     return -x * y
 
 
-def neg_thrice(x: float):
+def _neg_thrice(x: float) -> float:
     return x * -3
 
 
-def neg_2_div(x: float, y: float):
+def _neg_2_div(x: float, y: float) -> float:
     return -2 * x / y
 
 
-def ATP_stoi(x: float, y: float, z: float):
+def _atp_stoi(x: float, y: float, z: float) -> float:
     return x * y / z
 
 
-def calc_PsbS_Protonation(pH_lumen: float, pKa_PsbS: float):
-    return 1 - (1 - (1 / (10 ** (pH_lumen - pKa_PsbS) + 1)))  # checked
+def _calc_psb_s_protonation(p_h_lumen: float, p_ka_psb_s: float) -> float:
+    return 1 - (1 - (1 / (10 ** (p_h_lumen - p_ka_psb_s) + 1)))  # checked
 
 
-def calc_NPQ(Z, PsbS_H, NPQ_max):
-    return NPQ_max * PsbS_H * Z  # checked
+def _calc_npq(z: float, psb_s_h: float, npq_max: float) -> float:
+    return npq_max * psb_s_h * z  # checked
 
 
-def calc_phi2(NPQ, QA):
-    return 1 / (1 + (1 + NPQ) / (4.88 * QA))  # checked
+def _calc_phi2(npq: float, qa: float) -> float:
+    return 1 / (1 + (1 + npq) / (4.88 * qa))  # checked
 
 
-def DeltaGATP_to_volt(DeltaGATP):
-    return 0.06 * DeltaGATP / 5.7
+def _delta_gatp_to_volt(delta_gatp: float) -> float:
+    return 0.06 * delta_gatp / 5.7
 
 
-def ATPsynthase_driving_force(pmf, DeltaGATP, n):
-    return pmf - (DeltaGATP / n)
+def _at_psynthase_driving_force(pmf: float, delta_gatp: float, n: float) -> float:
+    return pmf - (delta_gatp / n)
 
 
-def calc_h(pH):
-    return 10 ** (-1 * pH)  # checked
+def _calc_h(p_h: float) -> float:
+    return 10 ** (-1 * p_h)  # checked
 
 
-def calc_pmf(Dpsi, pH_lumen, pH_stroma):
-    return Dpsi + 0.06 * (pH_stroma - pH_lumen)  # checked
+def _calc_pmf(dpsi: float, p_h_lumen: float, p_h_stroma: float) -> float:
+    return dpsi + 0.06 * (p_h_stroma - p_h_lumen)  # checked
 
 
-def k_b6f(pH_lumen, pKa_reg, c_b6f, Vmax_b6f):
-    pHmod = 1 - (1 / (10 ** (pH_lumen - pKa_reg) + 1))
-    b6f_deprot = pHmod * c_b6f
-    return b6f_deprot
+def _k_b6f(p_h_lumen: float, p_ka_reg: float, c_b6f: float) -> float:
+    pHmod = 1 - (1 / (10 ** (p_h_lumen - p_ka_reg) + 1))
+    return pHmod * c_b6f
 
 
-def _delta_pH_inVolts(delta_pH: float):
-    return 0.06 * delta_pH
+def _delta_p_h_in_volts(delta_p_h: float) -> float:
+    return 0.06 * delta_p_h
 
 
-def _vPSII_recomb(Dpsi, QAm, pH_lumen, k_recomb):  # checked
-    delta_delta_g_recomb = Dpsi + 0.06 * (7.0 - pH_lumen)
-    return k_recomb * QAm * 10 ** (delta_delta_g_recomb / 0.06)
+def _v_psii_recomb(
+    dpsi: float, q_am: float, p_h_lumen: float, k_recomb: float
+) -> float:  # checked
+    delta_delta_g_recomb = dpsi + 0.06 * (7.0 - p_h_lumen)
+    return k_recomb * q_am * 10 ** (delta_delta_g_recomb / 0.06)
 
 
-def _vPSII_ChSep(PPFD, PhiPSII):  # checked
-    return PPFD * PhiPSII
+def _v_psii_ch_sep(ppfd: float, phi_psii: float) -> float:  # checked
+    return ppfd * phi_psii
 
 
-def _v_PSII(QAm, PQ, k_QA):
-    return QAm * PQ * k_QA  # checked
+def _v_psii(q_am: float, pq: float, k_qa: float) -> float:
+    return q_am * pq * k_qa  # checked
 
 
-def _v_PQ(PQH2, QA, k_QA, Keq_QA):
-    return PQH2 * QA * k_QA / Keq_QA  # checked
+def _v_pq(pqh2: float, qa: float, k_qa: float, keq_qa: float) -> float:
+    return pqh2 * qa * k_qa / keq_qa  # checked
 
 
 def _v_b6f(
-    pH_lumen,
-    PQH2,
-    PQ,
-    PC_ox,
-    PC_red,
-    pKa_reg,
-    c_b6f,
-    Em_PC_pH7,
-    Em_PQH2_pH7,
-    pmf,
-    Vmax_b6f,
-):  # checked
-    pHmod = 1 - (1 / (10 ** (pH_lumen - pKa_reg) + 1))
+    p_h_lumen: float,
+    pqh2: float,
+    pq: float,
+    pc_ox: float,
+    pc_red: float,
+    p_ka_reg: float,
+    c_b6f: float,
+    em_pc_p_h7: float,
+    em_pqh2_p_h7: float,
+    pmf: float,
+    vmax_b6f: float,
+) -> float:  # checked
+    pHmod = 1 - (1 / (10 ** (p_h_lumen - p_ka_reg) + 1))
     b6f_deprot = pHmod * c_b6f
 
-    Em_PC = Em_PC_pH7
-    Em_PQH2 = Em_PQH2_pH7 - 0.06 * (pH_lumen - 7.0)
+    Em_PC = em_pc_p_h7
+    Em_PQH2 = em_pqh2_p_h7 - 0.06 * (p_h_lumen - 7.0)
 
     Keq_b6f = 10 ** ((Em_PC - Em_PQH2 - pmf) / 0.06)
-    k_b6f = b6f_deprot * Vmax_b6f
+    _k_b6f = b6f_deprot * vmax_b6f
 
-    k_b6f_reverse = k_b6f / Keq_b6f
-    f_PQH2 = PQH2 / (PQH2 + PQ)
+    k_b6f_reverse = _k_b6f / Keq_b6f
+    f_PQH2 = pqh2 / (pqh2 + pq)
     f_PQ = 1 - f_PQH2
-    return f_PQH2 * PC_ox * k_b6f - f_PQ * PC_red * k_b6f_reverse
+    return f_PQH2 * pc_ox * _k_b6f - f_PQ * pc_red * k_b6f_reverse
 
 
-def _PSI_ChSep(Fd_ox, P700_red, PSI_antenna_size, PPFD):  # checked
-    return P700_red * PPFD * PSI_antenna_size * Fd_ox
+def _psi_ch_sep(
+    fd_ox: float, p700_red: float, psi_antenna_size: float, ppfd: float
+) -> float:  # checked
+    return p700_red * ppfd * psi_antenna_size * fd_ox
 
 
-def _v_PSI_PCoxid(PC_red, P700_ox, k_PCtoP700):  # checked
-    return PC_red * k_PCtoP700 * P700_ox
+def _v_psi_p_coxid(
+    pc_red: float, p700_ox: float, k_p_cto_p700: float
+) -> float:  # checked
+    return pc_red * k_p_cto_p700 * p700_ox
 
 
-def _v_FNR(Fd_red, NADP_pool, k_FdtoNADP):  # checked
-    return k_FdtoNADP * NADP_pool * Fd_red
+def _v_fnr(fd_red: float, nadp_pool: float, k_fdto_nadp: float) -> float:  # checked
+    return k_fdto_nadp * nadp_pool * fd_red
 
 
-def vATPsynthase(Vmax_ATPsynth, ATP_synthase_driving_force):  # checked
-    return Vmax_ATPsynth * ATP_synthase_driving_force
+def _v_at_psynthase(
+    vmax_at_psynth: float, atp_synthase_driving_force: float
+) -> float:  # checked
+    return vmax_at_psynth * atp_synthase_driving_force
 
 
-def _v_KEA3(K_lu, H_lumen, H_st, K_stroma, k_KEA3):  # checked
-    return k_KEA3 * (H_lumen * K_stroma - H_st * K_lu)
+def _v_kea3(
+    k_lu: float, h_lumen: float, h_st: float, k_stroma: float, k_kea3: float
+) -> float:  # checked
+    return k_kea3 * (h_lumen * k_stroma - h_st * k_lu)
 
 
-def _v_VKC(K_lu, Dpsi, K_stroma, P_K):  # checked
-    K_deltaG = -0.06 * np.log10(K_stroma / K_lu) + Dpsi
-    return P_K * K_deltaG * (K_lu + K_stroma) / 2
+def _v_vkc(k_lu: float, dpsi: float, k_stroma: float, p_k: float) -> float:  # checked
+    K_deltaG = -0.06 * np.log10(k_stroma / k_lu) + dpsi
+    return p_k * K_deltaG * (k_lu + k_stroma) / 2
 
 
-def _v_Epox(Z, k_EZ):  # checked
-    return Z * k_EZ
+def _v_epox(z: float, k_ez: float) -> float:  # checked
+    return z * k_ez
 
 
-def _v_VDE(V, pH_lumen, nh_VDE, pKa_VDE, Vmax_VDE):  # checked
-    pHmod = 1 - (1 - (1 / (10 ** (nh_VDE * (pH_lumen - pKa_VDE)) + 1)))
-    return V * Vmax_VDE * pHmod
+def _v_vde(
+    v: float, p_h_lumen: float, nh_vde: float, p_ka_vde: float, vmax_vde: float
+) -> float:  # checked
+    pHmod = 1 - (1 - (1 / (10 ** (nh_vde * (p_h_lumen - p_ka_vde)) + 1)))
+    return v * vmax_vde * pHmod
 
 
-def vCBB(NADPH, kCBB):  # checked
-    return kCBB * NADPH
+def _v_cbb(nadph: float, k_cbb: float) -> float:  # checked
+    return k_cbb * nadph
 
 
 def get_davis2017() -> Model:
@@ -294,142 +305,148 @@ def get_davis2017() -> Model:
 
     m.add_derived(
         name="QA",
-        fn=moiety_1,
+        fn=_moiety_1,
         args=["QA_red", "QA_total"],
     )
 
     m.add_derived(
         name="P700_red",
-        fn=moiety_1,
+        fn=_moiety_1,
         args=["P700_ox", "P700_total"],
     )
 
     m.add_derived(
         name="PQ",
-        fn=moiety_1,
+        fn=_moiety_1,
         args=["PQH_2", "PQ_tot"],
     )
 
     m.add_derived(
         name="PC_red",
-        fn=moiety_1,
+        fn=_moiety_1,
         args=["PC_ox", "PC_tot"],
     )
 
     m.add_derived(
         name="Fd_ox",
-        fn=moiety_1,
+        fn=_moiety_1,
         args=["Fd_red", "Fd_tot"],
     )
 
     m.add_derived(
         name="NADP_st",
-        fn=moiety_1,
+        fn=_moiety_1,
         args=["NADPH_st", "NADP_tot"],
     )
 
     m.add_derived(
         name="Vx",
-        fn=moiety_1,
+        fn=_moiety_1,
         args=["Zx", "Xanthophyll_tot"],
     )
 
     m.add_derived(
         name="DeltaGATP_V",
-        fn=DeltaGATP_to_volt,
+        fn=_delta_gatp_to_volt,
         args=["DeltaGATP"],
     )
 
     m.add_derived(
         name="PsbSP",
-        fn=calc_PsbS_Protonation,
+        fn=_calc_psb_s_protonation,
         args=["pH_lumen", "pKa_PsbS"],
     )
 
     m.add_derived(
         name="NPQ",
-        fn=calc_NPQ,
+        fn=_calc_npq,
         args=["Zx", "PsbSP", "NPQ_max"],
     )
 
     m.add_derived(
         name="PhiPSII",
-        fn=calc_phi2,
+        fn=_calc_phi2,
         args=["NPQ", "QA"],
     )
 
     m.add_derived(
         name="H_lumen",
-        fn=calc_h,
+        fn=_calc_h,
         args=["pH_lumen"],
     )
 
     m.add_derived(
         name="H_stroma",
-        fn=calc_h,
+        fn=_calc_h,
         args=["pH_stroma"],
     )
 
     m.add_derived(
         name="pmf",
-        fn=calc_pmf,
+        fn=_calc_pmf,
         args=["Dpsi", "pH_lumen", "pH_stroma"],
     )
 
     m.add_derived(
         name="delta_pH",
-        fn=moiety_1,
+        fn=_moiety_1,
         args=["pH_lumen", "pH_stroma"],
     )
 
     m.add_derived(
         name="delta_pH_inVolts",
-        fn=_delta_pH_inVolts,
+        fn=_delta_p_h_in_volts,
         args=["delta_pH"],
     )
 
     m.add_derived(
         name="ATP_synthase_driving_force",
-        fn=ATPsynthase_driving_force,
+        fn=_at_psynthase_driving_force,
         args=["pmf", "DeltaGATP_V", "n"],
     )
 
     m.add_derived(
         name="k_b6f",
-        fn=k_b6f,
-        args=["pH_lumen", "pKa_reg", "c_b6f", "Vmax_b6f"],
+        fn=_k_b6f,
+        args=["pH_lumen", "pKa_reg", "c_b6f"],
     )
 
     m.add_reaction(
         name="vPSII_recomb",
-        fn=_vPSII_recomb,
+        fn=_v_psii_recomb,
         args=["Dpsi", "QA_red", "pH_lumen", "k_recomb"],
         stoichiometry={
             "singO2": Derived(
-                fn=mul, args=["phi_triplet", "phi_1O2"], unit=None
+                fn=_mul,
+                args=["phi_triplet", "phi_1O2"],
+                unit=None,
             ),  # checked
             "QA_red": -1,  # checked
             "pH_lumen": Derived(
-                fn=div, args=["lumen_protons_per_turnover", "b_H"], unit=None
+                fn=_div,
+                args=["lumen_protons_per_turnover", "b_H"],
+                unit=None,
             ),  # checked
-            "Dpsi": Derived(fn=neg, args=["volt_per_charge"], unit=None),
+            "Dpsi": Derived(fn=_neg, args=["volt_per_charge"], unit=None),
         },
     )
     m.add_reaction(
         name="vPSII_ChSep",  # checked
-        fn=_vPSII_ChSep,
+        fn=_v_psii_ch_sep,
         args=["PPFD", "PhiPSII"],
         stoichiometry={
             "QA_red": 1,
             "pH_lumen": Derived(
-                fn=neg_div, args=["lumen_protons_per_turnover", "b_H"], unit=None
+                fn=_neg_div,
+                args=["lumen_protons_per_turnover", "b_H"],
+                unit=None,
             ),
-            "Dpsi": Derived(fn=value, args=["volt_per_charge"], unit=None),
+            "Dpsi": Derived(fn=_value, args=["volt_per_charge"], unit=None),
         },
     )
     m.add_reaction(
         name="v_PSII",
-        fn=_v_PSII,
+        fn=_v_psii,
         args=["QA_red", "PQ", "k_QA"],
         stoichiometry={
             "QA_red": -1,
@@ -438,7 +455,7 @@ def get_davis2017() -> Model:
     )
     m.add_reaction(
         name="v_PQ",
-        fn=_v_PQ,
+        fn=_v_pq,
         args=["PQH_2", "QA", "k_QA", "Keq_QA"],
         stoichiometry={
             "QA_red": 1,
@@ -465,24 +482,26 @@ def get_davis2017() -> Model:
             "PQH_2": -0.5,
             "PC_ox": -1,
             "pH_lumen": Derived(
-                fn=neg_2_div, args=["lumen_protons_per_turnover", "b_H"], unit=None
+                fn=_neg_2_div,
+                args=["lumen_protons_per_turnover", "b_H"],
+                unit=None,
             ),
-            "Dpsi": Derived(fn=value, args=["volt_per_charge"], unit=None),
+            "Dpsi": Derived(fn=_value, args=["volt_per_charge"], unit=None),
         },
     )
     m.add_reaction(
         name="PSI_ChSep",
-        fn=_PSI_ChSep,
+        fn=_psi_ch_sep,
         args=["Fd_ox", "P700_red", "PSI_antenna_size", "PPFD"],
         stoichiometry={
             "P700_ox": 1,
             "Fd_red": 1,
-            "Dpsi": Derived(fn=value, args=["volt_per_charge"], unit=None),
+            "Dpsi": Derived(fn=_value, args=["volt_per_charge"], unit=None),
         },
     )
     m.add_reaction(
         name="v_PSI_PCoxid",
-        fn=_v_PSI_PCoxid,
+        fn=_v_psi_p_coxid,
         args=["PC_red", "P700_ox", "k_PCtoP700"],
         stoichiometry={
             "P700_ox": -1,
@@ -492,57 +511,63 @@ def get_davis2017() -> Model:
 
     m.add_reaction(
         name="v_FNR",
-        fn=_v_FNR,
+        fn=_v_fnr,
         args=["Fd_red", "NADP_st", "k_FdtoNADP"],
         stoichiometry={"Fd_red": -1, "NADPH_st": 0.5, "LEF": 1},
     )
 
     m.add_reaction(
         name="vATPsynthase",
-        fn=vATPsynthase,
+        fn=_v_at_psynthase,
         args=["Vmax_ATPsynth", "ATP_synthase_driving_force"],
         stoichiometry={
             "ATP_made": 1,
             "pH_lumen": Derived(
-                fn=ATP_stoi, args=["lumen_protons_per_turnover", "n", "b_H"], unit=None
+                fn=_atp_stoi,
+                args=["lumen_protons_per_turnover", "n", "b_H"],
+                unit=None,
             ),
             "Dpsi": Derived(
-                fn=neg_proportional, args=["n", "volt_per_charge"], unit=None
+                fn=_neg_proportional,
+                args=["n", "volt_per_charge"],
+                unit=None,
             ),
         },
     )
 
     m.add_reaction(
         name="v_CBB",
-        fn=vCBB,
+        fn=_v_cbb,
         args=["NADPH_st", "k_CBB"],
         stoichiometry={"NADPH_st": -1},
     )
 
     m.add_reaction(
         name="v_KEA3",
-        fn=_v_KEA3,
+        fn=_v_kea3,
         args=["K_lu", "H_lumen", "H_stroma", "K_st", "k_KEA3"],
         stoichiometry={
-            "K_lu": Derived(fn=value, args=["lumen_protons_per_turnover"], unit=None),
+            "K_lu": Derived(fn=_value, args=["lumen_protons_per_turnover"], unit=None),
             "pH_lumen": Derived(
-                fn=div, args=["lumen_protons_per_turnover", "b_H"], unit=None
+                fn=_div,
+                args=["lumen_protons_per_turnover", "b_H"],
+                unit=None,
             ),
-            "Dpsi": Derived(fn=neg, args=["volt_per_charge"], unit=None),
+            "Dpsi": Derived(fn=_neg, args=["volt_per_charge"], unit=None),
         },
     )
     m.add_reaction(
         name="v_VKC",
-        fn=_v_VKC,
+        fn=_v_vkc,
         args=["K_lu", "Dpsi", "K_st", "P_K"],
         stoichiometry={
-            "K_lu": Derived(fn=neg, args=["lumen_protons_per_turnover"], unit=None),
-            "Dpsi": Derived(fn=neg, args=["volt_per_charge"], unit=None),
+            "K_lu": Derived(fn=_neg, args=["lumen_protons_per_turnover"], unit=None),
+            "Dpsi": Derived(fn=_neg, args=["volt_per_charge"], unit=None),
         },
     )
     m.add_reaction(
         name="v_Epox",
-        fn=_v_Epox,
+        fn=_v_epox,
         args=["Zx", "k_EZ"],
         stoichiometry={
             "Zx": -1,
@@ -550,7 +575,7 @@ def get_davis2017() -> Model:
     )
     m.add_reaction(
         name="v_Deepox",
-        fn=_v_VDE,
+        fn=_v_vde,
         args=["Vx", "pH_lumen", "nh_VDE", "pKa_VDE", "Vmax_VDE"],
         stoichiometry={
             "Zx": 1,
