@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-import ast
+import os
+import re
 import shutil
 import subprocess
 from dataclasses import dataclass
@@ -11,11 +12,21 @@ import typer
 
 app = typer.Typer(add_completion=False)
 
+# Markdown block openers (tables, lists, headings, blockquotes, code fences)
+# that must never be word-wrapped/rejoined as if they were prose.
+_BLOCK_MARKER_RE = re.compile(r"^\s*(?:\d+[.)]\s|[-*+]\s|#{1,6}(?:\s|$)|>|```|\|)")
+
 
 @dataclass
 class FormatResult:
     formatted: str
     changed: bool
+
+
+@dataclass
+class DocstringInfo:
+    text: str
+    is_raw: bool
 
 
 def _format_markdown_via_uv(text: str) -> str:
@@ -37,19 +48,127 @@ def _format_markdown_via_uv(text: str) -> str:
     return proc.stdout  # .rstrip("\n")
 
 
+def _split_indent(text: str) -> tuple[str, str]:
+    r"""Strip a docstring's source indentation before markdown formatting.
+
+    Only the first physical line of a docstring value is unindented (it follows the
+    opening quotes directly); every later line carries the enclosing block's
+    indentation as part of the literal. Left in place, CommonMark reads an indented
+    paragraph that follows a blank line as a code block, so a multi-paragraph
+    docstring on an indented function or method gets its body wrapped in spurious
+    \`\`\` fences. The indentation is captured here and restored by `_apply_indent`
+    after formatting.
+    """
+    lines = text.split("\n")
+    if len(lines) <= 1:
+        return "", text
+
+    indent = os.path.commonprefix(
+        [
+            line[: len(line) - len(line.lstrip(" "))]
+            for line in lines[1:]
+            if line.strip()
+        ]
+    )
+    dedented = [lines[0]]
+    dedented.extend(line[len(indent) :] if line.strip() else "" for line in lines[1:])
+    return indent, "\n".join(dedented)
+
+
+_FENCE_LINE_RE = re.compile(r"`{3,}")
+_MIN_FENCED_BODY_LINES = 3  # opening fence + >=1 content line + closing fence
+
+
+def _strip_artifact_fence(text: str) -> str:
+    r"""Peel spurious \`\`\` wrapper fences left by the indentation bug.
+
+    Before `_split_indent` existed, an indented docstring's whole body (everything
+    after the summary's blank line) was misread by CommonMark as one indented code
+    block, and mdformat fenced it off with \`\`\`. Each later run of the buggy
+    script then wrapped that fence in one more layer of backticks, since a fence
+    can only be closed by a line with at least as many backticks. A fence spanning
+    the entire body edge to edge is always that artifact, never an intentionally
+    authored code block, so it's peeled off (possibly several nested layers) before
+    reformatting.
+    """
+    lines = text.split("\n")
+    try:
+        blank_idx = lines.index("")
+    except ValueError:
+        return text
+
+    head, body = lines[: blank_idx + 1], lines[blank_idx + 1 :]
+    trailing: list[str] = []
+    while body and body[-1] == "":
+        trailing.insert(0, body.pop())
+
+    while (
+        len(body) >= _MIN_FENCED_BODY_LINES
+        and _FENCE_LINE_RE.fullmatch(body[0].strip())
+        and _FENCE_LINE_RE.fullmatch(body[-1].strip())
+    ):
+        body = body[1:-1]
+
+    return "\n".join([*head, *body, *trailing])
+
+
+def _apply_indent(text: str, indent: str) -> str:
+    # mdformat always appends a trailing newline, even to single-line input.
+    # If the formatted content is genuinely one line, collapse it back to a
+    # true one-liner (pydocstyle D200) instead of indenting a bogus closing
+    # line; the resulting docstring literal ends up all on one source line
+    # regardless of the enclosing block's indentation.
+    if text.count("\n") == 1 and text.endswith("\n"):
+        return text[:-1]
+
+    if not indent:
+        return text
+    lines = text.split("\n")
+    last = len(lines) - 1
+    for i in range(1, len(lines)):
+        if i == last or lines[i]:
+            lines[i] = indent + lines[i]
+    return "\n".join(lines)
+
+
+def _unwrap_first_paragraph(formatted: str) -> str:
+    r"""Undo mdformat's word-wrap on the docstring's first paragraph.
+
+    pydocstyle's numpy convention requires a blank line immediately after the
+    summary line. If the summary is longer than the wrap width, mdformat folds it
+    across multiple physical lines with no blank line in between, which trips that
+    rule. The first paragraph is rejoined into a single line (however long) so the
+    wrap width only applies to the rest of the docstring.
+    """
+    lines = formatted.split("\n")
+    end = 0
+    while end < len(lines) and lines[end].strip() != "":
+        end += 1
+
+    first_block = lines[:end]
+    if len(first_block) <= 1:
+        return formatted
+    if any(_BLOCK_MARKER_RE.match(line) for line in first_block):
+        return formatted
+
+    joined = " ".join(line.strip() for line in first_block)
+    return "\n".join([joined, *lines[end:]])
+
+
 def _to_docstring_literal(text: str) -> cst.SimpleString:
-    escaped = text.replace('"""', '\\"\\"\\"')
-    return cst.SimpleString(f'"""{escaped}"""')
+    if '"""' in text:
+        msg = 'docstring contains a literal triple-quote; cannot emit as r"""'
+        raise RuntimeError(msg)
+    return cst.SimpleString(f'r"""{text}"""')
 
 
-def _extract_simple_docstring(expr: cst.BaseExpression) -> str | None:
-    if isinstance(expr, cst.SimpleString):
-        try:
-            value = ast.literal_eval(expr.value)
-        except (SyntaxError, ValueError):
-            return None
-        return value if isinstance(value, str) else None
-    return None
+def _extract_simple_docstring(expr: cst.BaseExpression) -> DocstringInfo | None:
+    if not isinstance(expr, cst.SimpleString):
+        return None
+    value = expr.evaluated_value
+    if not isinstance(value, str):
+        return None
+    return DocstringInfo(text=value, is_raw=expr.prefix.lower() == "r")
 
 
 class DocstringFormatter(cst.CSTTransformer):
@@ -73,8 +192,13 @@ class DocstringFormatter(cst.CSTTransformer):
         if original_doc is None:
             return stmt
 
-        formatted_doc = _format_markdown_via_uv(original_doc)
-        if formatted_doc == original_doc:
+        indent, dedented = _split_indent(original_doc.text)
+        if indent:
+            dedented = _strip_artifact_fence(dedented)
+        formatted_doc = _format_markdown_via_uv(dedented)
+        formatted_doc = _unwrap_first_paragraph(formatted_doc)
+        formatted_doc = _apply_indent(formatted_doc, indent)
+        if formatted_doc == original_doc.text and original_doc.is_raw:
             return stmt
 
         self.changed = True
@@ -160,11 +284,10 @@ def main(
     ),
     verbose: bool = typer.Option(False, "--verbose", "-v"),
 ) -> None:
-    """
-    Format Python docstrings in files using mdformat via uv.
+    r"""Format Python docstrings in files using mdformat via uv.
 
-    Default behavior writes fixes in-place.
-    Use --check for pre-commit/CI validation mode.
+    Default behavior writes fixes in-place. Use --check for pre-commit/CI
+    validation mode.
     """
     needs_changes: list[Path] = []
 
