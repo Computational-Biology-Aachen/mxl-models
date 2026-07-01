@@ -28,173 +28,220 @@ from mxlpy import InitialAssignment, Model
 ############INITIAL CONDITIONS##############
 
 
-def P_free(Ptot, Xtot, V, A, Z):
-    return Ptot - Xtot + V + A + Z
+def _p_free(ptot: float, xtot: float, v: float, a: float, z: float) -> float:
+    return ptot - xtot + v + a + z
 
 
-def X_tot(V, A, Z, PV, PA, PZ, QV, QA, QZ):
-    return V + A + Z + PV + PA + PZ + QV + QA + QZ
+def _x_tot(
+    v: float,
+    a: float,
+    z: float,
+    pv: float,
+    pa: float,
+    pz: float,
+    qv: float,
+    qa: float,
+    qz: float,
+) -> float:
+    return v + a + z + pv + pa + pz + qv + qa + qz
 
 
-def V_free(Xtot, A, Z, PV, PA, PZ, QV, QA, QZ):
-    return Xtot - (A + Z + PV + PA + PZ + QV + QA + QZ)
+def _v_free(
+    xtot: float,
+    a: float,
+    z: float,
+    pv: float,
+    pa: float,
+    pz: float,
+    qv: float,
+    qa: float,
+    qz: float,
+) -> float:
+    return xtot - (a + z + pv + pa + pz + qv + qa + qz)
 
 
-def Keq(kf, kr):
+def _keq(kf: float, kr: float) -> float:
     return kf / kr
 
 
-def Keq_light_dark(kf_light, kr_light, kf_dark, kr_dark, ppfd):
+# FIXME @ Huy: what is up with kf_light & kf_dark here?
+def _keq_light_dark(
+    kf_light: float, kr_light: float, kf_dark: float, kr_dark: float, ppfd: float
+) -> float:
     if ppfd == 0:
         return kf_dark / kr_dark
     return kf_dark / kr_dark  # kf_light/kr_light
 
 
-def P0(Ptot, V0, Kpv, Kpa, Ka, Kpz, Kz, Kqv, Kqa, Kqz):
-    return Ptot / (
+def _p0(
+    ptot: float,
+    v0: float,
+    kpv: float,
+    kpa: float,
+    ka: float,
+    kpz: float,
+    kz: float,
+    kqv: float,
+    kqa: float,
+    kqz: float,
+) -> float:
+    return ptot / (
         1
-        + V0
+        + v0
         * (
-            Kpv
-            + Kpa * Ka
-            + Kpz * Kz * Ka
-            + Kqv * Kpv
-            + Kqa * Kpa * Ka
-            + Kqz * Kpz * Kz * Ka
+            kpv
+            + kpa * ka
+            + kpz * kz * ka
+            + kqv * kpv
+            + kqa * kpa * ka
+            + kqz * kpz * kz * ka
         )
     )
 
 
-def A0(Keq, V0):
-    return Keq * V0
+def _a0(_keq: float, v0: float) -> float:
+    return _keq * v0
 
 
-def Z0(Ka, Kz, V0):
-    return Ka * Kz * V0
+def _z0(ka: float, kz: float, v0: float) -> float:
+    return ka * kz * v0
 
 
-def PA0(
-    Kpa,
-    Ka,
-    V0,
-    P0,
-):
-    return Kpa * Ka * V0 * P0
+def _pa0(
+    kpa: float,
+    ka: float,
+    v0: float,
+    _p0: float,
+) -> float:
+    return kpa * ka * v0 * _p0
 
 
-def PZ0(Kpz, Kz, Ka, P0, V0):
-    return Kpz * Kz * Ka * V0 * P0
+def _pz0(kpz: float, kz: float, ka: float, _p0: float, v0: float) -> float:
+    return kpz * kz * ka * v0 * _p0
 
 
-def PV0(
-    Kpv,
-    V0,
-    P0,
-):
-    return Kpv * V0 * P0
+def _pv0(
+    kpv: float,
+    v0: float,
+    _p0: float,
+) -> float:
+    return kpv * v0 * _p0
 
 
-def QA0(P0, V0, Kpa, Ka, Kqa):
-    return Kpa * Ka * Kqa * P0 * V0
+def _qa0(_p0: float, v0: float, kpa: float, ka: float, kqa: float) -> float:
+    return kpa * ka * kqa * _p0 * v0
 
 
-def QV0(P0, V0, Kpv, Kqv):
-    return Kpv * Kqv * P0 * V0
+def _qv0(_p0: float, v0: float, kpv: float, kqv: float) -> float:
+    return kpv * kqv * _p0 * v0
 
 
-def QZ0(Kqz, Kpz, Kz, Ka, P0, V0):
-    return Kqz * Kpz * Kz * Ka * P0 * V0
+def _qz0(kqz: float, kpz: float, kz: float, ka: float, _p0: float, v0: float) -> float:
+    return kqz * kpz * kz * ka * _p0 * v0
 
 
-def E0(kva_d, kva_l):
+def _e0(kva_d: float, kva_l: float) -> float:
     return kva_d / kva_l
 
 
 ############DERIVED##############
 
 
-def moiety(Xtot, X):
-    return Xtot - X
+def _moiety(xtot: float, x: float) -> float:
+    return xtot - x
 
 
-def kappa_r_nr(tau_0, kappa_qZ, Z_0):
-    return 1 / tau_0 - kappa_qZ * Z_0
+def _kappa_r_nr(tau_0: float, kappa_q_z: float, z_0: float) -> float:
+    return 1 / tau_0 - kappa_q_z * z_0
 
 
 ############RATES##############
 
 
-def same(x):
+def _same(x: float) -> float:
     return x
 
 
-def mul(x, y):
+def _mul(x: float, y: float) -> float:
     return x * y
 
 
-def mass_action_2s(k, s1, s2):
+def _mass_action_2s(k: float, s1: float, s2: float) -> float:
     return k * s1 * s2
 
 
-def mass_action_1s(k, s):
+def _mass_action_1s(k: float, s: float) -> float:
     return k * s
 
 
-def mass_action_light_dark_1s(ppfd, k_light, k_dark, s):
+def _mass_action_light_dark_1s(
+    ppfd: float, k_light: float, k_dark: float, s: float
+) -> float:
     if ppfd == 0:
         return k_dark * s
     return k_light * s
 
 
-def mass_action_light_dark_2s(ppfd, k_light, k_dark, s1, s2):
+def _mass_action_light_dark_2s(
+    ppfd: float, k_light: float, k_dark: float, s1: float, s2: float
+) -> float:
     if ppfd == 0:
         return k_dark * s1 * s2
     return k_light * s1 * s2
 
 
-def damage(ppfd, k_light, k_dark, tau, PSIId):
+def _damage(
+    ppfd: float, k_light: float, k_dark: float, tau: float, psi_id: float
+) -> float:
     tau = max(tau, 0)
     if ppfd == 0:
-        return max(k_dark * tau * (1 - PSIId), 0)
-    return max(k_light * tau * (1 - PSIId), 0)
+        return max(k_dark * tau * (1 - psi_id), 0)
+    return max(k_light * tau * (1 - psi_id), 0)
 
 
 # --- alpha_VDE enzyme activation ---
 
 
-def v_alpha_VDE(ppfd, k_L_VDE, k_D_VDE, k_L_VA, k_D_VA, alpha_VDE):
+def _v_alpha_vde(
+    ppfd: float,
+    k_l_vde: float,
+    k_d_vde: float,
+    k_l_va: float,
+    k_d_va: float,
+    alpha_vde: float,
+) -> float:
     if ppfd == 0:
-        k_VDE = k_D_VDE
-        alpha_VDE_eq = k_D_VA / k_L_VA
+        k_VDE = k_d_vde
+        alpha_VDE_eq = k_d_va / k_l_va
     else:
-        k_VDE = k_L_VDE
+        k_VDE = k_l_vde
         alpha_VDE_eq = 1
-    return k_VDE * (alpha_VDE_eq - alpha_VDE)
+    return k_VDE * (alpha_VDE_eq - alpha_vde)
 
 
-def chlorophyll_fluo_lifetime(
-    kappa_QV,
-    QV,
-    kappa_QA,
-    QA,
-    kappa_QZ,
-    QZ,
-    kappa_QL,
-    QL,
-    kappa_qZ,
-    Z,
-    k_qI,
-    PSIId,
-    kappa_r_nr,
-):
+def _chlorophyll_fluo_lifetime(
+    kappa_qv: float,
+    qv: float,
+    kappa_qa: float,
+    qa: float,
+    kappa_qz: float,
+    qz: float,
+    kappa_ql: float,
+    ql: float,
+    kappa_q_z: float,
+    z: float,
+    k_q_i: float,
+    psi_id: float,
+    _kappa_r_nr: float,
+) -> float:
     denom = (
-        kappa_r_nr
-        + kappa_QV * max(QV, 0)
-        + kappa_QA * max(QA, 0)
-        + kappa_QZ * max(QZ, 0)
-        + kappa_QL * max(QL, 0)
-        + kappa_qZ * max(Z, 0)
-        + k_qI * max(PSIId, 0)
+        _kappa_r_nr
+        + kappa_qv * max(qv, 0)
+        + kappa_qa * max(qa, 0)
+        + kappa_qz * max(qz, 0)
+        + kappa_ql * max(ql, 0)
+        + kappa_q_z * max(z, 0)
+        + k_q_i * max(psi_id, 0)
     )
     return 1.0 / max(denom, 1e-10)
 
@@ -203,6 +250,7 @@ def chlorophyll_fluo_lifetime(
 
 
 def get_lam2026() -> Model:
+    """Get Lam 2026 model."""
     m = Model()
     m.add_parameters(
         {
@@ -261,38 +309,42 @@ def get_lam2026() -> Model:
         }
     )
 
-    m.add_derived("gamma", E0, args=["k_D_VA", "k_L_VA"])
-    m.add_derived("k_D_AZ", mass_action_1s, args=["gamma", "k_L_AZ"])
+    m.add_derived("gamma", _e0, args=["k_D_VA", "k_L_VA"])
+    m.add_derived("k_D_AZ", _mass_action_1s, args=["gamma", "k_L_AZ"])
 
-    m.add_derived("Keq_pz", Keq, args=["k_PZ_f", "k_PZ_b"])
-    m.add_derived("Keq_pv", Keq, args=["k_PV_f", "k_PV_b"])
-    m.add_derived("Keq_pa", Keq, args=["k_PA_f", "k_PA_b"])
+    m.add_derived("Keq_pz", _keq, args=["k_PZ_f", "k_PZ_b"])
+    m.add_derived("Keq_pv", _keq, args=["k_PV_f", "k_PV_b"])
+    m.add_derived("Keq_pa", _keq, args=["k_PA_f", "k_PA_b"])
 
     m.add_derived(
-        "Keq_a", Keq_light_dark, args=["k_D_VA", "k_AV", "k_D_VA", "k_AV", "ppfd"]
+        "Keq_a",
+        _keq_light_dark,
+        args=["k_D_VA", "k_AV", "k_D_VA", "k_AV", "ppfd"],
     )
     m.add_derived(
-        "Keq_z", Keq_light_dark, args=["k_D_AZ", "k_ZA", "k_D_AZ", "k_ZA", "ppfd"]
+        "Keq_z",
+        _keq_light_dark,
+        args=["k_D_AZ", "k_ZA", "k_D_AZ", "k_ZA", "ppfd"],
     )
     m.add_derived(
         "Keq_qv",
-        Keq_light_dark,
+        _keq_light_dark,
         args=["k_L_QV_f", "k_QV_b", "k_D_QV_f", "k_QV_b", "ppfd"],
     )
     m.add_derived(
         "Keq_qa",
-        Keq_light_dark,
+        _keq_light_dark,
         args=["k_L_QA_f", "k_QA_b", "k_D_QA_f", "k_QA_b", "ppfd"],
     )
     m.add_derived(
         "Keq_qz",
-        Keq_light_dark,
+        _keq_light_dark,
         args=["k_L_QZ_f", "k_QZ_b", "k_D_QZ_f", "k_QZ_b", "ppfd"],
     )
 
     m.add_derived(
         "P0",
-        P0,
+        _p0,
         args=[
             "P_tot",
             "V_tot_WT",
@@ -307,56 +359,60 @@ def get_lam2026() -> Model:
         ],
     )
 
-    m.add_derived("A_0", fn=A0, args=["Keq_a", "V_tot_WT"])
-    m.add_derived("Z_0", fn=Z0, args=["Keq_a", "Keq_z", "V_tot_WT"])
-    m.add_derived("PV_0", fn=PV0, args=["Keq_pv", "V_tot_WT", "P0"])
-    m.add_derived("PA_0", fn=PA0, args=["Keq_pa", "Keq_a", "V_tot_WT", "P0"])
-    m.add_derived("PZ_0", fn=PZ0, args=["Keq_pz", "Keq_z", "Keq_a", "P0", "V_tot_WT"])
-    m.add_derived("QV_0", fn=QV0, args=["P0", "V_tot_WT", "Keq_pv", "Keq_qv"])
-    m.add_derived("QA_0", fn=QA0, args=["P0", "V_tot_WT", "Keq_pa", "Keq_a", "Keq_qa"])
+    m.add_derived("A_0", fn=_a0, args=["Keq_a", "V_tot_WT"])
+    m.add_derived("Z_0", fn=_z0, args=["Keq_a", "Keq_z", "V_tot_WT"])
+    m.add_derived("PV_0", fn=_pv0, args=["Keq_pv", "V_tot_WT", "P0"])
+    m.add_derived("PA_0", fn=_pa0, args=["Keq_pa", "Keq_a", "V_tot_WT", "P0"])
+    m.add_derived("PZ_0", fn=_pz0, args=["Keq_pz", "Keq_z", "Keq_a", "P0", "V_tot_WT"])
+    m.add_derived("QV_0", fn=_qv0, args=["P0", "V_tot_WT", "Keq_pv", "Keq_qv"])
+    m.add_derived("QA_0", fn=_qa0, args=["P0", "V_tot_WT", "Keq_pa", "Keq_a", "Keq_qa"])
     m.add_derived(
-        "QZ_0", fn=QZ0, args=["Keq_qz", "Keq_pz", "Keq_z", "Keq_a", "P0", "V_tot_WT"]
+        "QZ_0",
+        fn=_qz0,
+        args=["Keq_qz", "Keq_pz", "Keq_z", "Keq_a", "P0", "V_tot_WT"],
     )
 
     m.add_derived(
         "X_tot",
-        fn=X_tot,
+        fn=_x_tot,
         args=["V_tot_WT", "A_0", "Z_0", "PV_0", "PA_0", "PZ_0", "QV_0", "QA_0", "QZ_0"],
     )
 
-    m.add_derived("kappa_r_nr", kappa_r_nr, args=["tau_0", "kappa_qZ", "Z_0"])
+    m.add_derived("kappa_r_nr", _kappa_r_nr, args=["tau_0", "kappa_qZ", "Z_0"])
 
     # Variables and initial conditions
     m.add_variables(
         {
-            "V": InitialAssignment(fn=same, args=["V_tot_WT"]),
-            "A": InitialAssignment(fn=A0, args=["Keq_a", "V_tot_WT"]),
-            "Z": InitialAssignment(fn=Z0, args=["Keq_a", "Keq_z", "V_tot_WT"]),
-            "PV": InitialAssignment(fn=PV0, args=["Keq_pv", "V_tot_WT", "P0"]),
-            "PA": InitialAssignment(fn=PA0, args=["Keq_pa", "Keq_a", "V_tot_WT", "P0"]),
+            "V": InitialAssignment(fn=_same, args=["V_tot_WT"]),
+            "A": InitialAssignment(fn=_a0, args=["Keq_a", "V_tot_WT"]),
+            "Z": InitialAssignment(fn=_z0, args=["Keq_a", "Keq_z", "V_tot_WT"]),
+            "PV": InitialAssignment(fn=_pv0, args=["Keq_pv", "V_tot_WT", "P0"]),
+            "PA": InitialAssignment(
+                fn=_pa0, args=["Keq_pa", "Keq_a", "V_tot_WT", "P0"]
+            ),
             "PZ": InitialAssignment(
-                fn=PZ0, args=["Keq_pz", "Keq_z", "Keq_a", "P0", "V_tot_WT"]
+                fn=_pz0, args=["Keq_pz", "Keq_z", "Keq_a", "P0", "V_tot_WT"]
             ),
             "QV": InitialAssignment(
-                fn=QV0, args=["P0", "V_tot_WT", "Keq_pv", "Keq_qv"]
+                fn=_qv0, args=["P0", "V_tot_WT", "Keq_pv", "Keq_qv"]
             ),
             "QA": InitialAssignment(
-                fn=QA0, args=["P0", "V_tot_WT", "Keq_pa", "Keq_a", "Keq_qa"]
+                fn=_qa0, args=["P0", "V_tot_WT", "Keq_pa", "Keq_a", "Keq_qa"]
             ),
             "QZ": InitialAssignment(
-                fn=QZ0, args=["Keq_qz", "Keq_pz", "Keq_z", "Keq_a", "P0", "V_tot_WT"]
+                fn=_qz0, args=["Keq_qz", "Keq_pz", "Keq_z", "Keq_a", "P0", "V_tot_WT"]
             ),
             "QL": 0,
             "PL": 165,  # set from HPLC data
             "PSIId": 0,
-            "alpha_VDE": InitialAssignment(fn=E0, args=["k_D_VA", "k_L_VA"]),
+            "alpha_VDE": InitialAssignment(fn=_e0, args=["k_D_VA", "k_L_VA"]),
         }
     )
 
-    m.add_derived("PSII_active", moiety, args=["PSII_tot", "PSIId"])
+    m.add_derived("PSII_active", _moiety, args=["PSII_tot", "PSIId"])
     m.add_derived(
         "P_free",
-        P_free,
+        _p_free,
         args=[
             "P_tot",
             "X_tot",
@@ -368,7 +424,7 @@ def get_lam2026() -> Model:
 
     m.add_derived(
         "tau_Fluo",
-        chlorophyll_fluo_lifetime,
+        _chlorophyll_fluo_lifetime,
         args=[
             "kappa_QV",
             "QV",
@@ -388,107 +444,134 @@ def get_lam2026() -> Model:
 
     m.add_reaction(
         "VA",
-        mass_action_light_dark_2s,
+        _mass_action_light_dark_2s,
         stoichiometry={"V": -1, "A": 1},
         args=["ppfd", "k_L_VA", "k_L_VA", "alpha_VDE", "V"],
     )
     m.add_reaction(
-        "AV", mass_action_1s, stoichiometry={"A": -1, "V": 1}, args=["k_AV", "A"]
+        "AV",
+        _mass_action_1s,
+        stoichiometry={"A": -1, "V": 1},
+        args=["k_AV", "A"],
     )
     m.add_reaction(
         "AZ",
-        mass_action_light_dark_2s,
+        _mass_action_light_dark_2s,
         stoichiometry={"A": -1, "Z": 1},
         args=["ppfd", "k_L_AZ", "k_L_AZ", "alpha_VDE", "A"],
     )
     m.add_reaction(
-        "ZA", mass_action_1s, stoichiometry={"Z": -1, "A": 1}, args=["k_ZA", "Z"]
+        "ZA",
+        _mass_action_1s,
+        stoichiometry={"Z": -1, "A": 1},
+        args=["k_ZA", "Z"],
     )
 
     m.add_reaction(
         "PVf",
-        mass_action_2s,
+        _mass_action_2s,
         stoichiometry={"PV": 1, "V": -1},
         args=["k_PV_f", "V", "P_free"],
     )
     m.add_reaction(
-        "PVb", mass_action_1s, stoichiometry={"PV": -1, "V": 1}, args=["k_PV_b", "PV"]
+        "PVb",
+        _mass_action_1s,
+        stoichiometry={"PV": -1, "V": 1},
+        args=["k_PV_b", "PV"],
     )
     m.add_reaction(
         "PAf",
-        mass_action_2s,
+        _mass_action_2s,
         stoichiometry={"A": -1, "PA": 1},
         args=["k_PA_f", "A", "P_free"],
     )
     m.add_reaction(
-        "PAb", mass_action_1s, stoichiometry={"PA": -1, "A": 1}, args=["k_PA_b", "PA"]
+        "PAb",
+        _mass_action_1s,
+        stoichiometry={"PA": -1, "A": 1},
+        args=["k_PA_b", "PA"],
     )
     m.add_reaction(
         "PZf",
-        mass_action_2s,
+        _mass_action_2s,
         stoichiometry={"Z": -1, "PZ": 1},
         args=["k_PZ_f", "Z", "P_free"],
     )
     m.add_reaction(
-        "PZb", mass_action_1s, stoichiometry={"PZ": -1, "Z": 1}, args=["k_PZ_b", "PZ"]
+        "PZb",
+        _mass_action_1s,
+        stoichiometry={"PZ": -1, "Z": 1},
+        args=["k_PZ_b", "PZ"],
     )
 
     m.add_reaction(
         "QVf",
-        mass_action_light_dark_1s,
+        _mass_action_light_dark_1s,
         stoichiometry={"PV": -1, "QV": 1},
         args=["ppfd", "k_L_QV_f", "k_D_QX_f", "PV"],
     )
     m.add_reaction(
-        "QVb", mass_action_1s, stoichiometry={"QV": -1, "PV": 1}, args=["k_QV_b", "QV"]
+        "QVb",
+        _mass_action_1s,
+        stoichiometry={"QV": -1, "PV": 1},
+        args=["k_QV_b", "QV"],
     )
     m.add_reaction(
         "QAf",
-        mass_action_light_dark_1s,
+        _mass_action_light_dark_1s,
         stoichiometry={"PA": -1, "QA": 1},
         args=["ppfd", "k_L_QA_f", "k_D_QX_f", "PA"],
     )
     m.add_reaction(
-        "QAb", mass_action_1s, stoichiometry={"QA": -1, "PA": 1}, args=["k_QA_b", "QA"]
+        "QAb",
+        _mass_action_1s,
+        stoichiometry={"QA": -1, "PA": 1},
+        args=["k_QA_b", "QA"],
     )
     m.add_reaction(
         "QZf",
-        mass_action_light_dark_1s,
+        _mass_action_light_dark_1s,
         stoichiometry={"PZ": -1, "QZ": 1},
         args=["ppfd", "k_L_QZ_f", "k_D_QX_f", "PZ"],
     )
     m.add_reaction(
-        "QZb", mass_action_1s, stoichiometry={"QZ": -1, "PZ": 1}, args=["k_QA_b", "QZ"]
+        "QZb",
+        _mass_action_1s,
+        stoichiometry={"QZ": -1, "PZ": 1},
+        args=["k_QA_b", "QZ"],
     )
 
     m.add_reaction(
         "QLf",
-        mass_action_light_dark_1s,
+        _mass_action_light_dark_1s,
         stoichiometry={"PL": -1, "QL": 1},
         args=["ppfd", "k_L_QL_f", "k_D_QX_f", "PL"],
     )
     m.add_reaction(
-        "QLb", mass_action_1s, stoichiometry={"QL": -1, "PL": 1}, args=["k_QL_b", "QL"]
+        "QLb",
+        _mass_action_1s,
+        stoichiometry={"QL": -1, "PL": 1},
+        args=["k_QL_b", "QL"],
     )
 
     m.add_reaction(
         "damage",
-        damage,
+        _damage,
         stoichiometry={"PSIId": 1},
         args=["ppfd", "k_L_damage", "k_D_damage", "tau_Fluo", "PSIId"],
     )
 
     m.add_reaction(
         "v_alpha_VDE",
-        v_alpha_VDE,
+        _v_alpha_vde,
         stoichiometry={"alpha_VDE": 1},
         args=["ppfd", "k_L_VDE", "k_D_VDE", "k_L_VA", "k_D_VA", "alpha_VDE"],
     )
 
-    m.add_readout("NPQ_V", mul, args=["kappa_QV", "QV"])
-    m.add_readout("NPQ_A", mul, args=["kappa_QA", "QA"])
-    m.add_readout("NPQ_Z_qE", mul, args=["kappa_QZ", "QZ"])
-    m.add_readout("NPQ_L", mul, args=["kappa_QL", "QL"])
-    m.add_readout("NPQ_Z_qZ", mul, args=["kappa_qZ", "Z"])
-    m.add_readout("NPQ_qI", mul, args=["kappa_qI", "PSIId"])
+    m.add_readout("NPQ_V", _mul, args=["kappa_QV", "QV"])
+    m.add_readout("NPQ_A", _mul, args=["kappa_QA", "QA"])
+    m.add_readout("NPQ_Z_qE", _mul, args=["kappa_QZ", "QZ"])
+    m.add_readout("NPQ_L", _mul, args=["kappa_QL", "QL"])
+    m.add_readout("NPQ_Z_qZ", _mul, args=["kappa_qZ", "Z"])
+    m.add_readout("NPQ_qI", _mul, args=["kappa_qI", "PSIId"])
     return m
