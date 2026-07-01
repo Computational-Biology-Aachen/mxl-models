@@ -192,7 +192,8 @@ def _f(_eprime: float, p: float, y15: float) -> float:
     return nom / denom + y15
 
 
-def _get_lazar1997() -> float:
+def get_lazar1997() -> Model:
+    r"""Get the Lazar 1997 model."""
     return (
         Model()
         .add_parameters(

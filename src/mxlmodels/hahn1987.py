@@ -172,7 +172,8 @@ def _vphio(phio: float, oa: float, oi: float) -> float:
     return phio * (oa - oi)
 
 
-def _get_hahn1987() -> float:
+def get_hahn1987() -> Model:
+    r"""Get the Hahn 1987 model."""
     return (
         Model()
         .add_parameters(
