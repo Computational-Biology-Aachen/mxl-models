@@ -1,4 +1,4 @@
-"""Nedbal and Lazár (2021) photosynthesis dynamics model.
+r"""Nedbal and Lazár (2021) photosynthesis dynamics model.
 
 |             |                                 |
 | ----------- | ------------------------------- |
@@ -100,19 +100,25 @@ def harmonic_sum_rate(
     p3,
     p4,
 ):
-    return sum(
-        harmonic_rate(
-            time,
-            amplitude,
-            period,
-            lag,
-            harmonic,
-        )
-        for harmonic, amplitude, lag in zip(
-            [1, 2, 3, 4],
-            [a1, a2, a3, a4],
-            [p1, p2, p3, p4],
-        )
+    # return sum(
+    #     harmonic_rate(
+    #         time,
+    #         amplitude,
+    #         period,
+    #         lag,
+    #         harmonic,
+    #     )
+    #     for harmonic, amplitude, lag in zip(
+    #         [1, 2, 3, 4],
+    #         [a1, a2, a3, a4],
+    #         [p1, p2, p3, p4],
+    #     )
+    # )
+    return (
+        harmonic_rate(time, 1, period, a1, p1)
+        + harmonic_rate(time, 2, period, a2, p2)
+        + harmonic_rate(time, 3, period, a3, p3)
+        + harmonic_rate(time, 4, period, a4, p4)
     )
 
 
