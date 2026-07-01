@@ -469,166 +469,164 @@ def get_ebenhoeh2014() -> Model:
     """
     m: Model = Model()
     # Dynamic variables (initial values from the original main.ipynb)
-    m = m.add_variable("Plastoquinone (oxidised)", initial_value=17.5)
-    m = m.add_variable("Plastocyanine (oxidised)", initial_value=0.0202)
-    m = m.add_variable("Ferredoxine (oxidised)", initial_value=5.0)
-    m = m.add_variable("ATP", initial_value=0.0)
-    m = m.add_variable("NADPH", initial_value=0.0)
-    m = m.add_variable("protons_lumen", initial_value=4000.0 * 10 ** (-7.2))
-    m = m.add_variable("Light-harvesting complex", initial_value=0.9)
+    m.add_variable("Plastoquinone (oxidised)", initial_value=17.5)
+    m.add_variable("Plastocyanine (oxidised)", initial_value=0.0202)
+    m.add_variable("Ferredoxine (oxidised)", initial_value=5.0)
+    m.add_variable("ATP", initial_value=0.0)
+    m.add_variable("NADPH", initial_value=0.0)
+    m.add_variable("protons_lumen", initial_value=4000.0 * 10 ** (-7.2))
+    m.add_variable("Light-harvesting complex", initial_value=0.9)
     # Stroma pH (constant) and light
-    m = m.add_parameter("pH", value=7.8)
-    m = m.add_parameter("PPFD", value=100.0)
-    m = m.add_parameter(
-        "cPPFD", value=1 / 3
-    )  # incorporate this into the other equations
+    m.add_parameter("pH", value=7.8)
+    m.add_parameter("PPFD", value=100.0)
+    m.add_parameter("cPPFD", value=1 / 3)  # incorporate this into the other equations
     # Total pool sizes
-    m = m.add_parameter("PSII_total", value=2.5)
-    m = m.add_parameter("PSI_total", value=2.5)
-    m = m.add_parameter("PQ_tot", value=17.5)
-    m = m.add_parameter("PC_tot", value=4.0)
-    m = m.add_parameter("Fd*", value=5.0)
-    m = m.add_parameter("NADP*", value=25.0)
-    m = m.add_parameter("A*P", value=60.0)
-    m = m.add_parameter("LHC_tot", value=1.0)
+    m.add_parameter("PSII_total", value=2.5)
+    m.add_parameter("PSI_total", value=2.5)
+    m.add_parameter("PQ_tot", value=17.5)
+    m.add_parameter("PC_tot", value=4.0)
+    m.add_parameter("Fd*", value=5.0)
+    m.add_parameter("NADP*", value=25.0)
+    m.add_parameter("A*P", value=60.0)
+    m.add_parameter("LHC_tot", value=1.0)
     # Physical constants
-    m = m.add_parameter("F", value=96.485)
-    m = m.add_parameter("R", value=0.0083)
-    m = m.add_parameter("T", value=298.0)
-    m = m.add_parameter("bH", value=100.0)
+    m.add_parameter("F", value=96.485)
+    m.add_parameter("R", value=0.0083)
+    m.add_parameter("T", value=298.0)
+    m.add_parameter("bH", value=100.0)
     # Standard redox potentials (V, at pH 0)
-    m = m.add_parameter("E^0_QA", value=-0.14)
-    m = m.add_parameter("E^0_PQ", value=0.354)
-    m = m.add_parameter("E^0_PC", value=0.38)
-    m = m.add_parameter("E^0_P700", value=0.48)
-    m = m.add_parameter("E^0_FA", value=-0.55)
-    m = m.add_parameter("E^0_Fd", value=-0.43)
-    m = m.add_parameter("E^0_NADP", value=-0.113)
+    m.add_parameter("E^0_QA", value=-0.14)
+    m.add_parameter("E^0_PQ", value=0.354)
+    m.add_parameter("E^0_PC", value=0.38)
+    m.add_parameter("E^0_P700", value=0.48)
+    m.add_parameter("E^0_FA", value=-0.55)
+    m.add_parameter("E^0_Fd", value=-0.43)
+    m.add_parameter("E^0_NADP", value=-0.113)
     # PSII rate constants
-    m = m.add_parameter("kH0", value=500000000.0)
-    m = m.add_parameter("kH", value=0.0)
-    m = m.add_parameter("kF", value=62500000.0)
-    m = m.add_parameter("k2", value=1200000000.0)
-    m = m.add_parameter("Q", value=0.0)
+    m.add_parameter("kH0", value=500000000.0)
+    m.add_parameter("kH", value=0.0)
+    m.add_parameter("kF", value=62500000.0)
+    m.add_parameter("k2", value=1200000000.0)
+    m.add_parameter("Q", value=0.0)
     # Cross-section partitioning
-    m = m.add_parameter("staticAntI", value=0.2)
-    m = m.add_parameter("staticAntII", value=0.0)
+    m.add_parameter("staticAntI", value=0.2)
+    m.add_parameter("staticAntII", value=0.0)
     # ATP synthase / consumption
-    m = m.add_parameter("kf_atp_synthase", value=20.0)
-    m = m.add_parameter("kf_atp_consumption", value=10.0)
-    m = m.add_parameter("Pi_mol", value=0.01)
-    m = m.add_parameter("DeltaG0_ATP", value=30.6)
-    m = m.add_parameter("HPR", value=14.0 / 3.0)
-    m = m.add_parameter("kf_nadph_consumption", value=15.0)
+    m.add_parameter("kf_atp_synthase", value=20.0)
+    m.add_parameter("kf_atp_consumption", value=10.0)
+    m.add_parameter("Pi_mol", value=0.01)
+    m.add_parameter("DeltaG0_ATP", value=30.6)
+    m.add_parameter("HPR", value=14.0 / 3.0)
+    m.add_parameter("kf_nadph_consumption", value=15.0)
     # Proton leak / membrane
-    m = m.add_parameter(
+    m.add_parameter(
         "kf_proton_leak", value=0.01
     )  # this value is not specified in the paper
     # Electron transfer rate constants
-    m = m.add_parameter("kPQred", value=250.0)
-    m = m.add_parameter("kcat_b6f", value=2.5)
-    m = m.add_parameter("kPTOX", value=0.01)
-    m = m.add_parameter("kPCox", value=2500.0)
-    m = m.add_parameter("kFdred", value=250000.0)
-    m = m.add_parameter("kcat_fnr", value=500.0)
-    m = m.add_parameter("E0_fnr", value=3.0)
-    m = m.add_parameter("km_fnr_Ferredoxine (reduced)", value=1.56)
-    m = m.add_parameter("km_fnr_NADP", value=0.22)
-    m = m.add_parameter("kf_cyclic_electron_flow", value=1.0)
-    m = m.add_parameter("O2 (dissolved)_lumen", value=8.0)
-    m = m.add_parameter("kf_ndh", value=0.004)
+    m.add_parameter("kPQred", value=250.0)
+    m.add_parameter("kcat_b6f", value=2.5)
+    m.add_parameter("kPTOX", value=0.01)
+    m.add_parameter("kPCox", value=2500.0)
+    m.add_parameter("kFdred", value=250000.0)
+    m.add_parameter("kcat_fnr", value=500.0)
+    m.add_parameter("E0_fnr", value=3.0)
+    m.add_parameter("km_fnr_Ferredoxine (reduced)", value=1.56)
+    m.add_parameter("km_fnr_NADP", value=0.22)
+    m.add_parameter("kf_cyclic_electron_flow", value=1.0)
+    m.add_parameter("O2 (dissolved)_lumen", value=8.0)
+    m.add_parameter("kf_ndh", value=0.004)
     # State transitions
-    m = m.add_parameter("kStt7", value=0.0035)
-    m = m.add_parameter("kPph1", value=0.0013)
-    m = m.add_parameter("km_lhc_state_transition_12", value=0.2)
-    m = m.add_parameter("n_ST", value=2.0)
+    m.add_parameter("kStt7", value=0.0035)
+    m.add_parameter("kPph1", value=0.0013)
+    m.add_parameter("km_lhc_state_transition_12", value=0.2)
+    m.add_parameter("n_ST", value=2.0)
     # Derived quantities
-    m = m.add_derived(
+    m.add_derived(
         "RT",
         fn=_mass_action_1s,
         args=["R", "T"],
     )
-    m = m.add_derived(
+    m.add_derived(
         "dG_pH",
         fn=_dg_ph,
         args=["R", "T"],
     )
-    m = m.add_derived(
+    m.add_derived(
         "pH_lumen",
         fn=_ph_lumen,
         args=["protons_lumen"],
     )
-    m = m.add_derived(
+    m.add_derived(
         "Plastoquinone (reduced)",
         fn=_moiety_1,
         args=["Plastoquinone (oxidised)", "PQ_tot"],
     )
-    m = m.add_derived(
+    m.add_derived(
         "Plastocyanine (reduced)",
         fn=_moiety_1,
         args=["Plastocyanine (oxidised)", "PC_tot"],
     )
-    m = m.add_derived(
+    m.add_derived(
         "Ferredoxine (reduced)",
         fn=_moiety_1,
         args=["Ferredoxine (oxidised)", "Fd*"],
     )
-    m = m.add_derived(
+    m.add_derived(
         "ADP",
         fn=_moiety_1,
         args=["ATP", "A*P"],
     )
-    m = m.add_derived(
+    m.add_derived(
         "NADP",
         fn=_moiety_1,
         args=["NADPH", "NADP*"],
     )
-    m = m.add_derived(
+    m.add_derived(
         "Light-harvesting complex (protonated)",
         fn=_moiety_1,
         args=["Light-harvesting complex", "LHC_tot"],
     )
-    m = m.add_derived(
+    m.add_derived(
         "PSII_cross_section",
         fn=_ps2_crosssection,
         args=["Light-harvesting complex", "staticAntII", "staticAntI"],
     )
-    m = m.add_derived(
+    m.add_derived(
         "keq_Plastoquinone (reduced)",
         fn=_keq_pq_red,
         args=["E^0_QA", "F", "E^0_PQ", "pH", "dG_pH", "RT"],
     )
-    m = m.add_derived(
+    m.add_derived(
         "keq_atp_synthase",
         fn=_keq_atp,
         args=["pH_lumen", "DeltaG0_ATP", "dG_pH", "HPR", "pH", "Pi_mol", "RT"],
     )
-    m = m.add_derived(
+    m.add_derived(
         "keq_b6f",
         fn=_keq_cytb6f,
         args=["pH_lumen", "F", "E^0_PQ", "E^0_PC", "pH", "RT", "dG_pH"],
     )
-    m = m.add_derived(
+    m.add_derived(
         "keq_fnr",
         fn=_keq_fnr,
         args=["E^0_Fd", "F", "E^0_NADP", "pH", "dG_pH", "RT"],
     )
-    m = m.add_derived(
+    m.add_derived(
         "vmax_fnr",
         fn=_mass_action_1s,
         args=["kcat_fnr", "E0_fnr"],
     )
-    m = m.add_derived(
+    m.add_derived(
         "keq_PCP700",
         fn=_keq_pcp700,
         args=["E^0_PC", "F", "E^0_P700", "RT"],
     )
-    m = m.add_derived(
+    m.add_derived(
         "keq_ferredoxin_reductase",
         fn=_keq_faf_d,
         args=["E^0_FA", "F", "E^0_Fd", "RT"],
     )
-    m = m.add_derived(
+    m.add_derived(
         "A1",
         fn=_ps1states,
         args=[
@@ -647,7 +645,7 @@ def get_ebenhoeh2014() -> Model:
         ],
     )
     # Reactions
-    m = m.add_reaction(
+    m.add_reaction(
         "PSII",
         fn=_rate_ps2,
         args=["B1", "k2"],
@@ -656,7 +654,7 @@ def get_ebenhoeh2014() -> Model:
             "protons_lumen": Derived(fn=_two_div_by, args=["bH"]),
         },
     )
-    m = m.add_reaction(
+    m.add_reaction(
         "PSI",
         fn=_rate_ps1,
         args=["A1", "PSII_cross_section", "PPFD", "cPPFD"],
@@ -665,19 +663,19 @@ def get_ebenhoeh2014() -> Model:
             "Plastocyanine (oxidised)": 1,
         },
     )
-    m = m.add_reaction(
+    m.add_reaction(
         "PTOX",
         fn=_mass_action_2s,
         args=["Plastoquinone (reduced)", "O2 (dissolved)_lumen", "kPTOX"],
         stoichiometry={"Plastoquinone (oxidised)": 1},
     )
-    m = m.add_reaction(
+    m.add_reaction(
         "ndh",
         fn=_mass_action_1s,
         args=["Plastoquinone (oxidised)", "kf_ndh"],
         stoichiometry={"Plastoquinone (oxidised)": -1},
     )
-    m = m.add_reaction(
+    m.add_reaction(
         "b6f",
         fn=_b6f,
         args=[
@@ -694,7 +692,7 @@ def get_ebenhoeh2014() -> Model:
             "protons_lumen": Derived(fn=_four_div_by, args=["bH"]),
         },
     )
-    m = m.add_reaction(
+    m.add_reaction(
         "cyclic_electron_flow",
         fn=_rate_cyclic_electron_flow,
         args=[
@@ -707,7 +705,7 @@ def get_ebenhoeh2014() -> Model:
             "Ferredoxine (oxidised)": 2,
         },
     )
-    m = m.add_reaction(
+    m.add_reaction(
         "fnr",
         fn=_rate_fnr,
         args=[
@@ -725,13 +723,13 @@ def get_ebenhoeh2014() -> Model:
             "NADPH": 1,
         },
     )
-    m = m.add_reaction(
+    m.add_reaction(
         "proton_leak",
         fn=_rate_leak,
         args=["protons_lumen", "pH", "kf_proton_leak"],
         stoichiometry={"protons_lumen": Derived(fn=_neg_one_div_by, args=["bH"])},
     )
-    m = m.add_reaction(
+    m.add_reaction(
         "lhc_state_transition_12",
         fn=_rate_state_transition_ps1_ps2,
         args=[
@@ -744,13 +742,13 @@ def get_ebenhoeh2014() -> Model:
         ],
         stoichiometry={"Light-harvesting complex": -1},
     )
-    m = m.add_reaction(
+    m.add_reaction(
         "lhc_state_transition_21",
         fn=_mass_action_1s,
         args=["Light-harvesting complex (protonated)", "kPph1"],
         stoichiometry={"Light-harvesting complex": 1},
     )
-    m = m.add_reaction(
+    m.add_reaction(
         "atp_synthase",
         fn=_rate_atp_synthase,
         args=["ATP", "ADP", "keq_atp_synthase", "kf_atp_synthase"],
@@ -759,19 +757,19 @@ def get_ebenhoeh2014() -> Model:
             "protons_lumen": Derived(fn=_neg_div, args=["HPR", "bH"]),
         },
     )
-    m = m.add_reaction(
+    m.add_reaction(
         "atp_consumption",
         fn=_mass_action_1s,
         args=["ATP", "kf_atp_consumption"],
         stoichiometry={"ATP": -1},
     )
-    m = m.add_reaction(
+    m.add_reaction(
         "nadph_consumption",
         fn=_mass_action_1s,
         args=["NADPH", "kf_nadph_consumption"],
         stoichiometry={"NADPH": -1},
     )
-    m = m.add_surrogate(
+    m.add_surrogate(
         "ps2states",
         qss.Surrogate(
             model=_ps2states_surrogate,
@@ -793,32 +791,32 @@ def get_ebenhoeh2014() -> Model:
             outputs=["B0", "B1", "B2", "B3"],
         ),
     )
-    m = m.add_readout(
+    m.add_readout(
         "PQ_red/tot",
         fn=_div,
         args=["Plastoquinone (reduced)", "PQ_tot"],
     )
-    m = m.add_readout(
+    m.add_readout(
         "Fd_red/tot",
         fn=_div,
         args=["Ferredoxine (reduced)", "Fd*"],
     )
-    m = m.add_readout(
+    m.add_readout(
         "PC_red/tot",
         fn=_div,
         args=["Plastocyanine (reduced)", "PC_tot"],
     )
-    m = m.add_readout(
+    m.add_readout(
         "NADPH/tot",
         fn=_div,
         args=["NADPH", "NADP*"],
     )
-    m = m.add_readout(
+    m.add_readout(
         "ATP/tot",
         fn=_div,
         args=["ATP", "A*P"],
     )
-    m = m.add_readout(
+    m.add_readout(
         "Fluo",
         fn=_rate_fluorescence,
         args=["B0", "B2", "PSII_cross_section", "k2", "kF", "kH0", "kH"],

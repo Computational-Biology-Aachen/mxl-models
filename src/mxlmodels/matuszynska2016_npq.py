@@ -502,110 +502,110 @@ def get_matuszynska2016_npq() -> Model:
     ```
     """
     m: Model = Model()
-    m = m.add_variable("pq_red", initial_value=0)
-    m = m.add_variable("protons", initial_value=6.32975752e-05)
-    m = m.add_variable("vmax_atp_synthase", initial_value=0)
-    m = m.add_variable("atp", initial_value=25.0)
-    m = m.add_variable("psbs_de", initial_value=1)
-    m = m.add_variable("vx", initial_value=1)
-    m = m.add_parameter("PSII_tot", value=2.5)
-    m = m.add_parameter("PQ_tot", value=20)
-    m = m.add_parameter("AP_tot", value=50)
-    m = m.add_parameter("PsbS_tot", value=1)
-    m = m.add_parameter("X_tot", value=1)
-    m = m.add_parameter("O2_ex", value=8)
-    m = m.add_parameter("Pi", value=0.01)
-    m = m.add_parameter("k_Cytb6f", value=0.104)
-    m = m.add_parameter("k_ActATPase", value=0.01)
-    m = m.add_parameter("k_DeactATPase", value=0.002)
-    m = m.add_parameter("k_ATPsynth", value=20.0)
-    m = m.add_parameter("k_ATPconsum", value=10.0)
-    m = m.add_parameter("k_PQH2", value=250.0)
-    m = m.add_parameter("k_H", value=5000000000.0)
-    m = m.add_parameter("k_F", value=625000000.0)
-    m = m.add_parameter("k_P", value=5000000000.0)
-    m = m.add_parameter("k_PTOX", value=0.01)
-    m = m.add_parameter("pH_st", value=7.8)
-    m = m.add_parameter("k_leak", value=1000)
-    m = m.add_parameter("b_H", value=100)
-    m = m.add_parameter("hpr", value=4.666666666666667)
-    m = m.add_parameter("k_DV", value=0.0024)
-    m = m.add_parameter("k_EZ", value=0.00024)
-    m = m.add_parameter("K_pHSat", value=5.8)
-    m = m.add_parameter("nhx", value=5.0)
-    m = m.add_parameter("K_ZSat", value=0.12)
-    m = m.add_parameter("nhl", value=3)
-    m = m.add_parameter("k_deprot", value=0.0096)
-    m = m.add_parameter("k_prot", value=0.0096)
-    m = m.add_parameter("K_pHSatLHC", value=5.8)
-    m = m.add_parameter("gamma_0", value=0.1)
-    m = m.add_parameter("gamma_1", value=0.25)
-    m = m.add_parameter("gamma_2", value=0.6)
-    m = m.add_parameter("gamma_3", value=0.15)
-    m = m.add_parameter("F", value=96.485)
-    m = m.add_parameter("R", value=0.0083)
-    m = m.add_parameter("T", value=298)
-    m = m.add_parameter("E0_QA", value=-0.14)
-    m = m.add_parameter("E0_PQ", value=0.354)
-    m = m.add_parameter("E0_PC", value=0.38)
-    m = m.add_parameter("DG_ATP", value=30.6)
-    m = m.add_parameter("PPFD", value=100)
-    m = m.add_derived(
+    m.add_variable("pq_red", initial_value=0)
+    m.add_variable("protons", initial_value=6.32975752e-05)
+    m.add_variable("vmax_atp_synthase", initial_value=0)
+    m.add_variable("atp", initial_value=25.0)
+    m.add_variable("psbs_de", initial_value=1)
+    m.add_variable("vx", initial_value=1)
+    m.add_parameter("PSII_tot", value=2.5)
+    m.add_parameter("PQ_tot", value=20)
+    m.add_parameter("AP_tot", value=50)
+    m.add_parameter("PsbS_tot", value=1)
+    m.add_parameter("X_tot", value=1)
+    m.add_parameter("O2_ex", value=8)
+    m.add_parameter("Pi", value=0.01)
+    m.add_parameter("k_Cytb6f", value=0.104)
+    m.add_parameter("k_ActATPase", value=0.01)
+    m.add_parameter("k_DeactATPase", value=0.002)
+    m.add_parameter("k_ATPsynth", value=20.0)
+    m.add_parameter("k_ATPconsum", value=10.0)
+    m.add_parameter("k_PQH2", value=250.0)
+    m.add_parameter("k_H", value=5000000000.0)
+    m.add_parameter("k_F", value=625000000.0)
+    m.add_parameter("k_P", value=5000000000.0)
+    m.add_parameter("k_PTOX", value=0.01)
+    m.add_parameter("pH_st", value=7.8)
+    m.add_parameter("k_leak", value=1000)
+    m.add_parameter("b_H", value=100)
+    m.add_parameter("hpr", value=4.666666666666667)
+    m.add_parameter("k_DV", value=0.0024)
+    m.add_parameter("k_EZ", value=0.00024)
+    m.add_parameter("K_pHSat", value=5.8)
+    m.add_parameter("nhx", value=5.0)
+    m.add_parameter("K_ZSat", value=0.12)
+    m.add_parameter("nhl", value=3)
+    m.add_parameter("k_deprot", value=0.0096)
+    m.add_parameter("k_prot", value=0.0096)
+    m.add_parameter("K_pHSatLHC", value=5.8)
+    m.add_parameter("gamma_0", value=0.1)
+    m.add_parameter("gamma_1", value=0.25)
+    m.add_parameter("gamma_2", value=0.6)
+    m.add_parameter("gamma_3", value=0.15)
+    m.add_parameter("F", value=96.485)
+    m.add_parameter("R", value=0.0083)
+    m.add_parameter("T", value=298)
+    m.add_parameter("E0_QA", value=-0.14)
+    m.add_parameter("E0_PQ", value=0.354)
+    m.add_parameter("E0_PC", value=0.38)
+    m.add_parameter("DG_ATP", value=30.6)
+    m.add_parameter("PPFD", value=100)
+    m.add_derived(
         "pH_lu",
         fn=_ph,
         args=["protons"],
     )
-    m = m.add_derived(
+    m.add_derived(
         "H_st",
         fn=_ph_inv,
         args=["pH_st"],
     )
-    m = m.add_derived(
+    m.add_derived(
         "K_pHSat_inv",
         fn=_ph_inv,
         args=["K_pHSat"],
     )
-    m = m.add_derived(
+    m.add_derived(
         "K_pHSatLHC_inv",
         fn=_ph_inv,
         args=["K_pHSatLHC"],
     )
-    m = m.add_derived(
+    m.add_derived(
         "K_QAPQ",
         fn=_keq_qapq,
         args=["F", "E0_QA", "E0_PQ", "pH_st", "R", "T"],
     )
-    m = m.add_derived(
+    m.add_derived(
         "K_cytb6f",
         fn=_keq_cytb6f,
         args=["pH_lu", "F", "E0_PQ", "R", "T", "E0_PC", "pH_st"],
     )
-    m = m.add_derived(
+    m.add_derived(
         "K_ATPsynth",
         fn=_keq_atp_synth,
         args=["pH_lu", "DG_ATP", "pH_st", "R", "T", "Pi"],
     )
-    m = m.add_derived(
+    m.add_derived(
         "pq_ox",
         fn=_moiety_1s,
         args=["pq_red", "PQ_tot"],
     )
-    m = m.add_derived(
+    m.add_derived(
         "adp",
         fn=_moiety_1s,
         args=["atp", "AP_tot"],
     )
-    m = m.add_derived(
+    m.add_derived(
         "psbs_pr",
         fn=_moiety_1s,
         args=["psbs_de", "PsbS_tot"],
     )
-    m = m.add_derived(
+    m.add_derived(
         "zx",
         fn=_moiety_1s,
         args=["vx", "X_tot"],
     )
-    m = m.add_derived(
+    m.add_derived(
         "Q",
         fn=_quencher,
         args=[
@@ -619,12 +619,12 @@ def get_matuszynska2016_npq() -> Model:
             "gamma_3",
         ],
     )
-    m = m.add_derived(
+    m.add_derived(
         "Fluo",
         fn=_fluorescence,
         args=["Q", "B0", "B2", "k_H", "k_F", "k_P"],
     )
-    m = m.add_reaction(
+    m.add_reaction(
         "v_PSII",
         fn=_psii,
         args=["B1", "k_P"],
@@ -633,7 +633,7 @@ def get_matuszynska2016_npq() -> Model:
             "protons": Derived(fn=_two_divided_value, args=["b_H"]),
         },
     )
-    m = m.add_reaction(
+    m.add_reaction(
         "v_PQ",
         fn=_ptox,
         args=["pq_red", "PPFD", "k_Cytb6f", "k_PTOX", "O2_ex", "PQ_tot", "K_cytb6f"],
@@ -642,7 +642,7 @@ def get_matuszynska2016_npq() -> Model:
             "protons": Derived(fn=_four_divided_value, args=["b_H"]),
         },
     )
-    m = m.add_reaction(
+    m.add_reaction(
         "atp_synthase",
         fn=_atp_synthase,
         args=["atp", "vmax_atp_synthase", "k_ATPsynth", "K_ATPsynth", "AP_tot"],
@@ -651,31 +651,31 @@ def get_matuszynska2016_npq() -> Model:
             "protons": Derived(fn=_neg_fourteenthirds_divided_value, args=["b_H"]),
         },
     )
-    m = m.add_reaction(
+    m.add_reaction(
         "atp_activase",
         fn=_atp_synthase_activase,
         args=["vmax_atp_synthase", "PPFD", "k_ActATPase", "k_DeactATPase"],
         stoichiometry={"vmax_atp_synthase": 1},
     )
-    m = m.add_reaction(
+    m.add_reaction(
         "proton_leak",
         fn=_proton_leak,
         args=["protons", "k_leak", "H_st"],
         stoichiometry={"protons": Derived(fn=_neg_divided_value, args=["b_H"])},
     )
-    m = m.add_reaction(
+    m.add_reaction(
         "v_ATPcons",
         fn=_atp_consumption,
         args=["atp", "k_ATPconsum"],
         stoichiometry={"atp": -1},
     )
-    m = m.add_reaction(
+    m.add_reaction(
         "v_Xcyc",
         fn=_xantophyll_cycle,
         args=["vx", "protons", "nhx", "K_pHSat_inv", "k_DV", "k_EZ", "X_tot"],
         stoichiometry={"vx": -1},
     )
-    m = m.add_reaction(
+    m.add_reaction(
         "v_PsbSP",
         fn=_psbs_protonation,
         args=[
@@ -689,7 +689,7 @@ def get_matuszynska2016_npq() -> Model:
         ],
         stoichiometry={"psbs_de": -1},
     )
-    m = m.add_surrogate(
+    m.add_surrogate(
         "ps2states",
         qss.Surrogate(
             model=_ps2states_2016a_analytical,

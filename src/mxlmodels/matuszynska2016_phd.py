@@ -518,131 +518,131 @@ def get_matuszynska2016_phd() -> Model:
     ```
     """
     m: Model = Model()
-    m = m.add_variable("ATP", initial_value=1.6999999999999997)
-    m = m.add_variable("Plastoquinone (oxidised)", initial_value=4.706348349506148)
-    m = m.add_variable("Plastocyanine (oxidised)", initial_value=3.9414515288091567)
-    m = m.add_variable("Ferredoxine (oxidised)", initial_value=3.7761613271207324)
-    m = m.add_variable("protons_lumen", initial_value=7.737821100836988)
-    m = m.add_variable("Light-harvesting complex", initial_value=0.5105293511676007)
-    m = m.add_variable("PsbS (de-protonated)", initial_value=0.5000000001374878)
-    m = m.add_variable("Violaxanthin", initial_value=0.09090909090907397)
-    m = m.add_parameter("pH", value=7.9)
-    m = m.add_parameter("PPFD", value=100.0)
-    m = m.add_parameter("NADPH", value=0.6)
-    m = m.add_parameter("O2 (dissolved)_lumen", value=8.0)
-    m = m.add_parameter("bH", value=100.0)
-    m = m.add_parameter("F", value=96.485)
-    m = m.add_parameter("E^0_PC", value=0.38)
-    m = m.add_parameter("E^0_P700", value=0.48)
-    m = m.add_parameter("E^0_FA", value=-0.55)
-    m = m.add_parameter("E^0_Fd", value=-0.43)
-    m = m.add_parameter("E^0_NADP", value=-0.113)
-    m = m.add_parameter("NADP*", value=0.8)
-    m = m.add_parameter("R", value=0.0083)
-    m = m.add_parameter("T", value=298.0)
-    m = m.add_parameter("A*P", value=2.55)
-    m = m.add_parameter("Carotenoids_tot", value=1.0)
-    m = m.add_parameter("Fd*", value=5.0)
-    m = m.add_parameter("PC_tot", value=4.0)
-    m = m.add_parameter("PSBS_tot", value=1.0)
-    m = m.add_parameter("LHC_tot", value=1.0)
-    m = m.add_parameter("gamma0", value=0.1)
-    m = m.add_parameter("gamma1", value=0.25)
-    m = m.add_parameter("gamma2", value=0.6)
-    m = m.add_parameter("gamma3", value=0.15)
-    m = m.add_parameter("kZSat", value=0.12)
-    m = m.add_parameter("E^0_QA", value=-0.14)
-    m = m.add_parameter("E^0_PQ", value=0.354)
-    m = m.add_parameter("PQ_tot", value=17.5)
-    m = m.add_parameter("staticAntII", value=0.1)
-    m = m.add_parameter("staticAntI", value=0.37)
-    m = m.add_parameter("kf_atp_synthase", value=20.0)
-    m = m.add_parameter("HPR", value=4.666666666666667)
-    m = m.add_parameter("Pi_mol", value=0.01)
-    m = m.add_parameter("DeltaG0_ATP", value=30.6)
-    m = m.add_parameter("kcat_b6f", value=2.5)
-    m = m.add_parameter("kh_lhc_protonation", value=3.0)
-    m = m.add_parameter("kf_lhc_protonation", value=0.0096)
-    m = m.add_parameter("ksat_lhc_protonation", value=5.8)
-    m = m.add_parameter("kf_lhc_deprotonation", value=0.0096)
-    m = m.add_parameter("kf_cyclic_electron_flow", value=1.0)
-    m = m.add_parameter("kf_violaxanthin_deepoxidase", value=0.0024)
-    m = m.add_parameter("kh_violaxanthin_deepoxidase", value=5.0)
-    m = m.add_parameter("ksat_violaxanthin_deepoxidase", value=5.8)
-    m = m.add_parameter("kf_zeaxanthin_epoxidase", value=0.00024)
-    m = m.add_parameter("E0_fnr", value=3.0)
-    m = m.add_parameter("kcat_fnr", value=500.0)
-    m = m.add_parameter("km_fnr_Ferredoxine (reduced)", value=1.56)
-    m = m.add_parameter("km_fnr_NADP", value=0.22)
-    m = m.add_parameter("kf_ndh", value=0.002)
-    m = m.add_parameter("PSII_total", value=2.5)
-    m = m.add_parameter("PSI_total", value=2.5)
-    m = m.add_parameter("kH0", value=500000000.0)
-    m = m.add_parameter("kPQred", value=250.0)
-    m = m.add_parameter("kPCox", value=2500.0)
-    m = m.add_parameter("kFdred", value=250000.0)
-    m = m.add_parameter("k2", value=5000000000.0)
-    m = m.add_parameter("kH", value=5000000000.0)
-    m = m.add_parameter("kF", value=625000000.0)
-    m = m.add_parameter("convf", value=0.032)
-    m = m.add_parameter("kf_proton_leak", value=10.0)
-    m = m.add_parameter("kPTOX", value=0.01)
-    m = m.add_parameter("kStt7", value=0.0035)
-    m = m.add_parameter("km_lhc_state_transition_12", value=0.2)
-    m = m.add_parameter("n_ST", value=2.0)
-    m = m.add_parameter("kPph1", value=0.0013)
-    m = m.add_parameter("kf_ex_atp", value=10.0)
-    m = m.add_derived(
+    m.add_variable("ATP", initial_value=1.6999999999999997)
+    m.add_variable("Plastoquinone (oxidised)", initial_value=4.706348349506148)
+    m.add_variable("Plastocyanine (oxidised)", initial_value=3.9414515288091567)
+    m.add_variable("Ferredoxine (oxidised)", initial_value=3.7761613271207324)
+    m.add_variable("protons_lumen", initial_value=7.737821100836988)
+    m.add_variable("Light-harvesting complex", initial_value=0.5105293511676007)
+    m.add_variable("PsbS (de-protonated)", initial_value=0.5000000001374878)
+    m.add_variable("Violaxanthin", initial_value=0.09090909090907397)
+    m.add_parameter("pH", value=7.9)
+    m.add_parameter("PPFD", value=100.0)
+    m.add_parameter("NADPH", value=0.6)
+    m.add_parameter("O2 (dissolved)_lumen", value=8.0)
+    m.add_parameter("bH", value=100.0)
+    m.add_parameter("F", value=96.485)
+    m.add_parameter("E^0_PC", value=0.38)
+    m.add_parameter("E^0_P700", value=0.48)
+    m.add_parameter("E^0_FA", value=-0.55)
+    m.add_parameter("E^0_Fd", value=-0.43)
+    m.add_parameter("E^0_NADP", value=-0.113)
+    m.add_parameter("NADP*", value=0.8)
+    m.add_parameter("R", value=0.0083)
+    m.add_parameter("T", value=298.0)
+    m.add_parameter("A*P", value=2.55)
+    m.add_parameter("Carotenoids_tot", value=1.0)
+    m.add_parameter("Fd*", value=5.0)
+    m.add_parameter("PC_tot", value=4.0)
+    m.add_parameter("PSBS_tot", value=1.0)
+    m.add_parameter("LHC_tot", value=1.0)
+    m.add_parameter("gamma0", value=0.1)
+    m.add_parameter("gamma1", value=0.25)
+    m.add_parameter("gamma2", value=0.6)
+    m.add_parameter("gamma3", value=0.15)
+    m.add_parameter("kZSat", value=0.12)
+    m.add_parameter("E^0_QA", value=-0.14)
+    m.add_parameter("E^0_PQ", value=0.354)
+    m.add_parameter("PQ_tot", value=17.5)
+    m.add_parameter("staticAntII", value=0.1)
+    m.add_parameter("staticAntI", value=0.37)
+    m.add_parameter("kf_atp_synthase", value=20.0)
+    m.add_parameter("HPR", value=4.666666666666667)
+    m.add_parameter("Pi_mol", value=0.01)
+    m.add_parameter("DeltaG0_ATP", value=30.6)
+    m.add_parameter("kcat_b6f", value=2.5)
+    m.add_parameter("kh_lhc_protonation", value=3.0)
+    m.add_parameter("kf_lhc_protonation", value=0.0096)
+    m.add_parameter("ksat_lhc_protonation", value=5.8)
+    m.add_parameter("kf_lhc_deprotonation", value=0.0096)
+    m.add_parameter("kf_cyclic_electron_flow", value=1.0)
+    m.add_parameter("kf_violaxanthin_deepoxidase", value=0.0024)
+    m.add_parameter("kh_violaxanthin_deepoxidase", value=5.0)
+    m.add_parameter("ksat_violaxanthin_deepoxidase", value=5.8)
+    m.add_parameter("kf_zeaxanthin_epoxidase", value=0.00024)
+    m.add_parameter("E0_fnr", value=3.0)
+    m.add_parameter("kcat_fnr", value=500.0)
+    m.add_parameter("km_fnr_Ferredoxine (reduced)", value=1.56)
+    m.add_parameter("km_fnr_NADP", value=0.22)
+    m.add_parameter("kf_ndh", value=0.002)
+    m.add_parameter("PSII_total", value=2.5)
+    m.add_parameter("PSI_total", value=2.5)
+    m.add_parameter("kH0", value=500000000.0)
+    m.add_parameter("kPQred", value=250.0)
+    m.add_parameter("kPCox", value=2500.0)
+    m.add_parameter("kFdred", value=250000.0)
+    m.add_parameter("k2", value=5000000000.0)
+    m.add_parameter("kH", value=5000000000.0)
+    m.add_parameter("kF", value=625000000.0)
+    m.add_parameter("convf", value=0.032)
+    m.add_parameter("kf_proton_leak", value=10.0)
+    m.add_parameter("kPTOX", value=0.01)
+    m.add_parameter("kStt7", value=0.0035)
+    m.add_parameter("km_lhc_state_transition_12", value=0.2)
+    m.add_parameter("n_ST", value=2.0)
+    m.add_parameter("kPph1", value=0.0013)
+    m.add_parameter("kf_ex_atp", value=10.0)
+    m.add_derived(
         "NADP",
         fn=_moiety_1,
         args=["NADPH", "NADP*"],
     )
-    m = m.add_derived(
+    m.add_derived(
         "RT",
         fn=_mass_action_1s,
         args=["R", "T"],
     )
-    m = m.add_derived(
+    m.add_derived(
         "ADP",
         fn=_moiety_1,
         args=["ATP", "A*P"],
     )
-    m = m.add_derived(
+    m.add_derived(
         "dG_pH",
         fn=_dg_ph,
         args=["R", "T"],
     )
-    m = m.add_derived(
+    m.add_derived(
         "pH_lumen",
         fn=_ph_lumen,
         args=["protons_lumen"],
     )
-    m = m.add_derived(
+    m.add_derived(
         "Zeaxanthin",
         fn=_moiety_1,
         args=["Violaxanthin", "Carotenoids_tot"],
     )
-    m = m.add_derived(
+    m.add_derived(
         "Ferredoxine (reduced)",
         fn=_moiety_1,
         args=["Ferredoxine (oxidised)", "Fd*"],
     )
-    m = m.add_derived(
+    m.add_derived(
         "Plastocyanine (reduced)",
         fn=_moiety_1,
         args=["Plastocyanine (oxidised)", "PC_tot"],
     )
-    m = m.add_derived(
+    m.add_derived(
         "PsbS (protonated)",
         fn=_moiety_1,
         args=["PsbS (de-protonated)", "PSBS_tot"],
     )
-    m = m.add_derived(
+    m.add_derived(
         "Light-harvesting complex (protonated)",
         fn=_moiety_1,
         args=["Light-harvesting complex", "LHC_tot"],
     )
-    m = m.add_derived(
+    m.add_derived(
         "Q",
         fn=_quencher,
         args=[
@@ -657,52 +657,52 @@ def get_matuszynska2016_phd() -> Model:
             "kZSat",
         ],
     )
-    m = m.add_derived(
+    m.add_derived(
         "keq_Plastoquinone (reduced)",
         fn=_keq_pq_red,
         args=["E^0_QA", "F", "E^0_PQ", "pH", "dG_pH", "RT"],
     )
-    m = m.add_derived(
+    m.add_derived(
         "Plastoquinone (reduced)",
         fn=_moiety_1,
         args=["Plastoquinone (oxidised)", "PQ_tot"],
     )
-    m = m.add_derived(
+    m.add_derived(
         "PSII_cross_section",
         fn=_ps2_crosssection,
         args=["Light-harvesting complex", "staticAntII", "staticAntI"],
     )
-    m = m.add_derived(
+    m.add_derived(
         "keq_atp_synthase",
         fn=_keq_atp,
         args=["pH_lumen", "DeltaG0_ATP", "dG_pH", "HPR", "pH", "Pi_mol", "RT"],
     )
-    m = m.add_derived(
+    m.add_derived(
         "keq_b6f",
         fn=_keq_cytb6f,
         args=["pH_lumen", "F", "E^0_PQ", "E^0_PC", "pH", "RT", "dG_pH"],
     )
-    m = m.add_derived(
+    m.add_derived(
         "keq_fnr",
         fn=_keq_fnr,
         args=["E^0_Fd", "F", "E^0_NADP", "pH", "dG_pH", "RT"],
     )
-    m = m.add_derived(
+    m.add_derived(
         "vmax_fnr",
         fn=_mass_action_1s,
         args=["kcat_fnr", "E0_fnr"],
     )
-    m = m.add_derived(
+    m.add_derived(
         "keq_PCP700",
         fn=_keq_pcp700,
         args=["E^0_PC", "F", "E^0_P700", "RT"],
     )
-    m = m.add_derived(
+    m.add_derived(
         "keq_ferredoxin_reductase",
         fn=_keq_faf_d,
         args=["E^0_FA", "F", "E^0_Fd", "RT"],
     )
-    m = m.add_derived(
+    m.add_derived(
         "A1",
         fn=_ps1states_2019,
         args=[
@@ -719,7 +719,7 @@ def get_matuszynska2016_phd() -> Model:
             "PPFD",
         ],
     )
-    m = m.add_reaction(
+    m.add_reaction(
         "atp_synthase",
         fn=_rate_atp_synthase_2016,
         args=["ATP", "ADP", "keq_atp_synthase", "kf_atp_synthase"],
@@ -728,7 +728,7 @@ def get_matuszynska2016_phd() -> Model:
             "protons_lumen": Derived(fn=_neg_div, args=["HPR", "bH"]),
         },
     )
-    m = m.add_reaction(
+    m.add_reaction(
         "b6f",
         fn=_b6f,
         args=[
@@ -745,7 +745,7 @@ def get_matuszynska2016_phd() -> Model:
             "protons_lumen": Derived(fn=_four_div_by, args=["bH"]),
         },
     )
-    m = m.add_reaction(
+    m.add_reaction(
         "lhc_protonation",
         fn=_protonation_hill,
         args=[
@@ -757,13 +757,13 @@ def get_matuszynska2016_phd() -> Model:
         ],
         stoichiometry={"PsbS (de-protonated)": -1},
     )
-    m = m.add_reaction(
+    m.add_reaction(
         "lhc_deprotonation",
         fn=_mass_action_1s,
         args=["PsbS (protonated)", "kf_lhc_deprotonation"],
         stoichiometry={"PsbS (de-protonated)": 1},
     )
-    m = m.add_reaction(
+    m.add_reaction(
         "cyclic_electron_flow",
         fn=_rate_cyclic_electron_flow,
         args=[
@@ -773,7 +773,7 @@ def get_matuszynska2016_phd() -> Model:
         ],
         stoichiometry={"Plastoquinone (oxidised)": -1, "Ferredoxine (oxidised)": 2},
     )
-    m = m.add_reaction(
+    m.add_reaction(
         "violaxanthin_deepoxidase",
         fn=_rate_protonation_hill,
         args=[
@@ -785,13 +785,13 @@ def get_matuszynska2016_phd() -> Model:
         ],
         stoichiometry={"Violaxanthin": -1},
     )
-    m = m.add_reaction(
+    m.add_reaction(
         "zeaxanthin_epoxidase",
         fn=_mass_action_1s,
         args=["Zeaxanthin", "kf_zeaxanthin_epoxidase"],
         stoichiometry={"Violaxanthin": 1},
     )
-    m = m.add_reaction(
+    m.add_reaction(
         "fnr",
         fn=_rate_fnr2016,
         args=[
@@ -806,13 +806,13 @@ def get_matuszynska2016_phd() -> Model:
         ],
         stoichiometry={"Ferredoxine (oxidised)": 2},
     )
-    m = m.add_reaction(
+    m.add_reaction(
         "ndh",
         fn=_mass_action_1s,
         args=["Plastoquinone (oxidised)", "kf_ndh"],
         stoichiometry={"Plastoquinone (oxidised)": -1},
     )
-    m = m.add_reaction(
+    m.add_reaction(
         "PSII",
         fn=_rate_ps2,
         args=["B1", "k2"],
@@ -821,25 +821,25 @@ def get_matuszynska2016_phd() -> Model:
             "protons_lumen": Derived(fn=_two_div_by, args=["bH"]),
         },
     )
-    m = m.add_reaction(
+    m.add_reaction(
         "PSI",
         fn=_rate_ps1,
         args=["A1", "PSII_cross_section", "PPFD"],
         stoichiometry={"Ferredoxine (oxidised)": -1, "Plastocyanine (oxidised)": 1},
     )
-    m = m.add_reaction(
+    m.add_reaction(
         "proton_leak",
         fn=_rate_leak,
         args=["protons_lumen", "pH", "kf_proton_leak"],
         stoichiometry={"protons_lumen": Derived(fn=_neg_one_div_by, args=["bH"])},
     )
-    m = m.add_reaction(
+    m.add_reaction(
         "PTOX",
         fn=_mass_action_2s,
         args=["Plastoquinone (reduced)", "O2 (dissolved)_lumen", "kPTOX"],
         stoichiometry={"Plastoquinone (oxidised)": 1},
     )
-    m = m.add_reaction(
+    m.add_reaction(
         "lhc_state_transition_12",
         fn=_rate_state_transition_ps1_ps2,
         args=[
@@ -852,19 +852,19 @@ def get_matuszynska2016_phd() -> Model:
         ],
         stoichiometry={"Light-harvesting complex": -1},
     )
-    m = m.add_reaction(
+    m.add_reaction(
         "lhc_state_transition_21",
         fn=_mass_action_1s,
         args=["Light-harvesting complex (protonated)", "kPph1"],
         stoichiometry={"Light-harvesting complex": 1},
     )
-    m = m.add_reaction(
+    m.add_reaction(
         "ex_atp",
         fn=_mass_action_1s,
         args=["ATP", "kf_ex_atp"],
         stoichiometry={"ATP": -1},
     )
-    m = m.add_surrogate(
+    m.add_surrogate(
         "ps2states",
         qss.Surrogate(
             model=_ps2states_2016_phd_surrogate,
@@ -885,27 +885,27 @@ def get_matuszynska2016_phd() -> Model:
             outputs=["B0", "B1", "B2", "B3"],
         ),
     )
-    m = m.add_readout(
+    m.add_readout(
         "PQ_ox/tot",
         fn=_div,
         args=["Plastoquinone (reduced)", "PQ_tot"],
     )
-    m = m.add_readout(
+    m.add_readout(
         "Fd_ox/tot",
         fn=_div,
         args=["Ferredoxine (reduced)", "Fd*"],
     )
-    m = m.add_readout(
+    m.add_readout(
         "PC_ox/tot",
         fn=_div,
         args=["Plastocyanine (reduced)", "PC_tot"],
     )
-    m = m.add_readout(
+    m.add_readout(
         "ATP/tot",
         fn=_div,
         args=["ATP", "A*P"],
     )
-    m = m.add_readout(
+    m.add_readout(
         "Fluo",
         fn=_rate_fluorescence,
         args=["Q", "B0", "B2", "PSII_cross_section", "k2", "kF", "kH"],

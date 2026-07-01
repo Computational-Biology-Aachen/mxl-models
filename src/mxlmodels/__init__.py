@@ -19,7 +19,6 @@ from .ebenhoeh2014 import get_ebenhoeh2014
 from .elowitz2000_repressilator import get_elowitz2000_repressilator
 from .fuente2024 import get_fuente_2024
 from .hahn1987 import get_hahn1987
-from .johnson2021 import get_johnson2021
 from .lam2026 import get_lam2026
 from .lazar1997 import get_lazar1997
 from .li2021 import get_li_2021
@@ -45,6 +44,9 @@ from .saadat2021 import get_saadat2021 as get_saadat2021
 from .salvatori2022 import get_salvatori2022
 from .selkov1968_oscillator import get_selkov1968_glycolysis_oscillator
 from .sir import get_sir, get_sird
+from .ss.bernacchi2023 import get_bernacchi_2023
+from .ss.fvcb1980 import get_fvcb_1980
+from .ss.johnson2021 import get_johnson2021
 from .yokota1985 import get_yokota1985
 from .zaks2012 import get_zaks2012
 from .zhu2009 import get_zhu_2009
@@ -54,6 +56,7 @@ __all__ = [
     "data",
     "fit",
     "get_bellasio_2019",
+    "get_bernacchi_2023",
     "get_davis2017",
     "get_davis2017",
     "get_dynamic_enterobactin",
@@ -61,6 +64,7 @@ __all__ = [
     "get_ebenhoeh2014",
     "get_elowitz2000_repressilator",
     "get_fuente_2024",
+    "get_fvcb_1980",
     "get_hahn1987",
     "get_johnson2021",
     "get_lam2026",

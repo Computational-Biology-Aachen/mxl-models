@@ -3,7 +3,7 @@
 |             |                                                                                                                        |
 | ----------- | ---------------------------------------------------------------------------------------------------------------------- |
 | doi         | 10.1007/s11120-021-00840-4                                                                                             |
-| main author | Chandra Bellasio                                                                                                       |
+| main author | J. E. Johnson                                                                                                       |
 | paper title | A generalised dynamic model of leaf-level C3 photosynthesis combining light and dark reactions with stomatal behaviour |
 | published   | January 2019                                                                                                           |
 | journal     | Photosynthesis Research                                                                                                |

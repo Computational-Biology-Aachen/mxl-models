@@ -10,8 +10,8 @@ r"""Lam 2026 model
 | organism    | Higher plants (Nicotiana benthamiana)                                     |
 | Ported by   | Quang Huy Nguyen ( @PhotosyntheticBatman ) |
 
-The model provide a detailed, up-to-date descriptions regarding NPQ compoents within higher plants, along with detailed dataset of fluorescence lifetime and pigment qunatification from mutants that 
-lacks one or more compoents of NPQ. Combined with a rigorous fitting and optimization schedule for parameters, the model brings up quantified contributions of different NPQ components and how it changes overtime. 
+The model provide a detailed, up-to-date descriptions regarding NPQ compoents within higher plants, along with detailed dataset of fluorescence lifetime and pigment qunatification from mutants that
+lacks one or more compoents of NPQ. Combined with a rigorous fitting and optimization schedule for parameters, the model brings up quantified contributions of different NPQ components and how it changes overtime.
 
 Compoents: energy-depedent quenching (qE), zeaxanthin-depdent quenching (qZ) and photoinhibition (qI)
 
