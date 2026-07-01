@@ -29,7 +29,7 @@ from mxlpy import Model
 # ------------------------------------------------------------------
 
 
-def harmonic_value(
+def _harmonic_value(
     time: float,
     offset: float,
     amplitude: float,
@@ -42,7 +42,7 @@ def harmonic_value(
     return offset - amplitude * np.cos(angle)
 
 
-def harmonic_sum(
+def _harmonic_sum(
     time: float,
     offset: float,
     period: float,
@@ -66,40 +66,40 @@ def harmonic_sum(
     )
 
 
-def light_rate(
-    time,
-    amplitude,
-    period,
-):
+def _light_rate(
+    time: float,
+    amplitude: float,
+    period: float,
+) -> float:
     omega = 2.0 * np.pi / period
 
     return amplitude * omega * np.sin(omega * time)
 
 
-def harmonic_rate(
-    time,
-    amplitude,
-    period,
-    lag,
-    harmonic,
-):
+def _harmonic_rate(
+    time: float,
+    amplitude: float,
+    period: float,
+    lag: float,
+    harmonic: float,
+) -> float:
     omega = 2.0 * np.pi / period
 
     return amplitude * harmonic * omega * np.sin(harmonic * omega * time - lag)
 
 
-def harmonic_sum_rate(
-    time,
-    period,
-    a1,
-    a2,
-    a3,
-    a4,
-    p1,
-    p2,
-    p3,
-    p4,
-):
+def _harmonic_sum_rate(
+    time: float,
+    period: float,
+    a1: float,
+    a2: float,
+    a3: float,
+    a4: float,
+    p1: float,
+    p2: float,
+    p3: float,
+    p4: float,
+) -> float:
     # return sum(
     #     harmonic_rate(
     #         time,
@@ -115,14 +115,15 @@ def harmonic_sum_rate(
     #     )
     # )
     return (
-        harmonic_rate(time, 1, period, a1, p1)
-        + harmonic_rate(time, 2, period, a2, p2)
-        + harmonic_rate(time, 3, period, a3, p3)
-        + harmonic_rate(time, 4, period, a4, p4)
+        _harmonic_rate(time, 1, period, a1, p1)
+        + _harmonic_rate(time, 2, period, a2, p2)
+        + _harmonic_rate(time, 3, period, a3, p3)
+        + _harmonic_rate(time, 4, period, a4, p4)
     )
 
 
-def get_harmonic_model(config) -> Model:
+def get_harmonic_model(config: float) -> Model:
+    """Get the harmonic model."""
     period = config["period"]
     offset = config["offset"]
     amplitudes = config["amplitudes"]
@@ -134,7 +135,7 @@ def get_harmonic_model(config) -> Model:
 
     variables = {
         "Light": light_offset - light_amplitude,
-        "Fit": harmonic_sum(
+        "Fit": _harmonic_sum(
             0.0,
             offset,
             period,
@@ -142,7 +143,7 @@ def get_harmonic_model(config) -> Model:
             *lags,
         ),
         **{
-            f"H{i}": harmonic_value(
+            f"H{i}": _harmonic_value(
                 0.0,
                 offset,
                 amplitudes[i - 1],
@@ -168,7 +169,7 @@ def get_harmonic_model(config) -> Model:
         .add_parameters(parameters)
         .add_reaction(
             "light",
-            fn=light_rate,
+            fn=_light_rate,
             args=[
                 "time",
                 "light_amplitude",
@@ -178,7 +179,7 @@ def get_harmonic_model(config) -> Model:
         )
         .add_reaction(
             "fluorescence",
-            fn=harmonic_sum_rate,
+            fn=_harmonic_sum_rate,
             args=[
                 "time",
                 "period",
@@ -198,7 +199,7 @@ def get_harmonic_model(config) -> Model:
     for i in range(1, 5):
         model.add_reaction(
             f"harmonic_{i}",
-            fn=harmonic_rate,
+            fn=_harmonic_rate,
             args=[
                 "time",
                 f"a{i}",
@@ -217,25 +218,26 @@ def get_harmonic_model(config) -> Model:
 # ------------------------------------------------------------------
 
 
-def induction_rate(
-    time,
-    rise,
-    tau_rise,
-    decline,
-    tau_decline,
-):
+def _induction_rate(
+    time: float,
+    rise: float,
+    tau_rise: float,
+    decline: float,
+    tau_decline: float,
+) -> float:
     return rise / tau_rise * np.exp(-time / tau_rise) - decline / tau_decline * np.exp(
         -time / tau_decline
     )
 
 
 def get_induction_model(
-    baseline,
-    rise,
-    tau_rise,
-    decline,
-    tau_decline,
+    baseline: float,
+    rise: float,
+    tau_rise: float,
+    decline: float,
+    tau_decline: float,
 ) -> Model:
+    """Get the induction model."""
     return (
         Model()
         .add_variables(
@@ -253,7 +255,7 @@ def get_induction_model(
         )
         .add_reaction(
             "induction",
-            fn=induction_rate,
+            fn=_induction_rate,
             args=[
                 "time",
                 "rise",
@@ -266,15 +268,15 @@ def get_induction_model(
     )
 
 
-def ojip_rate(
-    time,
-    j,
-    i,
-    p,
-    tau_j,
-    tau_i,
-    tau_p,
-):
+def _ojip_rate(
+    time: float,
+    j: float,
+    i: float,
+    p: float,
+    tau_j: float,
+    tau_i: float,
+    tau_p: float,
+) -> float:
     return (
         j / tau_j * np.exp(-time / tau_j)
         + i / tau_i * np.exp(-time / tau_i)
@@ -283,14 +285,15 @@ def ojip_rate(
 
 
 def get_ojip_model(
-    fluorescence_0,
-    j,
-    i,
-    p,
-    tau_j,
-    tau_i,
-    tau_p,
+    fluorescence_0: float,
+    j: float,
+    i: float,
+    p: float,
+    tau_j: float,
+    tau_i: float,
+    tau_p: float,
 ) -> Model:
+    """Get the ojip model."""
     return (
         Model()
         .add_variables(
@@ -310,7 +313,7 @@ def get_ojip_model(
         )
         .add_reaction(
             "ojip",
-            fn=ojip_rate,
+            fn=_ojip_rate,
             args=[
                 "time",
                 "j",
