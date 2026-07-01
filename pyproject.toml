@@ -39,7 +39,7 @@ classifiers = [
   "Topic :: Scientific/Engineering",
   "Topic :: Software Development",
 ]
-dependencies = ["mxlpy>=0.38.0", "ipykernel>=7.3.0,<8"]
+dependencies = ["mxlpy>=0.38.0"]
 description = "MxlModels is a Python package of reference mechanistic models."
 keywords = ["metabolic", "modelling", "ode"]
 license = "MIT"
