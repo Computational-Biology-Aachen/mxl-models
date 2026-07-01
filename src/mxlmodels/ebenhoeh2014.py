@@ -183,10 +183,10 @@ def _ps1states(
     keq_pcp700: float,
     k_pc_ox: float,
     pfd: float,
-    cPFD: float,
+    c_pfd: float,
 ) -> float:
     r"""QSSA open state of PSI as a function of PC and Fd redox states."""
-    L = (1 - ps2cs) * cPFD * pfd
+    L = (1 - ps2cs) * c_pfd * pfd
     return psi_tot / (
         1
         + L / (k_fd_red * fd_ox)
@@ -288,9 +288,9 @@ def _rate_ps2(
     return 0.5 * k2 * b1
 
 
-def _rate_ps1(a: float, ps2cs: float, pfd: float, cPFD: float) -> float:
+def _rate_ps1(a: float, ps2cs: float, pfd: float, c_pfd: float) -> float:
     r"""PSI electron transfer rate: open PSI centres (a) * light absorbed by PSI antenna."""
-    return (1 - ps2cs) * cPFD * pfd * a
+    return (1 - ps2cs) * c_pfd * pfd * a
 
 
 def _rate_leak(
@@ -326,7 +326,7 @@ def _ps2states_surrogate(
     keq_pq_red: float,
     k_pq_red: float,
     pfd: float,
-    cPFD: float,
+    c_pfd: float,
     k_h0: float,
 ) -> tuple[float, float, float, float]:
     r"""PSII state populations via the analytical closed-form of the 4-state QSSA.
@@ -351,7 +351,7 @@ def _ps2states_surrogate(
     x13 = k_pq_red * keq_pq_red * pq_ox
     x14 = k_pq_red * pq_red
     x15 = k2 * x14
-    x16 = pfd * cPFD * ps2cs
+    x16 = pfd * c_pfd * ps2cs
     x17 = k_f * x14
     x18 = k_h0 * x14
     x19 = x14 * x6
@@ -374,7 +374,7 @@ def _ps2states_surrogate(
     x23 = psii_tot / (
         k_f * x20
         + k_h0 * x20
-        + (cPFD * pfd) ** 2 * ps2cs**2 * x12
+        + (c_pfd * pfd) ** 2 * ps2cs**2 * x12
         + x0 * x13
         + x1 * x13
         + x10 * x13
