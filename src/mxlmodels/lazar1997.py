@@ -1,4 +1,4 @@
-"""Lazar 1997 Fluorescence induction model.
+r"""Lazar 1997 Fluorescence induction model.
 
 |             |                                                                                             |
 | ----------- | ------------------------------------------------------------------------------------------- |

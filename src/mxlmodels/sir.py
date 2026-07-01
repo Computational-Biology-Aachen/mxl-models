@@ -1,4 +1,4 @@
-"""Compartmental models of infectious disease spread.
+r"""Compartmental models of infectious disease spread.
 
 |             |                                                        |
 | ----------- | ------------------------------------------------------ |
@@ -22,7 +22,7 @@ __all__ = ["get_sir", "get_sird"]
 
 
 def get_sir() -> Model:
-    """Create a simple SIR model."""
+    r"""Create a simple SIR model."""
     return (
         Model()
         .add_variables({"s": 0.9, "i": 0.1, "r": 0.0})
@@ -43,7 +43,7 @@ def get_sir() -> Model:
 
 
 def get_sird() -> Model:
-    """Create a simple SIR model with death."""
+    r"""Create a simple SIR model with death."""
     return (
         get_sir()
         .add_variable("d", 0.0)

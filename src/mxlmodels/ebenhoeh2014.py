@@ -1,4 +1,4 @@
-"""Ebenhoeh 2014 photosynthetic electron transport chain (PETC) model.
+r"""Ebenhoeh 2014 photosynthetic electron transport chain (PETC) model.
 
 |             |                                                                                                              |
 | ----------- | ------------------------------------------------------------------------------------------------------------ |
@@ -30,7 +30,7 @@ def _moiety_1(
     concentration: float,
     total: float,
 ) -> float:
-    """Conservation moiety: total - concentration."""
+    r"""Conservation moiety: total - concentration."""
     return total - concentration
 
 
@@ -38,7 +38,7 @@ def _mass_action_1s(
     s1: float,
     k_fwd: float,
 ) -> float:
-    """Mass-action rate for one substrate."""
+    r"""Mass-action rate for one substrate."""
     return k_fwd * s1
 
 
@@ -47,7 +47,7 @@ def _mass_action_2s(
     s2: float,
     k_fwd: float,
 ) -> float:
-    """Mass-action rate for two substrates."""
+    r"""Mass-action rate for two substrates."""
     return k_fwd * s1 * s2
 
 
@@ -55,16 +55,14 @@ def _dg_ph(
     r: float,
     t: float,
 ) -> float:
-    """Thermodynamic coefficient dG/dpH = RT\*ln(10) in kJ/mol."""
+    r"""Thermodynamic coefficient dG/dpH = RT\*ln(10) in kJ/mol."""
     return np.log(10) * r * t
 
 
 def _ph_lumen(
     protons: float,
 ) -> float:
-    """Lumenal pH from proton concentration in mmol/mmol_Chl (conversion factor
-    0.00025).
-    """
+    r"""Lumenal pH from proton concentration in mmol/mmol_Chl (conversion factor 0.00025)."""
     protons_mmc = protons * 0.00025
     # Clamp log to physiological state & prevent numerical instabilities
     # -log10(1e-14) = pH 14 <= protons <= -log10(1e-11) = pH 1
@@ -74,7 +72,7 @@ def _ph_lumen(
 def _protons_stroma(
     ph: float,
 ) -> float:
-    """Convert a pH value to proton concentration (4000 * 10^-pH)."""
+    r"""Convert a pH value to proton concentration (4000 * 10^-pH)."""
     return 4000.0 * 10 ** (-ph)
 
 
@@ -86,9 +84,7 @@ def _keq_pq_red(
     d_g_p_h: float,
     rt: float,
 ) -> float:
-    """Equilibrium constant for PQ reduction by QA, pH-corrected via stroma proton
-    contribution.
-    """
+    r"""Equilibrium constant for PQ reduction by QA, pH-corrected via stroma proton contribution."""
     dg1 = -e0_qa * f
     dg2 = -2 * e0_pq * f
     dg = -2 * dg1 + dg2 + 2 * p_hstroma * d_g_p_h
@@ -100,9 +96,7 @@ def _ps2_crosssection(
     static_ant_ii: float,
     static_ant_i: float,
 ) -> float:
-    """Relative absorption cross-section of PSII as a function of mobile LHC
-    association.
-    """
+    r"""Relative absorption cross-section of PSII as a function of mobile LHC association."""
     return static_ant_ii + (1 - static_ant_ii - static_ant_i) * lhc
 
 
@@ -115,9 +109,7 @@ def _keq_atp(
     pi_mol: float,
     rt: float,
 ) -> float:
-    """Equilibrium constant for ATP synthase, driven by the transmembrane proton
-    gradient.
-    """
+    r"""Equilibrium constant for ATP synthase, driven by the transmembrane proton gradient."""
     delta_g = delta_g0_atp - d_g_p_h * hpr * (p_hstroma - p_h)
     return pi_mol * math.exp(-delta_g / rt)
 
@@ -131,9 +123,7 @@ def _keq_cytb6f(
     rt: float,
     d_g_p_h: float,
 ) -> float:
-    """Equilibrium constant of cytochrome b6f from redox potentials and transmembrane
-    pH gradient.
-    """
+    r"""Equilibrium constant of cytochrome b6f from redox potentials and transmembrane pH gradient."""
     DG1 = -2 * f * e0_pq
     DG2 = -f * e0_pc
     DG = -(DG1 + 2 * d_g_p_h * p_h) + 2 * DG2 + 2 * d_g_p_h * (p_hstroma - p_h)
@@ -148,7 +138,7 @@ def _keq_fnr(
     d_g_p_h: float,
     rt: float,
 ) -> float:
-    """Equilibrium constant for FNR: Fd-mediated NADP+ reduction, pH-corrected."""
+    r"""Equilibrium constant for FNR: Fd-mediated NADP+ reduction, pH-corrected."""
     dg1 = -e0_fd * f
     dg2 = -2 * e0_nadp * f
     dg = -2 * dg1 + dg2 + d_g_p_h * p_hstroma
@@ -161,9 +151,7 @@ def _keq_pcp700(
     eo_p700: float,
     rt: float,
 ) -> float:
-    """Equilibrium constant for PC -> P700 electron transfer from standard redox
-    potentials.
-    """
+    r"""Equilibrium constant for PC -> P700 electron transfer from standard redox potentials."""
     dg1 = -e0_pc * f
     dg2 = -eo_p700 * f
     dg = -dg1 + dg2
@@ -176,9 +164,7 @@ def _keq_faf_d(
     e0_fd: float,
     rt: float,
 ) -> float:
-    """Equilibrium constant for FA -> Fd electron transfer from standard redox
-    potentials.
-    """
+    r"""Equilibrium constant for FA -> Fd electron transfer from standard redox potentials."""
     dg1 = -e0_fa * f
     dg2 = -e0_fd * f
     dg = -dg1 + dg2
@@ -199,7 +185,7 @@ def _ps1states(
     pfd: float,
     cPFD: float,
 ) -> float:
-    """QSSA open state of PSI as a function of PC and Fd redox states."""
+    r"""QSSA open state of PSI as a function of PC and Fd redox states."""
     L = (1 - ps2cs) * cPFD * pfd
     return psi_tot / (
         1
@@ -215,7 +201,7 @@ def _rate_atp_synthase(
     keq_atp_synthase: float,
     k_atp_synth: float,
 ) -> float:
-    """ATP synthase rate: linear reversible kinetics driven by the pH-dependent Keq."""
+    r"""ATP synthase rate: linear reversible kinetics driven by the pH-dependent Keq."""
     return k_atp_synth * (adp - atp / keq_atp_synthase)
 
 
@@ -223,28 +209,28 @@ def _neg_div(
     x: float,
     y: float,
 ) -> float:
-    """Return -x / y."""
+    r"""Return -x / y."""
     return -x / y
 
 
 def _neg_one_div_by(
     x: float,
 ) -> float:
-    """Return -1/x; negated unit stoichiometry scaled by buffering capacity."""
+    r"""Return -1/x; negated unit stoichiometry scaled by buffering capacity."""
     return -1.0 / x
 
 
 def _two_div_by(
     x: float,
 ) -> float:
-    """Return 2/x; 2-proton stoichiometry of PSII scaled by buffering capacity."""
+    r"""Return 2/x; 2-proton stoichiometry of PSII scaled by buffering capacity."""
     return 2.0 / x
 
 
 def _four_div_by(
     x: float,
 ) -> float:
-    """Return 4/x; 4-proton stoichiometry of b6f scaled by buffering capacity."""
+    r"""Return 4/x; 4-proton stoichiometry of b6f scaled by buffering capacity."""
     return 4.0 / x
 
 
@@ -256,9 +242,7 @@ def _b6f(
     keq_b6f: float,
     k_cytb6f: float,
 ) -> float:
-    """Cytochrome b6f rate: reversible mass action clamped to -kCytb6f to avoid
-    runaway reverse flux.
-    """
+    r"""Cytochrome b6f rate: reversible mass action clamped to -kCytb6f to avoid runaway reverse flux."""
     return max(
         k_cytb6f * (pq_red * pc_ox**2 - pq_ox * pc_red**2 / keq_b6f),
         -k_cytb6f,
@@ -270,7 +254,7 @@ def _rate_cyclic_electron_flow(
     fdred: float,
     kcyc: float,
 ) -> float:
-    """Cyclic electron flow rate: mass action on Fd_red^2 and PQ_ox."""
+    r"""Cyclic electron flow rate: mass action on Fd_red^2 and PQ_ox."""
     return kcyc * fdred**2 * pox
 
 
@@ -284,9 +268,7 @@ def _rate_fnr(
     km_nadph: float,
     keq: float,
 ) -> float:
-    """FNR rate: reversible convenience kinetics with Fd^2 stoichiometry
-    (mmol/mmol_Chl units).
-    """
+    r"""FNR rate: reversible convenience kinetics with Fd^2 stoichiometry (mmol/mmol_Chl units)."""
     fdred = fd_red / km_fd_red
     fdox = fd_ox / km_fd_red
     nadph = nadph / km_nadph
@@ -302,16 +284,12 @@ def _rate_ps2(
     b1: float,
     k2: float,
 ) -> float:
-    """PSII electron transfer rate from the open-excited state B1 and photochemistry
-    rate constant k2.
-    """
+    r"""PSII electron transfer rate from the open-excited state B1 and photochemistry rate constant k2."""
     return 0.5 * k2 * b1
 
 
 def _rate_ps1(a: float, ps2cs: float, pfd: float, cPFD: float) -> float:
-    """PSI electron transfer rate: open PSI centres (a) * light absorbed by PSI
-    antenna.
-    """
+    r"""PSI electron transfer rate: open PSI centres (a) * light absorbed by PSI antenna."""
     return (1 - ps2cs) * cPFD * pfd * a
 
 
@@ -320,9 +298,7 @@ def _rate_leak(
     ph_stroma: float,
     k_leak: float,
 ) -> float:
-    """Passive proton leak across the thylakoid membrane, proportional to the proton
-    gradient.
-    """
+    r"""Passive proton leak across the thylakoid membrane, proportional to the proton gradient."""
     return k_leak * (protons_lumen - _protons_stroma(ph_stroma))
 
 
@@ -334,9 +310,7 @@ def _rate_state_transition_ps1_ps2(
     km_st: float,
     n_st: float,
 ) -> float:
-    """STT7-kinase phosphorylation of LHC; inhibited by oxidised PQ (state 1 -> 2
-    transition).
-    """
+    r"""STT7-kinase phosphorylation of LHC; inhibited by oxidised PQ (state 1 -> 2 transition)."""
     return k_stt7 * (1 / (1 + (pox / p_tot / km_st) ** n_st)) * ant
 
 
@@ -355,13 +329,11 @@ def _ps2states_surrogate(
     cPFD: float,
     k_h0: float,
 ) -> tuple[float, float, float, float]:
-    """PSII state populations via the analytical closed-form of the 4-state QSSA.
+    r"""PSII state populations via the analytical closed-form of the 4-state QSSA.
 
-    ```
-    Total non-radiative de-excitation rate is k_h0 + _kh*quencher; for the
+    Total non-radiative de-excitation rate is k_h0 + \_kh\*quencher; for the
     Ebenhoeh 2014 model the variable quencher is zero, leaving the constant base
     quenching k_h0.
-    ```
     """
     x0 = k_f**2
     x1 = k_h0**2
@@ -431,7 +403,7 @@ def _div(
     x: float,
     y: float,
 ) -> float:
-    """Return x / y."""
+    r"""Return x / y."""
     return x / y
 
 
@@ -444,28 +416,26 @@ def _rate_fluorescence(
     k_h0: float,
     k_h: float,
 ) -> float:
-    """Chlorophyll fluorescence yield from open (B0) and closed (B2) PSII centres."""
+    r"""Chlorophyll fluorescence yield from open (B0) and closed (B2) PSII centres."""
     return ps2cs * k_f * b0 / (k_f + k_h0 + k2 + k_h) + ps2cs * k_f * b2 / (
         k_f + k_h0 + k_h
     )
 
 
 def get_ebenhoeh2014() -> Model:
-    """Ebenhoeh 2014 photosynthetic electron transport chain (PETC) model.
+    r"""Ebenhoeh 2014 photosynthetic electron transport chain (PETC) model.
 
-    ```
     Core dynamic model of the thylakoid electron transport chain used to study
     short-term light acclimation (state transitions) in *Chlamydomonas*. Covers
-    PSII/PSI, cytochrome b6f, FNR, ATP synthase, cyclic electron flow, PTOX/NDH
-    and LHCII state transitions, with constant base non-photochemical quenching
-    and lumped linear ATP/NADPH consumption (aerobic configuration).
+    PSII/PSI, cytochrome b6f, FNR, ATP synthase, cyclic electron flow, PTOX/NDH and
+    LHCII state transitions, with constant base non-photochemical quenching and
+    lumped linear ATP/NADPH consumption (aerobic configuration).
 
-    Reference: Ebenhoeh, Oliver, Geoffrey Fucile, Giovanni Finazzi,
-    Jean-David Rochaix, and Michel Goldschmidt-Clermont.
-    "Short-term acclimation of the photosynthetic electron transfer chain to
-    changing light: a mathematical model."
-    Philosophical Transactions of the Royal Society B 369.1640 (2014): 20130223.
-    ```
+    Reference: Ebenhoeh, Oliver, Geoffrey Fucile, Giovanni Finazzi, Jean-David
+    Rochaix, and Michel Goldschmidt-Clermont. "Short-term acclimation of the
+    photosynthetic electron transfer chain to changing light: a mathematical
+    model." Philosophical Transactions of the Royal Society B 369.1640 (2014):
+    20130223\.
     """
     m: Model = Model()
     # Dynamic variables (initial values from the original main.ipynb)

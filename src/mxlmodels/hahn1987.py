@@ -1,4 +1,4 @@
-"""Hahn 1987 Photorespiration and Photosynthesis model.
+r"""Hahn 1987 Photorespiration and Photosynthesis model.
 
 |             |                                                             |
 | ----------- | ----------------------------------------------------------- |

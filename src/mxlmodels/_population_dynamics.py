@@ -1,4 +1,4 @@
-"""Two-species population dynamics: E. coli and C. glutamicum with fixed affinities.
+r"""Two-species population dynamics: E. coli and C. glutamicum with fixed affinities.
 
 |             |       |
 | ----------- | ----- |
@@ -18,7 +18,7 @@ def _d_edt(
     a_e: float,
     e_coli: float,
 ) -> float:
-    """Net growth rate of E. coli: affinity * population * growth rate."""
+    r"""Net growth rate of E. coli: affinity * population * growth rate."""
     return a_e * e_coli * mu_e
 
 
@@ -28,12 +28,12 @@ def _d_cdt(
     c_gluta: float,
     theta: float,
 ) -> float:
-    """Net growth rate of C. glutamicum minus density-dependent death."""
+    r"""Net growth rate of C. glutamicum minus density-dependent death."""
     return a_c * c_gluta * mu_c - c_gluta**2.0 * theta
 
 
 def get_population_dynamics() -> Model:
-    """Build the two-species population dynamics model (E. coli / C. glutamicum)."""
+    r"""Build the two-species population dynamics model (E. coli / C. glutamicum)."""
     return (
         Model()
         .add_variable(

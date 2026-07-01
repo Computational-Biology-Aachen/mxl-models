@@ -1,4 +1,4 @@
-"""Matuszynska 2016 PhD photosynthesis model.
+r"""Matuszynska 2016 PhD photosynthesis model.
 
 |             |                                                                                      |
 | ----------- | ------------------------------------------------------------------------------------ |
@@ -27,7 +27,7 @@ def _moiety_1(
     concentration: float,
     total: float,
 ) -> float:
-    """Conservation moiety: total - concentration."""
+    r"""Conservation moiety: total - concentration."""
     return total - concentration
 
 
@@ -35,7 +35,7 @@ def _mass_action_1s(
     s1: float,
     k_fwd: float,
 ) -> float:
-    """Mass-action rate for one substrate."""
+    r"""Mass-action rate for one substrate."""
     return k_fwd * s1
 
 
@@ -43,16 +43,14 @@ def _dg_ph(
     r: float,
     t: float,
 ) -> float:
-    """Thermodynamic coefficient dG/dpH = RT\*ln(10) in kJ/mol."""
+    r"""Thermodynamic coefficient dG/dpH = RT\*ln(10) in kJ/mol."""
     return np.log(10) * r * t
 
 
 def _ph_lumen(
     protons: float,
 ) -> float:
-    """Lumenal pH from proton concentration in mmol/mmol_Chl (conversion factor
-    0.00025).
-    """
+    r"""Lumenal pH from proton concentration in mmol/mmol_Chl (conversion factor 0.00025)."""
     protons_mmc = protons * 0.00025
     # Clamp log to physiological state & prevent numerical instabilities
     # -log10(1e-14) = pH 14 <= protons <= -log10(1e-11) = pH 1
@@ -70,14 +68,11 @@ def _quencher(
     y3: float,
     k_z_sat: float,
 ) -> float:
-    """co-operative 4-state quenching mechanism.
+    r"""co-operative 4-state quenching mechanism.
 
-    ```
-    gamma0: slow quenching of (Vx - protonation)
-    gamma1: fast quenching (Vx + protonation)
-    gamma2: fastest possible quenching (Zx + protonation)
-    gamma3: slow quenching of Zx present (Zx - protonation).
-    ```
+    gamma0: slow quenching of (Vx - protonation) gamma1: fast quenching (Vx +
+    protonation) gamma2: fastest possible quenching (Zx + protonation) gamma3: slow
+    quenching of Zx present (Zx - protonation).
     """
     ZAnt = zx / (zx + k_z_sat)
     return y0 * vx * psbs + y1 * vx * psbsp + y2 * ZAnt * psbsp + y3 * ZAnt * psbs
@@ -91,9 +86,7 @@ def _keq_pq_red(
     d_g_p_h: float,
     rt: float,
 ) -> float:
-    """Equilibrium constant for PQ reduction by QA, pH-corrected via stroma proton
-    contribution.
-    """
+    r"""Equilibrium constant for PQ reduction by QA, pH-corrected via stroma proton contribution."""
     dg1 = -e0_qa * f
     dg2 = -2 * e0_pq * f
     dg = -2 * dg1 + dg2 + 2 * p_hstroma * d_g_p_h
@@ -105,9 +98,7 @@ def _ps2_crosssection(
     static_ant_ii: float,
     static_ant_i: float,
 ) -> float:
-    """Equilibrium constant for PQ reduction by QA, pH-corrected via stroma proton
-    contribution.
-    """
+    r"""Equilibrium constant for PQ reduction by QA, pH-corrected via stroma proton contribution."""
     return static_ant_ii + (1 - static_ant_ii - static_ant_i) * lhc
 
 
@@ -120,9 +111,7 @@ def _keq_atp(
     pi_mol: float,
     rt: float,
 ) -> float:
-    """Equilibrium constant for ATP synthase, driven by the transmembrane proton
-    gradient.
-    """
+    r"""Equilibrium constant for ATP synthase, driven by the transmembrane proton gradient."""
     delta_g = delta_g0_atp - d_g_p_h * hpr * (p_hstroma - p_h)
     return pi_mol * math.exp(-delta_g / rt)
 
@@ -136,9 +125,7 @@ def _keq_cytb6f(
     rt: float,
     d_g_p_h: float,
 ) -> float:
-    """Equilibrium constant of cytochrome b6f from redox potentials and transmembrane
-    pH gradient.
-    """
+    r"""Equilibrium constant of cytochrome b6f from redox potentials and transmembrane pH gradient."""
     DG1 = -2 * f * e0_pq
     DG2 = -f * e0_pc
     DG = -(DG1 + 2 * d_g_p_h * p_h) + 2 * DG2 + 2 * d_g_p_h * (p_hstroma - p_h)
@@ -153,7 +140,7 @@ def _keq_fnr(
     d_g_p_h: float,
     rt: float,
 ) -> float:
-    """Equilibrium constant for FNR: Fd-mediated NADP+ reduction, pH-corrected."""
+    r"""Equilibrium constant for FNR: Fd-mediated NADP+ reduction, pH-corrected."""
     dg1 = -e0_fd * f
     dg2 = -2 * e0_nadp * f
     dg = -2 * dg1 + dg2 + d_g_p_h * p_hstroma
@@ -166,9 +153,7 @@ def _keq_pcp700(
     eo_p700: float,
     rt: float,
 ) -> float:
-    """Equilibrium constant for PC -> P700 electron transfer from standard redox
-    potentials.
-    """
+    r"""Equilibrium constant for PC -> P700 electron transfer from standard redox potentials."""
     dg1 = -e0_pc * f
     dg2 = -eo_p700 * f
     dg = -dg1 + dg2
@@ -181,9 +166,7 @@ def _keq_faf_d(
     e0_fd: float,
     rt: float,
 ) -> float:
-    """Equilibrium constant for FA -> Fd electron transfer from standard redox
-    potentials.
-    """
+    r"""Equilibrium constant for FA -> Fd electron transfer from standard redox potentials."""
     dg1 = -e0_fa * f
     dg2 = -e0_fd * f
     dg = -dg1 + dg2
@@ -203,12 +186,10 @@ def _ps1states_2019(
     k_pc_ox: float,
     pfd: float,
 ) -> float:
-    """QSSA calculates open state of PSI.
+    r"""QSSA calculates open state of PSI.
 
-    ```
-    depends on reduction states of plastocyanin and ferredoxin
-    C = [PC], F = [Fd] (ox. forms).
-    ```
+    depends on reduction states of plastocyanin and ferredoxin C = [PC], F = [Fd]
+    (ox. forms).
     """
     L = (1 - ps2cs) * pfd
     return psi_tot / (
@@ -225,7 +206,7 @@ def _rate_atp_synthase_2016(
     keq_at_psynthase: float,
     k_at_psynth: float,
 ) -> float:
-    """ATP synthase rate (2016 formulation): linear reversible kinetics driven by Keq."""
+    r"""ATP synthase rate (2016 formulation): linear reversible kinetics driven by Keq."""
     return k_at_psynth * (adp - atp / keq_at_psynthase)
 
 
@@ -233,7 +214,7 @@ def _neg_div(
     x: float,
     y: float,
 ) -> float:
-    """Return -x / y."""
+    r"""Return -x / y."""
     return -x / y
 
 
@@ -245,9 +226,7 @@ def _b6f(
     keq_b6f: float,
     k_cytb6f: float,
 ) -> float:
-    """Cytochrome b6f rate: reversible mass action clamped to -kCytb6f to avoid
-    runaway reverse flux.
-    """
+    r"""Cytochrome b6f rate: reversible mass action clamped to -kCytb6f to avoid runaway reverse flux."""
     return max(
         k_cytb6f * (pq_red * pc_ox**2 - pq_ox * pc_red**2 / keq_b6f),
         -k_cytb6f,
@@ -257,20 +236,16 @@ def _b6f(
 def _four_div_by(
     x: float,
 ) -> float:
-    """Return 4/x; used for the 4-proton stoichiometry of b6f scaled by buffering
-    capacity.
-    """
+    r"""Return 4/x; used for the 4-proton stoichiometry of b6f scaled by buffering capacity."""
     return 4.0 / x
 
 
 def _protons_stroma_2016(
     ph: float,
 ) -> float:
-    """Convert stromal pH to proton concentration (µmol/L).
+    r"""Convert stromal pH to proton concentration (µmol/L).
 
-    ```
     Introduced by the Matuszynska 2016 PhD model.
-    ```
     """
     return 4000.0 * 10 ** (-ph)
 
@@ -282,7 +257,7 @@ def _protonation_hill(
     k_fwd: float,
     k_ph_sat: float,
 ) -> float:
-    """Hill-type protonation rate scaled by lumenal proton concentration."""
+    r"""Hill-type protonation rate scaled by lumenal proton concentration."""
     return k_fwd * (h**nh / (h**nh + _protons_stroma_2016(k_ph_sat) ** nh)) * vx  # type: ignore
 
 
@@ -291,7 +266,7 @@ def _rate_cyclic_electron_flow(
     fdred: float,
     kcyc: float,
 ) -> float:
-    """Cyclic electron flow rate: mass action on Fd_red^2 and PQ_ox."""
+    r"""Cyclic electron flow rate: mass action on Fd_red^2 and PQ_ox."""
     return kcyc * fdred**2 * pox
 
 
@@ -302,7 +277,7 @@ def _rate_protonation_hill(
     n_h: float,
     kph_sat: float,
 ) -> float:
-    """Hill-type deepoxidase rate activated by lumenal proton concentration."""
+    r"""Hill-type deepoxidase rate activated by lumenal proton concentration."""
     return k_fwd * (h**n_h / (h**n_h + _protons_stroma_2016(kph_sat) ** n_h)) * vx  # type: ignore
 
 
@@ -316,9 +291,7 @@ def _rate_fnr2016(
     km_nadph: float,
     keq: float,
 ) -> float:
-    """FNR rate (2016 formulation): reversible ping-pong with Fd^2 stoichiometry,
-    mmol/mmol_Chl units.
-    """
+    r"""FNR rate (2016 formulation): reversible ping-pong with Fd^2 stoichiometry, mmol/mmol_Chl units."""
     fdred = fd_red / km_fd_red
     fdox = fd_ox / km_fd_red
     nadph = nadph / km_nadph
@@ -334,18 +307,14 @@ def _rate_ps2(
     b1: float,
     k2: float,
 ) -> float:
-    """PSII electron transfer rate from the open-excited state B1 and photochemistry
-    rate constant k2.
-    """
+    r"""PSII electron transfer rate from the open-excited state B1 and photochemistry rate constant k2."""
     return 0.5 * k2 * b1
 
 
 def _two_div_by(
     x: float,
 ) -> float:
-    """Return 2/x; used for the 2-proton stoichiometry of PSII scaled by buffering
-    capacity.
-    """
+    r"""Return 2/x; used for the 2-proton stoichiometry of PSII scaled by buffering capacity."""
     return 2.0 / x
 
 
@@ -354,9 +323,7 @@ def _rate_ps1(
     ps2cs: float,
     pfd: float,
 ) -> float:
-    """PSI electron transfer rate: open PSI centers (a) * light absorbed by PSI
-    antenna.
-    """
+    r"""PSI electron transfer rate: open PSI centers (a) * light absorbed by PSI antenna."""
     return (1 - ps2cs) * pfd * a
 
 
@@ -365,16 +332,14 @@ def _rate_leak(
     ph_stroma: float,
     k_leak: float,
 ) -> float:
-    """Passive proton leak across the thylakoid membrane, proportional to the proton
-    gradient.
-    """
+    r"""Passive proton leak across the thylakoid membrane, proportional to the proton gradient."""
     return k_leak * (protons_lumen - _protons_stroma_2016(ph_stroma))
 
 
 def _neg_one_div_by(
     x: float,
 ) -> float:
-    """Return -1/x; used for negated unit stoichiometry scaled by buffering capacity."""
+    r"""Return -1/x; used for negated unit stoichiometry scaled by buffering capacity."""
     return -1.0 / x
 
 
@@ -383,7 +348,7 @@ def _mass_action_2s(
     s2: float,
     k_fwd: float,
 ) -> float:
-    """Mass-action rate for two substrates."""
+    r"""Mass-action rate for two substrates."""
     return k_fwd * s1 * s2
 
 
@@ -395,9 +360,7 @@ def _rate_state_transition_ps1_ps2(
     km_st: float,
     n_st: float,
 ) -> float:
-    """STT7-kinase phosphorylation of LHC; inhibited by oxidised PQ (state 1 → 2
-    transition).
-    """
+    r"""STT7-kinase phosphorylation of LHC; inhibited by oxidised PQ (state 1 → 2 transition)."""
     return k_stt7 * (1 / (1 + (pox / p_tot / km_st) ** n_st)) * ant
 
 
@@ -415,9 +378,7 @@ def _ps2states_2016_phd_surrogate(
     pfd: float,
     k_h0: float,
 ) -> tuple[float, float, float, float]:
-    """PSII state populations (PHD quenching model, 2016) via analytical closed-form
-    surrogate.
-    """
+    r"""PSII state populations (PHD quenching model, 2016) via analytical closed-form surrogate."""
     x0 = k_f**2
     x1 = k_h0**2
     x2 = k2 * k_f
@@ -486,7 +447,7 @@ def _div(
     x: float,
     y: float,
 ) -> float:
-    """Return x / y."""
+    r"""Return x / y."""
     return x / y
 
 
@@ -499,23 +460,21 @@ def _rate_fluorescence(
     k_f: float,
     k_h: float,
 ) -> float:
-    """Chlorophyll fluorescence yield from open (B0) and closed (B2) PSII centres."""
+    r"""Chlorophyll fluorescence yield from open (B0) and closed (B2) PSII centres."""
     return ps2cs * k_f * b0 / (k_f + k2 + k_h * q) + ps2cs * k_f * b2 / (k_f + k_h * q)
 
 
 def get_matuszynska2016_phd() -> Model:
-    """Matuszynska 2016 PhD photosynthesis model.
+    r"""Matuszynska 2016 PhD photosynthesis model.
 
-    ```
-    Full chloroplast electron transport chain with non-photochemical quenching (NPQ)
-    and LHC state transitions. Covers PSII/PSI, cytochrome b6f, FNR, ATP synthase,
-    the xanthophyll cycle (violaxanthin ↔ zeaxanthin), PsbS protonation, and
-    cyclic electron flow around PSI.
+    Full chloroplast electron transport chain with non-photochemical quenching
+    (NPQ) and LHC state transitions. Covers PSII/PSI, cytochrome b6f, FNR, ATP
+    synthase, the xanthophyll cycle (violaxanthin ↔ zeaxanthin), PsbS protonation,
+    and cyclic electron flow around PSI.
 
-    Reference: Matuszyńska, Anna Barbara.
-    Mathematical models of light acclimation mechanisms in higher plants and green algae.
-    Dissertation, Düsseldorf, Heinrich-Heine-Universität, 2016.
-    ```
+    Reference: Matuszyńska, Anna Barbara. Mathematical models of light acclimation
+    mechanisms in higher plants and green algae. Dissertation, Düsseldorf,
+    Heinrich-Heine-Universität, 2016.
     """
     m: Model = Model()
     m.add_variable("ATP", initial_value=1.6999999999999997)
@@ -910,4 +869,4 @@ def get_matuszynska2016_phd() -> Model:
         fn=_rate_fluorescence,
         args=["Q", "B0", "B2", "PSII_cross_section", "k2", "kF", "kH"],
     )
-    return m  # noqa: RET504
+    return m

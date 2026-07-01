@@ -1,4 +1,4 @@
-"""Li 2021 model.
+r"""Li 2021 model.
 
 |             |                                                                                                          |
 | ----------- | -------------------------------------------------------------------------------------------------------- |
@@ -436,46 +436,41 @@ def _v_vde(
 
 
 def get_li_2021() -> Model:
-    """Li 2021 model.
+    r"""Li 2021 model.
 
-    ```
-    The Li2021 model is a kinetic model of photosynthesis that focuses on
-    ion fluxes across the thylakoid membrane and their effects on the
-    proton motive force (PMF). Built upon the Davis2017 model, it provides
-    a more detailed representation of photosynthetic reactions directly
-    linked to PMF generation, including water splitting at photosystem II
-    and plastoquinone oxidation at the cytochrome b6f complex. Other
-    photosynthetic processes are represented with minimal complexity. The
-    model introduces two potassium (K+) transport channels and two chloride
-    (Cl-) transport channels in the thylakoid membrane to investigate their
-    roles in PMF regulation.
+    The Li2021 model is a kinetic model of photosynthesis that focuses on ion
+    fluxes across the thylakoid membrane and their effects on the proton motive
+    force (PMF). Built upon the Davis2017 model, it provides a more detailed
+    representation of photosynthetic reactions directly linked to PMF generation,
+    including water splitting at photosystem II and plastoquinone oxidation at the
+    cytochrome b6f complex. Other photosynthetic processes are represented with
+    minimal complexity. The model introduces two potassium (K+) transport channels
+    and two chloride (Cl-) transport channels in the thylakoid membrane to
+    investigate their roles in PMF regulation.
 
     Model validation was performed by comparing simulation results with
-    experimental data from multiple studies. The authors demonstrated that
-    the model reproduces both wild-type behavior and the phenotypes of
-    several knockout mutants, including VCCN1, CLCE, KEA3, and combinations
-    thereof. Following validation, the model was used to investigate how
-    these ion channels influence PMF formation and photosynthetic
-    efficiency. Simulation protocols included light oscillation
-    experiments, enzyme abundance scans, and other analyses that
-    demonstrate the model's capabilities. The primary objective of the
-    model was to address the long-standing question of how ion fluxes
-    across the thylakoid membrane contribute to photosynthetic regulation.
+    experimental data from multiple studies. The authors demonstrated that the
+    model reproduces both wild-type behavior and the phenotypes of several knockout
+    mutants, including VCCN1, CLCE, KEA3, and combinations thereof. Following
+    validation, the model was used to investigate how these ion channels influence
+    PMF formation and photosynthetic efficiency. Simulation protocols included
+    light oscillation experiments, enzyme abundance scans, and other analyses that
+    demonstrate the model's capabilities. The primary objective of the model was to
+    address the long-standing question of how ion fluxes across the thylakoid
+    membrane contribute to photosynthetic regulation.
 
-    The model description in the publication is limited, although the
-    authors provide access to a public GitHub repository containing the
-    implementation. The code is written in Python and includes extensive
-    comments. However, the repository contains multiple model components
-    and simulation protocols, making it difficult to determine precisely
-    which parts correspond to the published model. The version summarized
-    here was reduced to the components most relevant to the publication,
-    but this interpretation may not exactly match the authors' intent.
-    Discrepancies between the code, publication, and supplementary
-    materials further complicate reconstruction of the complete model and
-    its parameterization. Despite these challenges, the model illustrates
-    the value and versatility of photosynthesis modeling and was therefore
-    included in GreenSloth.
-    ```
+    The model description in the publication is limited, although the authors
+    provide access to a public GitHub repository containing the implementation. The
+    code is written in Python and includes extensive comments. However, the
+    repository contains multiple model components and simulation protocols, making
+    it difficult to determine precisely which parts correspond to the published
+    model. The version summarized here was reduced to the components most relevant
+    to the publication, but this interpretation may not exactly match the authors'
+    intent. Discrepancies between the code, publication, and supplementary
+    materials further complicate reconstruction of the complete model and its
+    parameterization. Despite these challenges, the model illustrates the value and
+    versatility of photosynthesis modeling and was therefore included in
+    GreenSloth.
     """
     m = Model()
 

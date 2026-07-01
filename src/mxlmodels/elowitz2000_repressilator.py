@@ -1,4 +1,4 @@
-"""Repressilator (Elowitz 2000).
+r"""Repressilator (Elowitz 2000).
 
 Ssynthetic genetic oscillator with three cyclically repressing genes.
 
@@ -23,7 +23,7 @@ def _transcription_laci(
     p_ci: float,
     n: float,
 ) -> float:
-    """Transcription of lacI repressed by CI protein via Hill kinetics."""
+    r"""Transcription of lacI repressed by CI protein via Hill kinetics."""
     return alpha / (1.0 + p_ci**n) + alpha0
 
 
@@ -33,7 +33,7 @@ def _transcription_tetr(
     p_laci: float,
     n: float,
 ) -> float:
-    """Transcription of tetR repressed by LacI protein via Hill kinetics."""
+    r"""Transcription of tetR repressed by LacI protein via Hill kinetics."""
     return alpha / (1.0 + p_laci**n) + alpha0
 
 
@@ -43,14 +43,14 @@ def _transcription_ci(
     p_tetr: float,
     n: float,
 ) -> float:
-    """Transcription of cI repressed by TetR protein via Hill kinetics."""
+    r"""Transcription of cI repressed by TetR protein via Hill kinetics."""
     return alpha / (1.0 + p_tetr**n) + alpha0
 
 
 def _mrna_degradation(
     m: float,
 ) -> float:
-    """First-order mRNA degradation."""
+    r"""First-order mRNA degradation."""
     return m
 
 
@@ -58,7 +58,7 @@ def _translation(
     beta: float,
     m: float,
 ) -> float:
-    """Protein synthesis proportional to mRNA level."""
+    r"""Protein synthesis proportional to mRNA level."""
     return beta * m
 
 
@@ -66,14 +66,12 @@ def _protein_degradation(
     beta: float,
     p: float,
 ) -> float:
-    """First-order protein degradation scaled by beta."""
+    r"""First-order protein degradation scaled by beta."""
     return beta * p
 
 
 def get_elowitz2000_repressilator() -> Model:
-    """Build the Repressilator model: synthetic three-gene ring oscillator where each
-    repressor cyclically inhibits the next.
-    """
+    r"""Build the Repressilator model: synthetic three-gene ring oscillator where each repressor cyclically inhibits the next."""
     return (
         Model()
         .add_variable("MlacI", initial_value=0.0)

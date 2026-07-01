@@ -1,4 +1,4 @@
-"""Ebeling 2026 extended chloroplast model with ion transport, ROS, and Calvin cycle.
+r"""Ebeling 2026 extended chloroplast model with ion transport, ROS, and Calvin cycle.
 
 |             |                             |
 | ----------- | --------------------------- |
@@ -24,16 +24,14 @@ def _initial_delta_psi(
     f: float,
     t: float,
 ) -> float:
-    r"""Estimate delta psi in the dark, assuming delta_pH and delta_psi contribute
-    equally to pmf.
-    """
+    r"""Estimate delta psi in the dark, assuming delta_pH and delta_psi contribute equally to pmf."""
     return np.log(10) * ((r * t) / f) * (p_h - p_h_lumen)
 
 
 def _half(
     x: float,
 ) -> float:
-    """Return x/2; used for halving a stoichiometric coefficient."""
+    r"""Return x/2; used for halving a stoichiometric coefficient."""
     return x / 2
 
 
@@ -41,7 +39,7 @@ def _mass_action_1s(
     s1: float,
     k_fwd: float,
 ) -> float:
-    """Mass-action rate for one substrate."""
+    r"""Mass-action rate for one substrate."""
     return k_fwd * s1
 
 
@@ -49,7 +47,7 @@ def _dg_ph(
     r: float,
     t: float,
 ) -> float:
-    """Thermodynamic coefficient dG/dpH = RT\*ln(10) in kJ/mol."""
+    r"""Thermodynamic coefficient dG/dpH = RT\*ln(10) in kJ/mol."""
     return np.log(10) * r * t
 
 
@@ -57,7 +55,7 @@ def _moiety_1(
     concentration: float,
     total: float,
 ) -> float:
-    """Conservation moiety: total - concentration."""
+    r"""Conservation moiety: total - concentration."""
     return total - concentration
 
 
@@ -72,14 +70,11 @@ def _quencher(
     y3: float,
     k_z_sat: float,
 ) -> float:
-    """co-operative 4-state quenching mechanism.
+    r"""co-operative 4-state quenching mechanism.
 
-    ```
-    gamma0: slow quenching of (Vx - protonation)
-    gamma1: fast quenching (Vx + protonation)
-    gamma2: fastest possible quenching (Zx + protonation)
-    gamma3: slow quenching of Zx present (Zx - protonation).
-    ```
+    gamma0: slow quenching of (Vx - protonation) gamma1: fast quenching (Vx +
+    protonation) gamma2: fastest possible quenching (Zx + protonation) gamma3: slow
+    quenching of Zx present (Zx - protonation).
     """
     ZAnt = zx / (zx + k_z_sat)
     return y0 * vx * psbs + y1 * vx * psbsp + y2 * ZAnt * psbsp + y3 * ZAnt * psbs
@@ -93,9 +88,7 @@ def _keq_pq_red(
     d_g_p_h: float,
     rt: float,
 ) -> float:
-    """Equilibrium constant for PQ reduction by QA, pH-corrected via stroma proton
-    contribution.
-    """
+    r"""Equilibrium constant for PQ reduction by QA, pH-corrected via stroma proton contribution."""
     dg1 = -e0_qa * f
     dg2 = -2 * e0_pq * f
     dg = -2 * dg1 + dg2 + 2 * p_hstroma * d_g_p_h
@@ -107,9 +100,7 @@ def _ps2_crosssection(
     static_ant_ii: float,
     static_ant_i: float,
 ) -> float:
-    """Equilibrium constant for PQ reduction by QA, pH-corrected via stroma proton
-    contribution.
-    """
+    r"""Equilibrium constant for PQ reduction by QA, pH-corrected via stroma proton contribution."""
     return static_ant_ii + (1 - static_ant_ii - static_ant_i) * lhc
 
 
@@ -132,9 +123,7 @@ def _pi_cbb(
     ru5p: float,
     atp: float,
 ) -> float:
-    """Free orthophosphate from total minus all phosphorylated CBB intermediates
-    (bisphosphates count twice).
-    """
+    r"""Free orthophosphate from total minus all phosphorylated CBB intermediates (bisphosphates count twice)."""
     return phosphate_total - (
         pga
         + 2 * bpga
@@ -160,7 +149,7 @@ def _moiety_2(
     x2: float,
     total: float,
 ) -> float:
-    """Conservation moiety: total - x1 - x2."""
+    r"""Conservation moiety: total - x1 - x2."""
     return total - x1 - x2
 
 
@@ -181,9 +170,7 @@ def _keq_atp(
     pi_mol: float,
     rt: float,
 ) -> float:
-    """Equilibrium constant for ATP synthase, driven by the transmembrane proton
-    gradient.
-    """
+    r"""Equilibrium constant for ATP synthase, driven by the transmembrane proton gradient."""
     delta_g = delta_g0_atp - d_g_p_h * hpr * (p_hstroma - p_h)
     return pi_mol * math.exp(-delta_g / rt)
 
@@ -196,7 +183,7 @@ def _keq_fnr(
     d_g_p_h: float,
     rt: float,
 ) -> float:
-    """Equilibrium constant for FNR: Fd-mediated NADP+ reduction, pH-corrected."""
+    r"""Equilibrium constant for FNR: Fd-mediated NADP+ reduction, pH-corrected."""
     dg1 = -e0_fd * f
     dg2 = -2 * e0_nadp * f
     dg = -2 * dg1 + dg2 + d_g_p_h * p_hstroma
@@ -207,23 +194,14 @@ def _mul(
     x: float,
     y: float,
 ) -> float:
-    """Calculate the product of two values.
+    r"""Calculate the product of two values.
+
+    x is the first factor, y is the second factor. Returns the product of x and y
+    (x * y).
+
+    ## Examples
 
     ```
-    Parameters
-    ----------
-    x
-        First factor
-    y
-        Second factor
-
-    Returns
-    -------
-    Float
-        Product of x and y (x * y)
-
-    Examples
-    --------
     >>> mul(2.0, 3.0)
     6.0
     >>> mul(0.5, 4.0)
@@ -245,9 +223,7 @@ def _rate_translocator(
     k_gap: float,
     k_dhap: float,
 ) -> float:
-    """Denominator term N for the phosphate translocator shared by all triose-P export
-    reactions.
-    """
+    r"""Denominator term N for the phosphate translocator shared by all triose-P export reactions."""
     return 1 + (1 + k_pxt / p_ext) * (
         pi / k_pi + pga / k_pga + gap / k_gap + dhap / k_dhap
     )
@@ -259,9 +235,7 @@ def _keq_pcp700(
     e0_p700: float,
     rt: float,
 ) -> float:
-    """Equilibrium constant for PC -> P700 electron transfer from standard redox
-    potentials.
-    """
+    r"""Equilibrium constant for PC -> P700 electron transfer from standard redox potentials."""
     DG = -(-e0_pc * f) + (-e0_p700 * f)
     return np.exp(-DG / rt)
 
@@ -272,9 +246,7 @@ def _keq_faf_d(
     e0_fd: float,
     rt: float,
 ) -> float:
-    """Equilibrium constant for FA -> Fd electron transfer from standard redox
-    potentials.
-    """
+    r"""Equilibrium constant for FA -> Fd electron transfer from standard redox potentials."""
     DG = -(-e0_fa * f) + (-e0_fd * f)
     return np.exp(-DG / rt)
 
@@ -285,7 +257,7 @@ def _moiety_3(
     c3: float,
     total: float,
 ) -> float:
-    """Conservation moiety: fourth species = total - c1 - c2 - c3."""
+    r"""Conservation moiety: fourth species = total - c1 - c2 - c3."""
     return total - c1 - c2 - c3
 
 
@@ -293,7 +265,7 @@ def _normalize_concentration(
     concentration: float,
     total: float,
 ) -> float:
-    """Return concentration/total as a dimensionless fraction."""
+    r"""Return concentration/total as a dimensionless fraction."""
     return concentration / total
 
 
@@ -302,7 +274,7 @@ def _normalize_2_concentrations(
     c2: float,
     total: float,
 ) -> float:
-    """Return (c1+c2)/total as a combined dimensionless fraction."""
+    r"""Return (c1+c2)/total as a combined dimensionless fraction."""
     return (c1 + c2) / total
 
 
@@ -316,9 +288,7 @@ def _fluo(
     k_h_qslope: float,
     k_h0: float,
 ) -> float:
-    """Chlorophyll fluorescence yield from open (B0) and closed (B2) PSII centres with
-    quencher-dependent kH.
-    """
+    r"""Chlorophyll fluorescence yield from open (B0) and closed (B2) PSII centres with quencher-dependent kH."""
     kH = k_h0 + k_h_qslope * q
     return (ps2cs * k_f * b0) / (k_f + k2 + kH) + (ps2cs * k_f * b2) / (k_f + kH)
 
@@ -329,7 +299,7 @@ def _k_b6f(
     b6f_content: float,
     max_b6f: float,
 ) -> float:
-    """Effective b6f rate constant modulated by lumenal pH via a sigmoid around pKreg."""
+    r"""Effective b6f rate constant modulated by lumenal pH via a sigmoid around pKreg."""
     pHmod = 1 - (1 / (10 ** (p_h - p_kreg) + 1))
     return pHmod * b6f_content * max_b6f
 
@@ -337,18 +307,14 @@ def _k_b6f(
 def _protons_lumen(
     p_h_lumen: float,
 ) -> float:
-    """Convert lumenal pH to proton concentration in mmol/mmol_Chl (conversion factor
-    2.5e-4).
-    """
+    r"""Convert lumenal pH to proton concentration in mmol/mmol_Chl (conversion factor 2.5e-4)."""
     return (10 ** (-p_h_lumen)) / 2.5e-4
 
 
 def _protons_stroma_ebeling(
     p_h_stroma: float,
 ) -> float:
-    """Convert stromal pH to proton concentration in mmol/mmol_Chl (Ebeling model,
-    factor 3.2e-5).
-    """
+    r"""Convert stromal pH to proton concentration in mmol/mmol_Chl (Ebeling model, factor 3.2e-5)."""
     return (10 ** (-p_h_stroma)) / 3.2e-5
 
 
@@ -357,9 +323,7 @@ def _pmf(
     delta_psi: float,
     f: float,
 ) -> float:
-    r"""Total proton motive force: electrical (F\*delta_psi) + chemical (delta_pH)
-    contributions.
-    """
+    r"""Total proton motive force: electrical (F\*delta_psi) + chemical (delta_pH) contributions."""
     return f * delta_psi + _deltap_h
 
 
@@ -368,7 +332,7 @@ def _deltap_h(
     p_h_lumen: float,
     d_g: float,
 ) -> float:
-    """Proton motive force component from transmembrane pH difference.
+    r"""Proton motive force component from transmembrane pH difference.
 
     (in energy units).
     """
@@ -410,7 +374,7 @@ def _keq_cytb6f(
     rt: float,
     d_g_p_h: float,
 ) -> float:
-    """Equilibrium constant of cytochrome b6f.
+    r"""Equilibrium constant of cytochrome b6f.
 
     including PMF contribution to free energy.
     """
@@ -423,7 +387,7 @@ def _keq_cytb6f(
 def _squared(
     x: float,
 ) -> float:
-    """Return x^2; used for second-order stoichiometry terms."""
+    r"""Return x^2; used for second-order stoichiometry terms."""
     return x**2
 
 
@@ -433,7 +397,7 @@ def _reg_kea(
     kea3_p_h_reg: float,
     kea3_atp_treshold: float,
 ) -> float:
-    """KEA3 K+/H+ antiporter regulation: product of pH and ATP inhibition sigmoids."""
+    r"""KEA3 K+/H+ antiporter regulation: product of pH and ATP inhibition sigmoids."""
     pH_inhib = (1 - 0.1) / (1 + np.exp((p_h - kea3_p_h_reg) / 0.001))
     ATP_inhib = (1 - 0.1) / (1 + np.exp((kea3_atp_treshold - atp) / 0.01))
     return pH_inhib * ATP_inhib
@@ -446,7 +410,7 @@ def _dg_k(
     rt: float,
     f: float,
 ) -> float:
-    """Electrochemical driving force for K+ transport across the thylakoid membrane."""
+    r"""Electrochemical driving force for K+ transport across the thylakoid membrane."""
     return (-(rt / f) * np.log10(kstroma / klumen) + delta_psi) * f
 
 
@@ -457,7 +421,7 @@ def _cl_driving_force(
     rt: float,
     f: float,
 ) -> float:
-    """Electrochemical driving force for Cl- transport across the thylakoid membrane."""
+    r"""Electrochemical driving force for Cl- transport across the thylakoid membrane."""
     return ((rt / f) * np.log10(cl_stroma / cl_lumen) + delta_psi) * f
 
 
@@ -470,9 +434,7 @@ def _keq_ndh1(
     d_g_p_h: float,
     rt: float,
 ) -> float:
-    """Equilibrium constant for NDH-1 (Fd-dependent PQ reduction) including PMF and
-    stromal pH.
-    """
+    r"""Equilibrium constant for NDH-1 (Fd-dependent PQ reduction) including PMF and stromal pH."""
     DG1 = -e0_fd * f
     DG2 = -2 * e0_pq * f
     DG = -2 * DG1 + DG2 + 2 * d_g_p_h * p_hstroma + 4 * _pmf
@@ -483,9 +445,7 @@ def _cl_ce_activation(
     atp: float,
     cl_ce_atp_threshold: float,
 ) -> float:
-    """CLCe activation factor: sigmoid inhibited by high ATP (low-energy stress
-    signal).
-    """
+    r"""CLCe activation factor: sigmoid inhibited by high ATP (low-energy stress signal)."""
     return (1 - 0.1) / (1 + np.exp((atp - cl_ce_atp_threshold) / 0.01))
 
 
@@ -494,7 +454,7 @@ def _mass_action_2s(
     s2: float,
     k_fwd: float,
 ) -> float:
-    """Mass-action rate for two substrates."""
+    r"""Mass-action rate for two substrates."""
     return k_fwd * s1 * s2
 
 
@@ -507,9 +467,7 @@ def _atp_pmf_activity(
     rt: float,
     delta_psi: float,
 ) -> float:
-    """Sigmoidal ATP synthase activity as function of PMF (delta_psi and delta_pH
-    combined).
-    """
+    r"""Sigmoidal ATP synthase activity as function of PMF (delta_psi and delta_pH combined)."""
     _pmf = delta_psi - np.log(10) * ((rt) / f) * (p_h_lumen - p_h)
     x = np.log(10 ** (-p_k0_e)) + b * (_pmf * f) / (rt)
     return (np.e**x) / (1 + np.e**x)
@@ -524,9 +482,7 @@ def _v_at_psynthase_mod(
     _keq_atp: float,
     convf: float,
 ) -> float:
-    """ATP synthase flux modulated by light-activation state and PMF-dependent
-    activity sigmoid.
-    """
+    r"""ATP synthase flux modulated by light-activation state and PMF-dependent activity sigmoid."""
     return (
         atp_activity
         * _atp_pmf_activity
@@ -538,7 +494,7 @@ def _v_at_psynthase_mod(
 def _value(
     x: float,
 ) -> float:
-    """Return x unchanged."""
+    r"""Return x unchanged."""
     return x
 
 
@@ -546,20 +502,16 @@ def _atp_div(
     hpr: float,
     x: float,
 ) -> float:
-    """Return -hpr\*x for the HPR-scaled proton stoichiometry of ATP synthase
-    (negative = lumen consumption).
-    """
+    r"""Return -hpr\*x for the HPR-scaled proton stoichiometry of ATP synthase (negative = lumen consumption)."""
     return -hpr * x
 
 
 def _protons_stroma_2016(
     ph: float,
 ) -> float:
-    """Convert stromal pH to proton concentration (µmol/L).
+    r"""Convert stromal pH to proton concentration (µmol/L).
 
-    ```
     Introduced by the Matuszynska 2016 PhD model.
-    ```
     """
     return 4000.0 * 10 ** (-ph)
 
@@ -571,7 +523,7 @@ def _protonation_hill(
     k_fwd: float,
     k_ph_sat: float,
 ) -> float:
-    """Hill-type protonation rate scaled by lumenal proton concentration."""
+    r"""Hill-type protonation rate scaled by lumenal proton concentration."""
     return k_fwd * (h**nh / (h**nh + _protons_stroma_2016(k_ph_sat) ** nh)) * vx  # type: ignore
 
 
@@ -580,7 +532,7 @@ def _rate_cyclic_electron_flow(
     fdred: float,
     kcyc: float,
 ) -> float:
-    """Cyclic electron flow rate: mass action on Fd_red^2 and PQ_ox."""
+    r"""Cyclic electron flow rate: mass action on Fd_red^2 and PQ_ox."""
     return kcyc * fdred**2 * pox
 
 
@@ -591,7 +543,7 @@ def _rate_protonation_hill(
     n_h: float,
     kph_sat: float,
 ) -> float:
-    """Hill-type deepoxidase rate activated by lumenal proton concentration."""
+    r"""Hill-type deepoxidase rate activated by lumenal proton concentration."""
     return k_fwd * (h**n_h / (h**n_h + _protons_stroma_2016(kph_sat) ** n_h)) * vx  # type: ignore
 
 
@@ -606,9 +558,7 @@ def _rate_fnr_2019(
     keq_fnr: float,
     convf: float,
 ) -> float:
-    """FNR rate (2019 formulation): same as 2016 but NADP/H concentrations scaled by
-    convf.
-    """
+    r"""FNR rate (2019 formulation): same as 2016 but NADP/H concentrations scaled by convf."""
     fdred = fd_red / km_fnr_f
     fdox = fd_ox / km_fnr_f
     nadph = nadph / convf / km_fnr_n
@@ -625,16 +575,14 @@ def _rate_leak(
     ph_stroma: float,
     k_leak: float,
 ) -> float:
-    """Passive proton leak across the thylakoid membrane, proportional to the proton
-    gradient.
-    """
+    r"""Passive proton leak across the thylakoid membrane, proportional to the proton gradient."""
     return k_leak * (protons_lumen - _protons_stroma_2016(ph_stroma))
 
 
 def _neg_one_div(
     x: float,
 ) -> float:
-    """Negate x; used as a sign-flipping stoichiometry wrapper."""
+    r"""Negate x; used as a sign-flipping stoichiometry wrapper."""
     return -1 * x
 
 
@@ -646,9 +594,7 @@ def _rate_state_transition_ps1_ps2(
     km_st: float,
     n_st: float,
 ) -> float:
-    """STT7-kinase phosphorylation of LHC; inhibited by oxidised PQ (state 1 → 2
-    transition).
-    """
+    r"""STT7-kinase phosphorylation of LHC; inhibited by oxidised PQ (state 1 → 2 transition)."""
     return k_stt7 * (1 / (1 + (pox / p_tot / km_st) ** n_st)) * ant
 
 
@@ -670,9 +616,7 @@ def _rate_poolman_5i(
     nadph: float,
     ki_nadph: float,
 ) -> float:
-    """Rubisco carboxylation rate (Poolman 2000): bi-substrate with 5 competitive
-    inhibitors.
-    """
+    r"""Rubisco carboxylation rate (Poolman 2000): bi-substrate with 5 competitive inhibitors."""
     top = vmax * rubp * co2
     btm = (
         rubp
@@ -697,7 +641,7 @@ def _rapid_equilibrium_2s_2p(
     k_re: float,
     q: float,
 ) -> float:
-    """Rapid-equilibrium rate for two substrates, two products."""
+    r"""Rapid-equilibrium rate for two substrates, two products."""
     return k_re * (s1 * s2 - p1 * p2 / q)
 
 
@@ -711,7 +655,7 @@ def _rapid_equilibrium_3s_3p(
     k_re: float,
     q: float,
 ) -> float:
-    """Rapid-equilibrium rate for three substrates, three products."""
+    r"""Rapid-equilibrium rate for three substrates, three products."""
     return k_re * (s1 * s2 * s3 - p1 * p2 * p3 / q)
 
 
@@ -721,7 +665,7 @@ def _rapid_equilibrium_1s_1p(
     k_re: float,
     q: float,
 ) -> float:
-    """Rapid-equilibrium rate for one substrate, one product."""
+    r"""Rapid-equilibrium rate for one substrate, one product."""
     return k_re * (s1 - p1 / q)
 
 
@@ -732,7 +676,7 @@ def _rapid_equilibrium_2s_1p(
     k_re: float,
     q: float,
 ) -> float:
-    """Rapid-equilibrium rate for two substrates, one product."""
+    r"""Rapid-equilibrium rate for two substrates, one product."""
     return k_re * (s1 * s2 - p1 / q)
 
 
@@ -745,7 +689,7 @@ def _michaelis_menten_1s_2i(
     ki1: float,
     ki2: float,
 ) -> float:
-    """Irreversible Michaelis-Menten rate for one substrate with two inhibitors."""
+    r"""Irreversible Michaelis-Menten rate for one substrate with two inhibitors."""
     return vmax * s / (s + km * (1 + i1 / ki1 + i2 / ki2))
 
 
@@ -756,7 +700,7 @@ def _michaelis_menten_1s_1i(
     km: float,
     ki: float,
 ) -> float:
-    """Irreversible Michaelis-Menten rate for one substrate with one inhibitor."""
+    r"""Irreversible Michaelis-Menten rate for one substrate with one inhibitor."""
     return vmax * s / (s + km * (1 + i / ki))
 
 
@@ -776,9 +720,7 @@ def _rate_prk(
     ki134: float,
     ki135: float,
 ) -> float:
-    """Phosphoribulokinase rate: ordered bi-substrate kinetics with PGA, RuBP, Pi and
-    ADP inhibition.
-    """
+    r"""Phosphoribulokinase rate: ordered bi-substrate kinetics with PGA, RuBP, Pi and ADP inhibition."""
     return (
         v13
         * ru5p
@@ -796,7 +738,7 @@ def _rate_out(
     vmax_efflux: float,
     k_efflux: float,
 ) -> float:
-    """Individual substrate export rate normalised by the translocator occupancy N."""
+    r"""Individual substrate export rate normalised by the translocator occupancy N."""
     return vmax_efflux * s1 / (n_total * k_efflux)
 
 
@@ -816,9 +758,7 @@ def _rate_starch(
     kast2: float,
     kast3: float,
 ) -> float:
-    """Starch synthesis rate via G1P+ATP with ADP inhibition and allosteric activation
-    by PGA/F6P/FBP.
-    """
+    r"""Starch synthesis rate via G1P+ATP with ADP inhibition and allosteric activation by PGA/F6P/FBP."""
     return (
         v_st
         * g1p
@@ -837,7 +777,7 @@ def _rate_mda_reductase1(
     mda: float,
     k3: float,
 ) -> float:
-    """MDA reductase rate: second-order disproportionation of monodehydroascorbate."""
+    r"""MDA reductase rate: second-order disproportionation of monodehydroascorbate."""
     return k3 * mda**2
 
 
@@ -848,7 +788,7 @@ def _rate_mda_reductase2(
     km_nadph: float,
     km_mda: float,
 ) -> float:
-    """Compare Valero et al. 2016."""
+    r"""Compare Valero et al. 2016."""
     nom = vmax * nadph * mda
     denom = km_nadph * mda + km_mda * nadph + nadph * mda + km_nadph * km_mda
     return nom / denom
@@ -867,14 +807,10 @@ def _rate_ascorbate_peroxidase(
     kf5: float,
     xt: float,
 ) -> float:
-    """Lumped reaction of ascorbate peroxidase.
+    r"""Lumped reaction of ascorbate peroxidase.
 
-    ```
-    the cycle stretched to a linear chain with
-    two steps producing the MDA
-    two steps releasing ASC
-    and one step producing hydrogen peroxide.
-    ```
+    the cycle stretched to a linear chain with two steps producing the MDA two
+    steps releasing ASC and one step producing hydrogen peroxide.
     """
     nom = a * h * xt
     denom = (
@@ -897,7 +833,7 @@ def _rate_glutathion_reductase(
     km_nadph: float,
     km_gssg: float,
 ) -> float:
-    """Glutathione reductase rate: bi-substrate Michaelis-Menten for NADPH + GSSG."""
+    r"""Glutathione reductase rate: bi-substrate Michaelis-Menten for NADPH + GSSG."""
     nom = vmax * nadph * gssg
     denom = km_nadph * gssg + km_gssg * nadph + nadph * gssg + km_nadph * km_gssg
     return nom / denom
@@ -911,7 +847,7 @@ def _rate_dhar(
     km_gsh: float,
     k: float,
 ) -> float:
-    """Dehydroascorbate reductase rate: bi-substrate random-order Michaelis-Menten."""
+    r"""Dehydroascorbate reductase rate: bi-substrate random-order Michaelis-Menten."""
     nom = vmax * dha * gsh
     denom = k + km_dha * gsh + km_gsh * dha + dha * gsh
     return nom / denom
@@ -925,7 +861,7 @@ def _mass_action_22_rev(
     kf: float,
     keq: float,
 ) -> float:
-    """Reversible bimolecular mass-action rate: kf\*(s1*s2) - (kf/keq)*(p1\*p2)."""
+    r"""Reversible bimolecular mass-action rate: kf\*(s1*s2) - (kf/keq)*(p1\*p2)."""
     return kf * s1 * s2 - (kf / keq) * p1 * p2
 
 
@@ -934,7 +870,7 @@ def _v_ps1(
     ps2cs: float,
     pfd: float,
 ) -> float:
-    """PSI electron transfer rate: open PSI fraction * light absorbed by PSI antenna."""
+    r"""PSI electron transfer rate: open PSI fraction * light absorbed by PSI antenna."""
     return (1 - ps2cs) * pfd * p700_fa
 
 
@@ -943,9 +879,7 @@ def _v_mehler(
     o2ext: float,
     k_mehler: float,
 ) -> float:
-    """Mehler reaction rate: O2 reduction by PSI-reduced acceptor
-    (pseudo-Mehler/flavodiiron).
-    """
+    r"""Mehler reaction rate: O2 reduction by PSI-reduced acceptor (pseudo-Mehler/flavodiiron)."""
     return k_mehler * o2ext * psi_red_acceptor
 
 
@@ -955,16 +889,14 @@ def _kquencher(
     k_h_qslope: float,
     k_h0: float,
 ) -> float:
-    """Effective quenching rate on state s: linear quencher dependence with baseline
-    k_h0.
-    """
+    r"""Effective quenching rate on state s: linear quencher dependence with baseline k_h0."""
     return (k_h0 + k_h_qslope * q) * s
 
 
 def _one_div(
     x: float,
 ) -> float:
-    """Identity passthrough; used as a no-op stoichiometry wrapper."""
+    r"""Identity passthrough; used as a no-op stoichiometry wrapper."""
     return x
 
 
@@ -976,7 +908,7 @@ def _vb6f_2024(
     _k_b6f: float,
     keq: float,
 ) -> float:
-    """2024 b6f rate using PQH2/PQ fractions instead of absolute concentrations."""
+    r"""2024 b6f rate using PQH2/PQ fractions instead of absolute concentrations."""
     f = p_qred / (p_qred + pq)
     return f * pc * _k_b6f - (1 - f) * p_cred * (_k_b6f / keq)
 
@@ -994,7 +926,7 @@ def _v_at_pactivity(
     k_act_at_pase: float,
     k_deact_at_pase: float,
 ) -> float:
-    """Activation of ATPsynthase by light."""
+    r"""Activation of ATPsynthase by light."""
     if light > 0.0:
         return k_act_at_pase * (1 - at_pactivity)
     return -k_deact_at_pase * at_pactivity
@@ -1006,7 +938,7 @@ def _reversible_mass_action_1s_1p(
     kf: float,
     kb: float,
 ) -> float:
-    """Reversible unimolecular mass-action rate: kf*s - kb*p."""
+    r"""Reversible unimolecular mass-action rate: kf*s - kb*p."""
     return kf * s - kb * p
 
 
@@ -1018,7 +950,7 @@ def _v_kea(
     hstroma: float,
     _reg_kea: float,
 ) -> float:
-    """KEA3 antiporter rate: regulated K+/H+ exchange clamped to zero for back-flux."""
+    r"""KEA3 antiporter rate: regulated K+/H+ exchange clamped to zero for back-flux."""
     v_KEA = k_kea * (h * kstroma - hstroma * klumen) * _reg_kea
     return max(
         v_KEA,
@@ -1034,9 +966,7 @@ def _v_voltage_k_channel(
     perm_k: float,
     k_delta_psi_treshold: float,
 ) -> float:
-    """Voltage-gated K+ channel flux: sigmoid voltage activation times electrochemical
-    driving force.
-    """
+    r"""Voltage-gated K+ channel flux: sigmoid voltage activation times electrochemical driving force."""
     voltage_dependence = (1 - 0.1) / (
         1 + np.exp(-(delta_psi_ions - k_delta_psi_treshold) / 0.001)
     )
@@ -1053,9 +983,7 @@ def _v_vccn1(
     k_vccn1: float,
     vccn_delta_psi_treshold: float,
 ) -> float:
-    """VCCN1 anion channel flux: voltage-gated Cl- transport driven by electrochemical
-    force.
-    """
+    r"""VCCN1 anion channel flux: voltage-gated Cl- transport driven by electrochemical force."""
     voltage_gate = (1 - 0.1) / (
         1 + np.exp(-(delta_psi_ions - vccn_delta_psi_treshold) / 0.001)
     )
@@ -1070,9 +998,7 @@ def _v_cl_leak(
     cl_leak_pq: float,
     total_div: float,
 ) -> float:
-    """Passive Cl- leak flux: PQ-activated quadratic concentration-difference driving
-    force.
-    """
+    r"""Passive Cl- leak flux: PQ-activated quadratic concentration-difference driving force."""
     activation = (1 - 0.1) / (1 + np.exp(-(pq - cl_leak_pq) / 0.1))
     return k_cl_leak * ((cl_lumen - cl_stroma) ** 2) / (total_div) * activation
 
@@ -1084,9 +1010,7 @@ def _v_ndh1(
     p_hlumen: float,
     k_ndh1: float,
 ) -> float:
-    """NDH-1 flux: Fd-dependent PQ reduction activated by open PSI fraction and
-    lumenal pH.
-    """
+    r"""NDH-1 flux: Fd-dependent PQ reduction activated by open PSI fraction and lumenal pH."""
     return (
         k_ndh1
         * ((fdred**2) * pq)
@@ -1101,7 +1025,7 @@ def _cl_ce_bi(
     k_cl_ce: float,
     activation: float,
 ) -> float:  # correct
-    """CLCe bidirectional flux: simple concentration-gradient driven Cl- transport."""
+    r"""CLCe bidirectional flux: simple concentration-gradient driven Cl- transport."""
     return k_cl_ce * (cl_stroma - cl_lumen) * activation
 
 
@@ -1109,17 +1033,14 @@ def _div(
     x: float,
     y: float,
 ) -> float:
-    """Return x / y."""
+    r"""Return x / y."""
     return x / y
 
 
 def get_ebeling_2026() -> Model:
-    """Ebeling 2026 extended chloroplast model with ion transport, ROS, and Calvin
-    cycle.
+    r"""Ebeling 2026 extended chloroplast model with ion transport, ROS, and Calvin cycle.
 
-    ```
     Reference: tbd
-    ```
     """
     m: Model = Model()
     m.add_variable("3PGA", initial_value=0.9167729479368978)
@@ -2454,4 +2375,4 @@ def get_ebeling_2026() -> Model:
         fn=_div,
         args=["ATP", "A*P"],
     )
-    return m  # noqa: RET504
+    return m

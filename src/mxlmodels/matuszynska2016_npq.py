@@ -1,4 +1,4 @@
-"""Matuszynska 2016 NPQ model.
+r"""Matuszynska 2016 NPQ model.
 
 Non-photochemical quenching via PsbS and xanthophyll cycle.
 
@@ -21,7 +21,7 @@ from mxlpy.surrogates import qss
 def _ph(
     h: float,
 ) -> float:
-    """Convert lumenal proton concentration to pH (conversion factor 2.5e-4)."""
+    r"""Convert lumenal proton concentration to pH (conversion factor 2.5e-4)."""
     return -np.log10(h * 2.5e-4)
 
 
@@ -40,9 +40,7 @@ def _keq_qapq(
     r: float,
     t: float,
 ) -> float:
-    """Equilibrium constant for QA -> PQ electron transfer, including stroma pH
-    correction.
-    """
+    r"""Equilibrium constant for QA -> PQ electron transfer, including stroma pH correction."""
     RT = r * t
     DG1 = -f * e0_qa
     DG2 = -2 * f * e0_pq + 2 * p_h_st * np.log(10) * RT
@@ -59,7 +57,7 @@ def _keq_cytb6f(
     e0_pc: float,
     p_h_st: float,
 ) -> float:
-    """Equilibriu constant of Cytochrome b6f."""
+    r"""Equilibriu constant of Cytochrome b6f."""
     RT = r * t
     DG1 = -2 * f * e0_pq + 2 * RT * np.log(10) * p_h_lu
     DG2 = -f * e0_pc
@@ -76,11 +74,9 @@ def _keq_atp_synth(
     t: float,
     pi: float,
 ) -> float:
-    """Return equilibrium constant of ATP synthase.
+    r"""Return equilibrium constant of ATP synthase.
 
-    ```
     See Matuszynska et al 2016 or Ebenhöh et al. 2011,2014.
-    ```
     """
     RT = r * t
     DG = dg_atp - np.log(10) * (p_h_st - p_h_lu) * (14 / 3) * RT
@@ -91,26 +87,18 @@ def _moiety_1s(
     x: float,
     x_total: float,
 ) -> float:
-    """Calculate conservation relationship for one substrate.
+    r"""Calculate conservation relationship for one substrate.
+
+    Used for creating derived variables that represent moiety conservation, such as
+    calculating the free form of a species when you know the total.
+
+    x is the concentration of one form of the species, x_total is the total
+    concentration of all forms. Returns the concentration of the other form
+    (x_total - x).
+
+    ## Examples
 
     ```
-    Used for creating derived variables that represent moiety conservation,
-    such as calculating the free form of a species when you know the total.
-
-    Parameters
-    ----------
-    x
-        Concentration of one form of the species
-    x_total
-        Total concentration of all forms
-
-    Returns
-    -------
-    Float
-        Concentration of the other form (x_total - x)
-
-    Examples
-    --------
     >>> moiety_1s(0.3, 1.0)  # If total is 1.0 and one form is 0.3, other is 0.7
     0.7
     >>> # Example: If ATP + ADP = total_adenosine
@@ -131,13 +119,10 @@ def _quencher(
     gamma_2: float,
     gamma_3: float,
 ) -> float:
-    """Quencher mechanism.
+    r"""Quencher mechanism.
 
-    ```
-    accepts:
-    psbS: fraction of non-protonated PsbS protein
-    Vx: fraction of Violaxanthin
-    ```
+    accepts: psbS: fraction of non-protonated PsbS protein Vx: fraction of
+    Violaxanthin
     """
     Zs = zx / (zx + k_z_sat)
 
@@ -161,9 +146,7 @@ def _b2(
     kp: float,
     psii_tot: float,
 ) -> float:
-    """Analytical PSII B2 state (dark-closed, Matuszynska 2016): fraction with PQ
-    reduced.
-    """
+    r"""Analytical PSII B2 state (dark-closed, Matuszynska 2016): fraction with PQ reduced."""
     return (
         psii_tot
         * (
@@ -210,9 +193,7 @@ def _b0(
     kp: float,
     psii_tot: float,
 ) -> float:
-    """Analytical PSII B0 state (dark-closed, Matuszynska 2016): fraction with PQ
-    oxidised.
-    """
+    r"""Analytical PSII B0 state (dark-closed, Matuszynska 2016): fraction with PQ oxidised."""
     return (
         k_pqh2
         * keq_qapq
@@ -256,7 +237,7 @@ def _fluorescence(
     k_f: float,
     k_p: float,
 ) -> float:
-    """Fluorescence function."""
+    r"""Fluorescence function."""
     return k_f / (k_h * q + k_f + k_p) * _b0 + k_f / (k_h * q + k_f) * _b2
 
 
@@ -272,9 +253,7 @@ def _b1(
     kp: float,
     psii_tot: float,
 ) -> float:
-    """Analytical PSII B1 state (light-open, Matuszynska 2016): fraction absorbing
-    light with PQ oxidised.
-    """
+    r"""Analytical PSII B1 state (light-open, Matuszynska 2016): fraction absorbing light with PQ oxidised."""
     return (
         k_pqh2
         * keq_qapq
@@ -309,14 +288,14 @@ def _psii(
     _b1: float,
     k_p: float,
 ) -> float:
-    """Reduction of PQ due to ps2."""
+    r"""Reduction of PQ due to ps2."""
     return k_p * 0.5 * _b1
 
 
 def _two_divided_value(
     x: float,
 ) -> float:
-    """Return 2/x; used for scaling 2-proton stoichiometry by buffering capacity."""
+    r"""Return 2/x; used for scaling 2-proton stoichiometry by buffering capacity."""
     return 2 / x
 
 
@@ -329,7 +308,7 @@ def _ptox(
     pq_tot: float,
     keq_cytb6f: float,
 ) -> float:
-    """Oxidation of the PQ pool through cytochrome and PTOX."""
+    r"""Oxidation of the PQ pool through cytochrome and PTOX."""
     kPFD = k_cytb6f * pfd
     k_ptox = k_ptox * o2_ex
     a1 = kPFD * keq_cytb6f / (keq_cytb6f + 1)
@@ -340,7 +319,7 @@ def _ptox(
 def _four_divided_value(
     x: float,
 ) -> float:
-    """Return 4/x; used for scaling 4-proton stoichiometry by buffering capacity."""
+    r"""Return 4/x; used for scaling 4-proton stoichiometry by buffering capacity."""
     return 4 / x
 
 
@@ -351,16 +330,14 @@ def _atp_synthase(
     keq_at_psynth: float,
     ap_tot: float,
 ) -> float:
-    """Production of ATP by ATPsynthase."""
+    r"""Production of ATP by ATPsynthase."""
     return at_pase_ac * kf_at_psynth * (ap_tot - atp_st - atp_st / keq_at_psynth)
 
 
 def _neg_fourteenthirds_divided_value(
     x: float,
 ) -> float:
-    """Return -(14/3)/x; used for HPR proton stoichiometry of ATP synthase scaled by
-    buffering capacity.
-    """
+    r"""Return -(14/3)/x; used for HPR proton stoichiometry of ATP synthase scaled by buffering capacity."""
     return -(14 / 3) / x
 
 
@@ -370,7 +347,7 @@ def _atp_synthase_activase(
     k_act_at_pase: float,
     k_deact_at_pase: float,
 ) -> float:
-    """Activation of ATPsynthase by light."""
+    r"""Activation of ATPsynthase by light."""
     switch = pfd > 0.0
     if switch:
         return k_act_at_pase * (1 - at_pase_ac)
@@ -382,16 +359,14 @@ def _proton_leak(
     k_leak: float,
     h_st: float,
 ) -> float:
-    """Transmembrane proton leak."""
+    r"""Transmembrane proton leak."""
     return k_leak * (h_lu - h_st)
 
 
 def _neg_divided_value(
     x: float,
 ) -> float:
-    """Return -1/x; used for negative proton leak stoichiometry scaled by buffering
-    capacity.
-    """
+    r"""Return -1/x; used for negative proton leak stoichiometry scaled by buffering capacity."""
     return -1 / x
 
 
@@ -399,7 +374,7 @@ def _atp_consumption(
     atp_st: float,
     k_at_pconsum: float,
 ) -> float:
-    """ATP consuming reaction."""
+    r"""ATP consuming reaction."""
     return k_at_pconsum * atp_st
 
 
@@ -412,7 +387,7 @@ def _xantophyll_cycle(
     k_ez: float,
     x_tot: float,
 ) -> float:
-    """Xanthophyll cycle."""
+    r"""Xanthophyll cycle."""
     a = h_lu**nhx / (h_lu**nhx + k_p_h_sat_inv**nhx)
     return k_dv * a * vx - k_ez * (x_tot - vx)
 
@@ -426,7 +401,7 @@ def _psbs_protonation(
     k_deprot: float,
     psb_s_tot: float,
 ) -> float:
-    """Protonation of PsbS protein."""
+    r"""Protonation of PsbS protein."""
     a = h_lu**nhl / (h_lu**nhl + k_p_h_sat_lhc_inv**nhl)
     return k_prot * a * psb_s - k_deprot * (psb_s_tot - psb_s)
 
@@ -443,7 +418,7 @@ def _ps2states_2016a_analytical(
     kp: float,
     psii_tot: float,
 ) -> tuple[float, float, float, float]:
-    """PSII state populations (Matuszynska 2016 NPQ, analytical closed-form variant)."""
+    r"""PSII state populations (Matuszynska 2016 NPQ, analytical closed-form variant)."""
     x0 = kf**2
     x1 = kf * kp
     x2 = kh * quencher
@@ -492,14 +467,11 @@ def _ps2states_2016a_analytical(
 
 
 def get_matuszynska2016_npq() -> Model:
-    """Matuszynska 2016 NPQ model: non-photochemical quenching via PsbS and
-    xanthophyll cycle.
+    r"""Matuszynska 2016 NPQ model: non-photochemical quenching via PsbS and xanthophyll cycle.
 
-    ```
-    Reference: Matuszyńska, Anna, et al.
-    "A mathematical model of non-photochemical quenching to study short-term light memory in plants."
-    Biochimica et Biophysica Acta (BBA)-Bioenergetics 1857.12 (2016): 1860-1869
-    ```
+    Reference: Matuszyńska, Anna, et al. "A mathematical model of non-photochemical
+    quenching to study short-term light memory in plants." Biochimica et Biophysica
+    Acta (BBA)-Bioenergetics 1857.12 (2016): 1860-1869
     """
     m: Model = Model()
     m.add_variable("pq_red", initial_value=0)
@@ -708,4 +680,4 @@ def get_matuszynska2016_npq() -> Model:
             outputs=["B0", "B1", "B2", "B3"],
         ),
     )
-    return m  # noqa: RET504
+    return m

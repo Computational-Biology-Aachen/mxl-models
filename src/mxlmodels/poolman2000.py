@@ -1,4 +1,4 @@
-"""Poolman 2000 Calvin-Benson-Bassham cycle model.
+r"""Poolman 2000 Calvin-Benson-Bassham cycle model.
 
 |             |                                          |
 | ----------- | ---------------------------------------- |
@@ -19,7 +19,7 @@ def _moiety_1(
     concentration: float,
     total: float,
 ) -> float:
-    """Conservation moiety: total - concentration."""
+    r"""Conservation moiety: total - concentration."""
     return total - concentration
 
 
@@ -42,9 +42,7 @@ def _pi_cbb(
     ru5p: float,
     atp: float,
 ) -> float:
-    """Free orthophosphate from total minus all phosphorylated CBB intermediates
-    (bisphosphates count twice).
-    """
+    r"""Free orthophosphate from total minus all phosphorylated CBB intermediates (bisphosphates count twice)."""
     return phosphate_total - (
         pga
         + 2 * bpga
@@ -69,7 +67,7 @@ def _mass_action_1s(
     s1: float,
     k_fwd: float,
 ) -> float:
-    """Mass-action rate for one substrate."""
+    r"""Mass-action rate for one substrate."""
     return k_fwd * s1
 
 
@@ -85,9 +83,7 @@ def _rate_translocator(
     k_gap: float,
     k_dhap: float,
 ) -> float:
-    """Denominator term N for the phosphate translocator shared by all triose-P export
-    reactions.
-    """
+    r"""Denominator term N for the phosphate translocator shared by all triose-P export reactions."""
     return 1 + (1 + k_pxt / p_ext) * (
         pi / k_pi + pga / k_pga + gap / k_gap + dhap / k_dhap
     )
@@ -111,9 +107,7 @@ def _rate_poolman_5i(
     nadph: float,
     ki_nadph: float,
 ) -> float:
-    """Rubisco carboxylation rate (Poolman 2000): bi-substrate with 5 competitive
-    inhibitors.
-    """
+    r"""Rubisco carboxylation rate (Poolman 2000): bi-substrate with 5 competitive inhibitors."""
     top = vmax * rubp * co2
     btm = (
         rubp
@@ -138,7 +132,7 @@ def _rapid_equilibrium_2s_2p(
     k_re: float,
     q: float,
 ) -> float:
-    """Rapid-equilibrium rate for two substrates, two products."""
+    r"""Rapid-equilibrium rate for two substrates, two products."""
     return k_re * (s1 * s2 - p1 * p2 / q)
 
 
@@ -152,7 +146,7 @@ def _rapid_equilibrium_3s_3p(
     k_re: float,
     q: float,
 ) -> float:
-    """Rapid-equilibrium rate for three substrates, three products."""
+    r"""Rapid-equilibrium rate for three substrates, three products."""
     return k_re * (s1 * s2 * s3 - p1 * p2 * p3 / q)
 
 
@@ -162,7 +156,7 @@ def _rapid_equilibrium_1s_1p(
     k_re: float,
     q: float,
 ) -> float:
-    """Rapid-equilibrium rate for one substrate, one product."""
+    r"""Rapid-equilibrium rate for one substrate, one product."""
     return k_re * (s1 - p1 / q)
 
 
@@ -173,7 +167,7 @@ def _rapid_equilibrium_2s_1p(
     k_re: float,
     q: float,
 ) -> float:
-    """Rapid-equilibrium rate for two substrates, one product."""
+    r"""Rapid-equilibrium rate for two substrates, one product."""
     return k_re * (s1 * s2 - p1 / q)
 
 
@@ -186,7 +180,7 @@ def _michaelis_menten_1s_2i(
     ki1: float,
     ki2: float,
 ) -> float:
-    """Irreversible Michaelis-Menten rate for one substrate with two inhibitors."""
+    r"""Irreversible Michaelis-Menten rate for one substrate with two inhibitors."""
     return vmax * s / (s + km * (1 + i1 / ki1 + i2 / ki2))
 
 
@@ -197,7 +191,7 @@ def _michaelis_menten_1s_1i(
     km: float,
     ki: float,
 ) -> float:
-    """Irreversible Michaelis-Menten rate for one substrate with one inhibitor."""
+    r"""Irreversible Michaelis-Menten rate for one substrate with one inhibitor."""
     return vmax * s / (s + km * (1 + i / ki))
 
 
@@ -217,9 +211,7 @@ def _rate_prk(
     ki134: float,
     ki135: float,
 ) -> float:
-    """Phosphoribulokinase rate: ordered bi-substrate kinetics with PGA, RuBP, Pi and
-    ADP inhibition.
-    """
+    r"""Phosphoribulokinase rate: ordered bi-substrate kinetics with PGA, RuBP, Pi and ADP inhibition."""
     return (
         v13
         * ru5p
@@ -237,7 +229,7 @@ def _rate_out(
     vmax_efflux: float,
     k_efflux: float,
 ) -> float:
-    """Individual substrate export rate normalised by the translocator occupancy N."""
+    r"""Individual substrate export rate normalised by the translocator occupancy N."""
     return vmax_efflux * s1 / (n_total * k_efflux)
 
 
@@ -257,9 +249,7 @@ def _rate_starch(
     kast2: float,
     kast3: float,
 ) -> float:
-    """Starch synthesis rate via G1P+ATP with ADP inhibition and allosteric activation
-    by PGA/F6P/FBP.
-    """
+    r"""Starch synthesis rate via G1P+ATP with ADP inhibition and allosteric activation by PGA/F6P/FBP."""
     return (
         v_st
         * g1p
@@ -281,18 +271,16 @@ def _rate_atp_synthase_2000(
     km161: float,
     km162: float,
 ) -> float:
-    """ATP synthase rate (Poolman 2000): bi-substrate Michaelis-Menten on ADP and Pi."""
+    r"""ATP synthase rate (Poolman 2000): bi-substrate Michaelis-Menten on ADP and Pi."""
     return v16 * adp * pi / ((adp + km161) * (pi + km162))
 
 
 def get_poolman2000() -> Model:
-    """Poolman 2000 Calvin-Benson-Bassham cycle model.
+    r"""Poolman 2000 Calvin-Benson-Bassham cycle model.
 
-    ```
-    Reference: Poolman, Mark G., David A. Fell, and Simon Thomas.
-    "Modelling photosynthesis and its control."
-    Journal of experimental botany 51.suppl_1 (2000): 319-328
-    ```
+    Reference: Poolman, Mark G., David A. Fell, and Simon Thomas. "Modelling
+    photosynthesis and its control." Journal of experimental botany 51.suppl_1
+    (2000): 319-328
     """
     m: Model = Model()
     m.add_variable("3PGA", initial_value=0.6387788347932627)
@@ -701,4 +689,4 @@ def get_poolman2000() -> Model:
         ],
         stoichiometry={"ATP": 1.0},
     )
-    return m  # noqa: RET504
+    return m

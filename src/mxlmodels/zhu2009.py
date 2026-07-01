@@ -1,4 +1,4 @@
-"""Simple Calvin Cycle model from Zhu et al. (2009).
+r"""Simple Calvin Cycle model from Zhu et al. (2009).
 
 |             |                                                                                                                          |
 | ----------- | ------------------------------------------------------------------------------------------------------------------------ |
@@ -46,7 +46,7 @@ def _calculate_A(v1: float) -> float:
 
 
 def get_zhu_2009() -> Model:
-    """Simple Calvin Cycle Model developed by Zhu et al. (2009)."""
+    r"""Simple Calvin Cycle Model developed by Zhu et al. (2009)."""
     m = Model()
     m.add_parameters(
         {

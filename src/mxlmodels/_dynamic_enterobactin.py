@@ -1,4 +1,4 @@
-"""Dynamic enterobactin cross-feeding model: *E. coli* vs *C. glutamicum*.
+r"""Dynamic enterobactin cross-feeding model: *E. coli* vs *C. glutamicum*.
 
 |             |       |
 | ----------- | ----- |
@@ -76,23 +76,23 @@ state; *E. coli* dominance fills it, *C. glutamicum* dominance depletes it.
 1. **Iron is implicit.** Enterobactin concentration p1 serves as a proxy for
    bioavailable iron. No free Fe³⁺ is tracked; p1 lumps chelation and
    transport.
-2. **Growth requires enterobactin.** Both organisms depend on p1 for growth via
+1. **Growth requires enterobactin.** Both organisms depend on p1 for growth via
    the Monod term. *E. coli* is modelled as highly sensitive (K_s_X1-P =
    0.00001 g/L) — it has evolved tight sensing for its own siderophore. *C.
    glutamicum* is less sensitive (K_s_X2-P = 0.001 g/L), reflecting a looser
    dependence.
-3. **Production and uptake are growth-coupled.** Specific rates scale linearly
+1. **Production and uptake are growth-coupled.** Specific rates scale linearly
    with mu/mu_max. No constitutive (growth-independent) production or uptake is
    included.
-4. **Only *E. coli* produces enterobactin.** *C. glutamicum* is a pure consumer
+1. **Only *E. coli* produces enterobactin.** *C. glutamicum* is a pure consumer
    (q_p_X2 = 0). This encodes the public-goods asymmetry.
-5. **Batch culture — no dilution.** There is no washout term D·x or D·s, so
+1. **Batch culture — no dilution.** There is no washout term D·x or D·s, so
    this describes a closed batch experiment, not a chemostat.
-6. **Constant, growth-independent yields.** Y_X1_S and Y_X2_S are fixed
+1. **Constant, growth-independent yields.** Y_X1_S and Y_X2_S are fixed
    parameters; no maintenance or overflow metabolism.
-7. **No enterobactin degradation.** p1 can only increase (production) or
+1. **No enterobactin degradation.** p1 can only increase (production) or
    decrease (uptake); no abiotic hydrolysis or photodegradation is modelled.
-8. **Well-mixed, spatially homogeneous.** All concentrations are bulk liquid
+1. **Well-mixed, spatially homogeneous.** All concentrations are bulk liquid
    values; no diffusion, gradients, or biofilm structure.
 
 ## Parameter notes
@@ -134,11 +134,9 @@ def minus_div(x: float, y: float) -> float:
 
 
 def get_dynamic_enterobactin() -> Model:
-    """Return the dynamic enterobactin cross-feeding model.
+    r"""Return the dynamic enterobactin cross-feeding model.
 
-    ```
     See module docstring for full biological context, ODEs, and assumptions.
-    ```
     """
     m = Model()
     m.add_variables({"x1": 0.55, "x2": 0.55, "s1": 10, "p1": 0.02})

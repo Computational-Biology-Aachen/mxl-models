@@ -1,14 +1,14 @@
 r"""Davis 2017 model of pmf-induced photosystem II photodamage.
 
-|             |                                                                                         |
-| ----------- | --------------------------------------------------------------------------------------- |
-| doi         | 10.1098/rstb.2016.0381                                                                     |
-| main author | Geoffry A. Davis                                                                        |
+|             |                                                                                                                                                                  |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| doi         | 10.1098/rstb.2016.0381                                                                                                                                           |
+| main author | Geoffry A. Davis                                                                                                                                                 |
 | paper title | Hacking the thylakoid proton motive force for improved photosynthesis: modulating ion flux rates that control proton motive force partitioning into Dpsi and DpH |
-| published   | 31 May 2017                                                                           |
-| journal     |  Philosophical Transactions of the Royal Society B |
-| organism    | higher plants (thylakoid)                                                               |
-| Ported by   | Quang Huy Nguyen ( @PhotosyntheticBatman )                                              |
+| published   | 31 May 2017                                                                                                                                                      |
+| journal     | Philosophical Transactions of the Royal Society B                                                                                                                |
+| organism    | higher plants (thylakoid)                                                                                                                                        |
+| Ported by   | Quang Huy Nguyen ( @PhotosyntheticBatman )                                                                                                                       |
 
 A mechanistic model of the photosynthetic electron transport chain and
 thylakoid proton motive force (pmf) that resolves the pmf into its two
@@ -204,36 +204,28 @@ def vCBB(NADPH, kCBB):  # checked
 
 
 def get_davis2017() -> Model:
-    """Build the Davis 2017 pmf / PSII photodamage model.
+    r"""Build the Davis 2017 pmf / PSII photodamage model.
 
-    `````
-    ````
-    ```
-    Assembles the photosynthetic electron transport chain, thylakoid proton
-    motive force, and photoprotection machinery into a single mxlpy Model.
+    Assembles the photosynthetic electron transport chain, thylakoid proton motive
+    force, and photoprotection machinery into a single mxlpy Model.
 
-    Variables (14): QA_red (reduced Q_A), PQH_2 (plastoquinol), pH_lumen,
-    Dpsi (membrane potential, V), K_lu (lumen K+), PC_ox (oxidised
-    plastocyanin), Zx (zeaxanthin), singO2 (cumulative singlet oxygen),
-    P700_ox, Fd_red (reduced ferredoxin), NADPH_st, LEF (cumulative linear
-    electron flow), ATP_made (cumulative ATP).
+    Variables (14): QA_red (reduced Q_A), PQH_2 (plastoquinol), pH_lumen, Dpsi
+    (membrane potential, V), K_lu (lumen K+), PC_ox (oxidised plastocyanin), Zx
+    (zeaxanthin), singO2 (cumulative singlet oxygen), P700_ox, Fd_red (reduced
+    ferredoxin), NADPH_st, LEF (cumulative linear electron flow), ATP_made
+    (cumulative ATP).
 
     Key reactions: vPSII_ChSep / vPSII_recomb (PSII charge separation and the
-    Dpsi-driven recombination producing singO2), v_PSII / v_PQ (Q_A <-> PQ
-    pool), v_b6f (cytochrome b6f), PSI_ChSep / v_PSI_PCoxid (PSI), v_FNR
-    (ferredoxin -> NADPH), vATPsynthase, v_CBB (Calvin-Benson-Bassham sink),
-    v_KEA3 / v_VKC (K+/H+ counter-ion fluxes partitioning the pmf), and
-    v_Epox / v_Deepox (xanthophyll cycle).
+    Dpsi-driven recombination producing singO2), v_PSII / v_PQ (Q_A \<-> PQ pool),
+    v_b6f (cytochrome b6f), PSI_ChSep / v_PSI_PCoxid (PSI), v_FNR (ferredoxin ->
+    NADPH), vATPsynthase, v_CBB (Calvin-Benson-Bassham sink), v_KEA3 / v_VKC (K+/H+
+    counter-ion fluxes partitioning the pmf), and v_Epox / v_Deepox (xanthophyll
+    cycle).
 
-    pmf is split into Dpsi and delta_pH via the volt_per_charge and b_H
-    buffering parameters; light input is the PPFD parameter (default 0).
+    pmf is split into Dpsi and delta_pH via the volt_per_charge and b_H buffering
+    parameters; light input is the PPFD parameter (default 0).
 
-    Returns
-    -------
-        Model: the configured mxlpy model.
-    ```
-    ````
-    `````
+    Returns the fully configured mxlpy Model instance.
     """
     m = Model()
 

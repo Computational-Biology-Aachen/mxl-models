@@ -1,4 +1,4 @@
-"""Sel'kov glycolysis oscillator (Sel'kov 1968).
+r"""Sel'kov glycolysis oscillator (Sel'kov 1968).
 
 Autocatalytic ADP activation of PFK drives sustained oscillations.
 
@@ -20,28 +20,26 @@ def _pfk(
     x: float,
     y: float,
 ) -> float:
-    """PFK rate: product-activated (ADP²) consumption of F6P."""
+    r"""PFK rate: product-activated (ADP²) consumption of F6P."""
     return (a + x**2) * y
 
 
 def _atp_consumption(
     x: float,
 ) -> float:
-    """First-order ADP removal."""
+    r"""First-order ADP removal."""
     return x
 
 
 def _f6p_influx(
     b: float,
 ) -> float:
-    """Constant F6P influx."""
+    r"""Constant F6P influx."""
     return b
 
 
 def get_selkov1968_glycolysis_oscillator() -> Model:
-    """Build the Sel'kov oscillator: two-variable dimensionless model of glycolytic
-    oscillations via autocatalytic PFK activation.
-    """
+    r"""Build the Sel'kov oscillator: two-variable dimensionless model of glycolytic oscillations via autocatalytic PFK activation."""
     return (
         Model()
         .add_variable("X", initial_value=0.5)

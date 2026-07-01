@@ -1,17 +1,18 @@
 r"""Complete mxlpy port of the Zaks et al. photosynthesis model.
 
-|             |                                            |
-| ----------- | ------------------------------------------ |
-| doi         | 10.1073/pnas.1211017109                    |
-| main author | Julia Zaks                                 |
-| paper title | A kinetic model of rapidly reversible nonphotochemical quenching  |
-| published   | September 25, 2012                         |
-| journal     | PNAS   |
-| organism    | Higher plants                              |
-| Ported by   | Quang Huy Nguyen ( @PhotosyntheticBatman ) |
+|             |                                                                  |
+| ----------- | ---------------------------------------------------------------- |
+| doi         | 10.1073/pnas.1211017109                                          |
+| main author | Julia Zaks                                                       |
+| paper title | A kinetic model of rapidly reversible nonphotochemical quenching |
+| published   | September 25, 2012                                               |
+| journal     | PNAS                                                             |
+| organism    | Higher plants                                                    |
+| Ported by   | Quang Huy Nguyen ( @PhotosyntheticBatman )                       |
 
-The model provides one of the first mechanistic description of energy dependent quenching process qE
-within NPQ. qE activity is simulated under 2 different light conditions: low light and high light.
+The model provides one of the first mechanistic description of energy dependent
+quenching process qE within NPQ. qE activity is simulated under 2 different
+light conditions: low light and high light.
 
 Sections: F1 - PSII (antenna + reaction centre) F2 - qE / xanthophyll cycle F3
 \- PQ pool (QB site + plastoquinone) F4 - Cytochrome b6f F5 - PSI F7 - ATP
@@ -116,7 +117,7 @@ def V_from_AZ(Xtot, A, Z):
 
 
 def complement(c1):
-    """1 - c1 (used for moiety complements)."""
+    r"""1 - c1 (used for moiety complements)."""
     return 1.0 - c1
 
 

@@ -1,4 +1,4 @@
-"""Yokota 1985 photorespiratory carbon oxidation cycle model.
+r"""Yokota 1985 photorespiratory carbon oxidation cycle model.
 
 |             |                                                                             |
 | ----------- | --------------------------------------------------------------------------- |
@@ -18,14 +18,14 @@ def _mass_action_1s(
     s1: float,
     k_fwd: float,
 ) -> float:
-    """Mass-action rate for one substrate."""
+    r"""Mass-action rate for one substrate."""
     return k_fwd * s1
 
 
 def _value(
     x: float,
 ) -> float:
-    """Return x unchanged."""
+    r"""Return x unchanged."""
     return x
 
 
@@ -34,7 +34,7 @@ def _michaelis_menten_1s(
     vmax: float,
     km: float,
 ) -> float:
-    """Irreversible Michaelis-Menten rate for one substrate."""
+    r"""Irreversible Michaelis-Menten rate for one substrate."""
     return vmax * s / (km + s)
 
 
@@ -45,18 +45,16 @@ def _ping_pong_bi_bi(
     km_s1: float,
     km_s2: float,
 ) -> float:
-    """Ping-pong Bi-Bi kinetics for two-substrate, two-product reactions."""
+    r"""Ping-pong Bi-Bi kinetics for two-substrate, two-product reactions."""
     return vmax * s1 * s2 / (1 / (km_s1 * km_s2) + s1 / km_s1 + s2 / km_s2 + s1 * s2)
 
 
 def get_yokota1985() -> Model:
-    """Yokota 1985 photorespiratory carbon oxidation cycle model.
+    r"""Yokota 1985 photorespiratory carbon oxidation cycle model.
 
-    ```
-    Reference: Yokota, Akiho, Hiroshi Komura, and Shozaburo Kitaoka.
-    "Refixation of photorespired CO2 during photosynthesis in Euglena gracilis Z."
-    Agricultural and biological chemistry 49.11 (1985): 3309-3310.
-    ```
+    Reference: Yokota, Akiho, Hiroshi Komura, and Shozaburo Kitaoka. "Refixation of
+    photorespired CO2 during photosynthesis in Euglena gracilis Z." Agricultural
+    and biological chemistry 49.11 (1985): 3309-3310.
     """
     m: Model = Model()
     m.add_variable("glycolate", initial_value=0.09)
@@ -175,4 +173,4 @@ def get_yokota1985() -> Model:
         args=["H2O2", "vmax_catalase", "km_catalase_s"],
         stoichiometry={"H2O2": -1},
     )
-    return m  # noqa: RET504
+    return m

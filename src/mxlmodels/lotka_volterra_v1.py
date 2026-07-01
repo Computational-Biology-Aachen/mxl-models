@@ -1,4 +1,4 @@
-"""Lotka-Volterra predator-prey model (v1).
+r"""Lotka-Volterra predator-prey model (v1).
 
 Explicit prey growth and predation reactions.
 
@@ -20,7 +20,7 @@ def _v0(
     alpha: float,
     prey: float,
 ) -> float:
-    """Prey intrinsic growth: Alpha * Prey."""
+    r"""Prey intrinsic growth: Alpha * Prey."""
     return alpha * prey
 
 
@@ -29,7 +29,7 @@ def _v1(
     beta: float,
     prey: float,
 ) -> float:
-    """Predation rate (prey loss): Beta * Predator * Prey."""
+    r"""Predation rate (prey loss): Beta * Predator * Prey."""
     return beta * predator * prey
 
 
@@ -38,7 +38,7 @@ def _v2(
     predator: float,
     prey: float,
 ) -> float:
-    """Predator growth from predation: Delta * Predator * Prey."""
+    r"""Predator growth from predation: Delta * Predator * Prey."""
     return delta * predator * prey
 
 
@@ -46,12 +46,12 @@ def _v3(
     predator: float,
     gamma: float,
 ) -> float:
-    """Predator natural death: Gamma * Predator."""
+    r"""Predator natural death: Gamma * Predator."""
     return gamma * predator
 
 
 def get_lotka_volterra_v1() -> Model:
-    """Build the Lotka-Volterra predator-prey model (v1)."""
+    r"""Build the Lotka-Volterra predator-prey model (v1)."""
     return (
         Model()
         .add_variable(

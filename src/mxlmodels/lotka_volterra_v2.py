@@ -1,4 +1,4 @@
-"""Lotka-Volterra predator-prey model (v2).
+r"""Lotka-Volterra predator-prey model (v2).
 
 Predation uses derived stoichiometry.
 
@@ -21,7 +21,7 @@ def _prey_growth(
     alpha: float,
     prey: float,
 ) -> float:
-    """Prey intrinsic growth: Alpha * Prey."""
+    r"""Prey intrinsic growth: Alpha * Prey."""
     return alpha * prey
 
 
@@ -29,7 +29,7 @@ def _predation(
     predator: float,
     prey: float,
 ) -> float:
-    """Predation encounter rate: Predator * Prey."""
+    r"""Predation encounter rate: Predator * Prey."""
     return predator * prey
 
 
@@ -37,12 +37,12 @@ def _predator_death(
     predator: float,
     gamma: float,
 ) -> float:
-    """Predator natural death: Gamma * Predator."""
+    r"""Predator natural death: Gamma * Predator."""
     return gamma * predator
 
 
 def get_lotka_volterra_v2() -> Model:
-    """Build the Lotka-Volterra predator-prey model (v2) with derived stoichiometry."""
+    r"""Build the Lotka-Volterra predator-prey model (v2) with derived stoichiometry."""
     return (
         Model()
         .add_variable(
