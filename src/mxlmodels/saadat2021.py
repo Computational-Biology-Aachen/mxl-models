@@ -785,71 +785,87 @@ def _ps2states_2016_phd_surrogate(
     pfd: float,
     k_h0: float,
 ) -> tuple[float, float, float, float]:
-    """PSII state populations (PHD quenching model, 2016) via analytical closed-form
-    surrogate.
-    """
-    x0 = k_f**2
-    x1 = k_h0**2
-    x2 = k2 * k_f
-    x3 = k2 * k_h0
-    x4 = 2 * k_f
-    x5 = k_h0 * x4
-    x6 = _kh * quencher
-    x7 = k2 * x6
-    x8 = x4 * x6
-    x9 = 2 * x6
-    x10 = k_h0 * x9
-    x11 = _kh**2 * quencher**2
-    x12 = k2 * keq_pq_red
-    x13 = k_pq_red * keq_pq_red * pq_ox
-    x14 = k_pq_red * pq_red
-    x15 = k2 * x14
-    x16 = pfd * ps2cs
-    x17 = k_f * x14
-    x18 = k_h0 * x14
-    x19 = x14 * x6
-    x20 = x13 * x16
-    x21 = keq_pq_red * x16
-    x22 = (
-        x0 * x14
-        + x1 * x14
-        + x11 * x14
-        + x14 * x2
-        + x14 * x3
-        + x14 * x5
-        + x14 * x7
-        + x14 * x8
-        + x18 * x9
-        + x2 * x21
-        + x21 * x3
-        + x21 * x7
+    """PSII state populations (PHD quenching model, 2016) via analytical closed-form surrogate."""
+    # x0 = k_f**2
+    # x1 = k_h0**2
+    # x2 = k2 * k_f
+    # x3 = k2 * k_h0
+    # x4 = 2 * k_f
+    # x5 = k_h0 * x4
+    # x6 = _kh * quencher
+    # x7 = k2 * x6
+    # x8 = x4 * x6
+    # x9 = 2 * x6
+    # x10 = k_h0 * x9
+    # x11 = _kh**2 * quencher**2
+    # x12 = k2 * keq_pq_red
+    # x13 = k_pq_red * keq_pq_red * pq_ox
+    # x14 = k_pq_red * pq_red
+    # x15 = k2 * x14
+    # x16 = pfd * ps2cs
+    # x17 = k_f * x14
+    # x18 = k_h0 * x14
+    # x19 = x14 * x6
+    # x20 = x13 * x16
+    # x21 = keq_pq_red * x16
+    # x22 = (
+    #     x0 * x14
+    #     + x1 * x14
+    #     + x11 * x14
+    #     + x14 * x2
+    #     + x14 * x3
+    #     + x14 * x5
+    #     + x14 * x7
+    #     + x14 * x8
+    #     + x18 * x9
+    #     + x2 * x21
+    #     + x21 * x3
+    #     + x21 * x7
+    # )
+    # x23 = psii_tot / (
+    #     k_f * x20
+    #     + k_h0 * x20
+    #     + pfd**2 * ps2cs**2 * x12
+    #     + x0 * x13
+    #     + x1 * x13
+    #     + x10 * x13
+    #     + x11 * x13
+    #     + x13 * x2
+    #     + x13 * x3
+    #     + x13 * x5
+    #     + x13 * x7
+    #     + x13 * x8
+    #     + x15 * x16
+    #     + x16 * x17
+    #     + x16 * x18
+    #     + x16 * x19
+    #     + x20 * x6
+    #     + x22
+    # )
+    # x24 = x16 * x23
+    # _B0 = x13 * x23 * (x0 + x1 + x10 + x11 + x2 + x3 + x5 + x7 + x8)
+    # _B1 = x13 * x24 * (k_f + k_h0 + x6)
+    # _B2 = x22 * x23
+    # _B3 = x24 * (x12 * x16 + x15 + x17 + x18 + x19)
+    # return _B0, _B1, _B2, _B3
+    
+    absorbed = ps2cs * pfd
+    kH = k_h0 + _kh * quencher
+    k3p = k_pq_red * pq_ox
+    k3m = k_pq_red * pq_red / keq_pq_red
+
+    state_matrix = np.array(
+        [
+            [-absorbed - k3m, kH + k_f, k3p, 0],
+            [absorbed, -(kH + k_f + k2), 0, 0],
+            [0, 0, absorbed, -(kH + k_f)],
+            [1, 1, 1, 1],
+        ],
+        dtype=float,
     )
-    x23 = psii_tot / (
-        k_f * x20
-        + k_h0 * x20
-        + pfd**2 * ps2cs**2 * x12
-        + x0 * x13
-        + x1 * x13
-        + x10 * x13
-        + x11 * x13
-        + x13 * x2
-        + x13 * x3
-        + x13 * x5
-        + x13 * x7
-        + x13 * x8
-        + x15 * x16
-        + x16 * x17
-        + x16 * x18
-        + x16 * x19
-        + x20 * x6
-        + x22
-    )
-    x24 = x16 * x23
-    _B0 = x13 * x23 * (x0 + x1 + x10 + x11 + x2 + x3 + x5 + x7 + x8)
-    _B1 = x13 * x24 * (k_f + k_h0 + x6)
-    _B2 = x22 * x23
-    _B3 = x24 * (x12 * x16 + x15 + x17 + x18 + x19)
-    return _B0, _B1, _B2, _B3
+    a = np.array([0, 0, 0, psii_tot])
+
+    return np.linalg.solve(state_matrix, a)
 
 
 def _ps1states_2021_surrogate(

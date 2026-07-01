@@ -39,7 +39,7 @@ classifiers = [
   "Topic :: Scientific/Engineering",
   "Topic :: Software Development",
 ]
-dependencies = ["mxlpy>=0.38.0"]
+dependencies = ["mxlpy>=0.38.0", "ipykernel>=7.3.0,<8"]
 description = "MxlModels is a Python package of reference mechanistic models."
 keywords = ["metabolic", "modelling", "ode"]
 license = "MIT"
@@ -152,3 +152,19 @@ package       = true
 
 [tool.uv.sources]
 mxlmodels = { workspace = true }
+
+[tool.pixi.project]
+channels = ["conda-forge"]
+platforms = ["linux-64"]
+
+[tool.pixi.pypi-dependencies]
+mxlmodels = { path = ".", editable = true }
+
+[tool.pixi.environments]
+default = { solve-group = "default" }
+dev = { features = ["dev"], solve-group = "default" }
+
+[tool.pixi.tasks]
+
+[tool.pixi.dependencies]
+assimulo = ">=3.8.0,<4"
