@@ -34,58 +34,76 @@ different units for their simulations without a parameter change or put the
 wrong labels on their figures.
 """
 
+from typing import Literal
+
 import numpy as np
 from mxlpy import Model
 
 
-def energy_input(E_PSII, alpha, c_in, PAR, Ec_PSII):
-    return alpha * c_in * PAR * (1 - E_PSII / Ec_PSII)
+def _energy_input(
+    e_psii: float, alpha: float, c_in: float, par: float, ec_psii: float
+) -> float:
+    return alpha * c_in * par * (1 - e_psii / ec_psii)
 
 
-def ETR_out(E_PSII, NADP, v_ETR):
-    return v_ETR * E_PSII * NADP
+def _etr_out(e_psii: float, nadp: float, v_etr: float) -> float:
+    return v_etr * e_psii * nadp
 
 
-def energy_dissipation(E_PSII, P_NPQ, Q, v_d, Qc):
-    return v_d * E_PSII * P_NPQ * (1 - Q / Qc)
+def _energy_dissipation(
+    e_psii: float, p_npq: float, q: float, v_d: float, qc: float
+) -> float:
+    return v_d * e_psii * p_npq * (1 - q / qc)
 
 
-def NPQ_func(Q, v_NPQ):
-    return v_NPQ * Q
+def _npq_func(q: float, v_npq: float) -> float:
+    return v_npq * q
 
 
-def activation_P_NPQ(P_NPQ, E_PSII, NADP, alpha, c_in, PAR, Ec_PSII, v_ETR, c_y, v_p):
-    CEF = alpha * c_in * PAR * (1 - E_PSII / Ec_PSII) - v_ETR * E_PSII * NADP
+def _activation_p_npq(
+    p_npq: float,
+    e_psii: float,
+    nadp: float,
+    alpha: float,
+    c_in: float,
+    par: float,
+    ec_psii: float,
+    v_etr: float,
+    c_y: float,
+    v_p: float,
+) -> float:
+    CEF = alpha * c_in * par * (1 - e_psii / ec_psii) - v_etr * e_psii * nadp
     if c_y < CEF:
-        return v_p * (1 - P_NPQ)
+        return v_p * (1 - p_npq)
     return 0.0
 
 
-def ETR_in(NADP, E_PSII, v_ETR, eta_NADP):
-    return v_ETR * E_PSII * NADP * eta_NADP
+def _etr_in(nadp: float, e_psii: float, v_etr: float, eta_nadp: float) -> float:
+    return v_etr * e_psii * nadp * eta_nadp
 
 
-def A_in(NADPH, R, v_C, eta_NADPH):
-    return v_C * R * NADPH * eta_NADPH
+def _a_in(nadph: float, r: float, v_c: float, eta_nadph: float) -> float:
+    return v_c * r * nadph * eta_nadph
 
 
-def Rubisco_activation(R, pH, v_R, d):
-    return v_R * (1 - R) * np.minimum(d, pH)
+def _rubisco_activation(r: float, p_h: float, v_r: float, d: float) -> float:
+    return v_r * (1 - r) * np.minimum(d, p_h)
 
 
-def pH_func(NADPH, NADP):
-    return NADPH / NADP
+def _p_h_func(nadph: float, nadp: float) -> float:
+    return nadph / nadp
 
 
-def ETR_func(E_PSII, NADP, v_ETR):
-    return v_ETR * E_PSII * NADP
+def _etr_func(e_psii: float, nadp: float, v_etr: float) -> float:
+    return v_etr * e_psii * nadp
 
 
-def A_func(NADPH, R, v_C):
-    return v_C * R * NADPH
+def _a_func(nadph: float, r: float, v_c: float) -> float:
+    return v_c * r * nadph
 
 
-def get_salvatori2022(load="Eiko") -> Model:
+def get_salvatori2022(load: Literal["Minn", "Eiko"] = "Eiko") -> Model:
+    r"""Get Salvatori model"""
     m = Model()
 
     if load == "Minn":
@@ -134,38 +152,38 @@ def get_salvatori2022(load="Eiko") -> Model:
         {"E_PSII": 0, "Q": 0, "P_NPQ": 0, "NADP": 5, "NADPH": 5, "R": 0.001}
     )
 
-    m.add_derived("pH", pH_func, args=["NADPH", "NADP"])
-    m.add_derived("ETR", ETR_func, args=["E_PSII", "NADP", "v_ETR"])
-    m.add_derived("A", A_func, args=["NADPH", "R", "v_C"])
+    m.add_derived("pH", _p_h_func, args=["NADPH", "NADP"])
+    m.add_derived("ETR", _etr_func, args=["E_PSII", "NADP", "v_ETR"])
+    m.add_derived("A", _a_func, args=["NADPH", "R", "v_C"])
 
     m.add_reaction(
         "Energy_input",
-        energy_input,
+        _energy_input,
         stoichiometry={"E_PSII": 1},
         args=["E_PSII", "alpha", "c_in", "PAR", "Ec_PSII"],
     )
     m.add_reaction(
         "ETR_out",
-        ETR_out,
+        _etr_out,
         stoichiometry={"E_PSII": -1},
         args=["E_PSII", "NADP", "v_ETR"],
     )
     m.add_reaction(
         "ETR_in",
-        ETR_in,
+        _etr_in,
         stoichiometry={"NADP": -1, "NADPH": 1},
         args=["NADP", "E_PSII", "v_ETR", "eta_NADP"],
     )
     m.add_reaction(
         "energy_dissipation",
-        energy_dissipation,
+        _energy_dissipation,
         stoichiometry={"E_PSII": -1, "Q": 1},
         args=["E_PSII", "P_NPQ", "Q", "v_d", "Qc"],
     )
-    m.add_reaction("NPQ", NPQ_func, stoichiometry={"Q": -1}, args=["Q", "v_NPQ"])
+    m.add_reaction("NPQ", _npq_func, stoichiometry={"Q": -1}, args=["Q", "v_NPQ"])
     m.add_reaction(
         "NPQ_activation",
-        activation_P_NPQ,
+        _activation_p_npq,
         stoichiometry={"P_NPQ": 1},
         args=[
             "P_NPQ",
@@ -182,13 +200,13 @@ def get_salvatori2022(load="Eiko") -> Model:
     )
     m.add_reaction(
         "Carbon_assimilation",
-        A_in,
+        _a_in,
         stoichiometry={"NADPH": -1, "NADP": 1},
         args=["NADPH", "R", "v_C", "eta_NADPH"],
     )
     m.add_reaction(
         "RuBisCO_activation",
-        Rubisco_activation,
+        _rubisco_activation,
         stoichiometry={"R": 1},
         args=["R", "pH", "v_R", "d"],
     )
