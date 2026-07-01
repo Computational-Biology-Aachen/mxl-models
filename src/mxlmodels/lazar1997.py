@@ -14,7 +14,7 @@ r"""Lazar 1997 Fluorescence induction model.
 from mxlpy import Model
 
 
-def v1(
+def _v1(
     k1: float,
     k17: float,
     k10: float,
@@ -27,7 +27,7 @@ def v1(
     return -(k1 + k17) * y1 + k10 * y3 + k16 * y9 * y11
 
 
-def v2(
+def _v2(
     k1: float,
     k23: float,
     k6: float,
@@ -44,17 +44,23 @@ def v2(
     return k1 * y1 - (k6 + k23) * y2 + k7 * y3 + k11 * y4 + k22 * y9 * y12
 
 
-def v3(k6: float, k2: float, k7: float, k10: float, y2: float, y3: float) -> float:
+def _v3(k6: float, k2: float, k7: float, k10: float, y2: float, y3: float) -> float:
     return k6 * y2 - (k2 + k7 + k10) * y3
 
 
-def v4(
-    k2: float, k8: float, k11: float, k9: float, y3: float, y4: float, y5: float
+def _v4(
+    k2: float,
+    k8: float,
+    k11: float,
+    k9: float,
+    y3: float,
+    y4: float,
+    y5: float,
 ) -> float:
     return k2 * y3 - (k8 + k11) * y4 + k9 * y5
 
 
-def v5(
+def _v5(
     k8: float,
     k3: float,
     k9: float,
@@ -67,11 +73,11 @@ def v5(
     return k8 * y4 - (k3 + k9 + k12) * y5 + k13 * y7
 
 
-def v6(k3: float, k18: float, k19: float, y5: float, y6: float, y8: float) -> float:
+def _v6(k3: float, k18: float, k19: float, y5: float, y6: float, y8: float) -> float:
     return k3 * y5 - k18 * y6 + k19 * y8
 
 
-def v7(
+def _v7(
     k12: float,
     k4: float,
     k13: float,
@@ -85,7 +91,7 @@ def v7(
     return k12 * y5 - (k4 + k13 + k14) * y7 + k15 * y10 * y11
 
 
-def v8(
+def _v8(
     k18: float,
     k4: float,
     k19: float,
@@ -100,7 +106,7 @@ def v8(
     return k18 * y6 + k4 * y7 - (k19 + k20) * y8 + k21 * y10 * y12
 
 
-def v9(
+def _v9(
     k17: float,
     k23: float,
     k24: float,
@@ -117,7 +123,7 @@ def v9(
     return k17 * y1 + k23 * y2 + k24 * y10 - (k25 + k16 * y11 + k22 * y12) * y9
 
 
-def v10(
+def _v10(
     k14: float,
     k20: float,
     k25: float,
@@ -134,7 +140,7 @@ def v10(
     return k14 * y7 + k20 * y8 + k25 * y9 - (k24 + k15 * y11 + k21 * y12) * y10
 
 
-def v11(
+def _v11(
     k17: float,
     k14: float,
     k16: float,
@@ -148,7 +154,7 @@ def v11(
     return k17 * y1 + k14 * y7 - (k16 * y9 + k15 * y10) * y11
 
 
-def v12(
+def _v12(
     k23: float,
     k20: float,
     k22: float,
@@ -162,29 +168,31 @@ def v12(
     return k23 * y2 + k20 * y8 - (k22 * y9 + k21 * y10) * y12
 
 
-def v13(k6: float, y13: float) -> float:
+def _v13(k6: float, y13: float) -> float:
     return -k6 * y13
 
 
-def v14(k5: float, y13: float) -> float:
+def _v14(k5: float, y13: float) -> float:
     return k5 * y13
 
 
-def v15() -> float:
+def _v15() -> float:
     return 0
 
 
-def eprime(y2: float, y4: float, y6: float, y8: float, y12: float, y14: float) -> float:
+def _eprime(
+    y2: float, y4: float, y6: float, y8: float, y12: float, y14: float
+) -> float:
     return y2 + y4 + y6 + y8 + y12 + y14
 
 
-def F(eprime: float, p: float, y15: float) -> float:
-    nom = (1 - p) * eprime
-    denom = 1 - p * eprime
+def _f(_eprime: float, p: float, y15: float) -> float:
+    nom = (1 - p) * _eprime
+    denom = 1 - p * _eprime
     return nom / denom + y15
 
 
-def get_lazar1997():
+def _get_lazar1997() -> float:
     return (
         Model()
         .add_parameters(
@@ -239,13 +247,13 @@ def get_lazar1997():
         )
         .add_reaction(
             "v1",
-            fn=v1,
+            fn=_v1,
             args=["k1", "k17", "k10", "k16", "y1", "y3", "y9", "y11"],
             stoichiometry={"y1": 1},
         )
         .add_reaction(
             "v2",
-            fn=v2,
+            fn=_v2,
             args=[
                 "k1",
                 "k23",
@@ -264,43 +272,43 @@ def get_lazar1997():
         )
         .add_reaction(
             "v3",
-            fn=v3,
+            fn=_v3,
             args=["k6", "k2", "k7", "k10", "y2", "y3"],
             stoichiometry={"y3": 1},
         )
         .add_reaction(
             "v4",
-            fn=v4,
+            fn=_v4,
             args=["k2", "k8", "k11", "k9", "y3", "y4", "y5"],
             stoichiometry={"y4": 1},
         )
         .add_reaction(
             "v5",
-            fn=v5,
+            fn=_v5,
             args=["k8", "k3", "k9", "k12", "k13", "y4", "y5", "y7"],
             stoichiometry={"y5": 1},
         )
         .add_reaction(
             "v6",
-            fn=v6,
+            fn=_v6,
             args=["k3", "k18", "k19", "y5", "y6", "y8"],
             stoichiometry={"y6": 1},
         )
         .add_reaction(
             "v7",
-            fn=v7,
+            fn=_v7,
             args=["k12", "k4", "k13", "k14", "k15", "y5", "y7", "y10", "y11"],
             stoichiometry={"y7": 1},
         )
         .add_reaction(
             "v8",
-            fn=v8,
+            fn=_v8,
             args=["k18", "k4", "k19", "k20", "k21", "y6", "y7", "y8", "y10", "y12"],
             stoichiometry={"y8": 1},
         )
         .add_reaction(
             "v9",
-            fn=v9,
+            fn=_v9,
             args=[
                 "k17",
                 "k23",
@@ -319,7 +327,7 @@ def get_lazar1997():
         )
         .add_reaction(
             "v10",
-            fn=v10,
+            fn=_v10,
             args=[
                 "k14",
                 "k20",
@@ -338,23 +346,28 @@ def get_lazar1997():
         )
         .add_reaction(
             "v11",
-            fn=v11,
+            fn=_v11,
             args=["k17", "k14", "k16", "k15", "y1", "y7", "y9", "y10", "y11"],
             stoichiometry={"y11": 1},
         )
         .add_reaction(
             "v12",
-            fn=v12,
+            fn=_v12,
             args=["k23", "k20", "k22", "k21", "y2", "y8", "y9", "y10", "y12"],
             stoichiometry={"y12": 1},
         )
-        .add_reaction("v13", fn=v13, args=["k6n", "y13"], stoichiometry={"y13": 1})
+        .add_reaction("v13", fn=_v13, args=["k6n", "y13"], stoichiometry={"y13": 1})
         .add_reaction(
-            "v14", fn=v14, args=["k6n", "y13"], stoichiometry={"y14": 1}
+            "v14",
+            fn=_v14,
+            args=["k6n", "y13"],
+            stoichiometry={"y14": 1},
         )  # Change in contrast to pub
-        .add_reaction("v15", fn=v15, args=[], stoichiometry={"y15": 1})
+        .add_reaction("v15", fn=_v15, args=[], stoichiometry={"y15": 1})
         .add_derived(
-            name="eprime", fn=eprime, args=["y2", "y4", "y6", "y8", "y12", "y14"]
+            name="eprime",
+            fn=_eprime,
+            args=["y2", "y4", "y6", "y8", "y12", "y14"],
         )
-        .add_derived(name="F", fn=F, args=["eprime", "p", "y15"])
+        .add_derived(name="F", fn=_f, args=["eprime", "p", "y15"])
     )
