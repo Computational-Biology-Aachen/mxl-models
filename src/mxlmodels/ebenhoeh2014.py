@@ -14,9 +14,9 @@ Core dynamic model of the thylakoid electron transport chain used to study
 short-term light acclimation (state transitions) in *Chlamydomonas*. Covers
 PSII/PSI, cytochrome b6f, FNR, ATP synthase, cyclic electron flow, PTOX/NDH and
 LHCII state transitions. Non-photochemical quenching is a constant base term
-(kH0); the xanthophyll/PsbS machinery of the later Matuszynska models is absent.
-ATP and NADPH are consumed by lumped linear sinks instead of a Calvin cycle.
-
+(kH0); the xanthophyll/PsbS machinery of the later Matuszynska models is
+absent. ATP and NADPH are consumed by lumped linear sinks instead of a Calvin
+cycle.
 """
 
 import math
@@ -184,7 +184,7 @@ def _ps1states(
     k_pc_ox: float,
     ppfd: float,
 ) -> float:
-    """QSSA open state of PSI as a function of PC and Fd redox states."""
+    r"""QSSA open state of PSI as a function of PC and Fd redox states."""
     L = (1 - ps2cs) * ppfd
     return psi_tot / (
         1
