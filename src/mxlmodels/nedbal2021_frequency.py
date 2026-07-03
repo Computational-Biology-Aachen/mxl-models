@@ -122,17 +122,17 @@ def _harmonic_sum_rate(
     )
 
 
-def get_harmonic_model(config: float) -> Model:
-    """Get the harmonic model."""
-    period = config["period"]
-    offset = config["offset"]
-    amplitudes = config["amplitudes"]
-    lags = config["lags"]
-
-    light_offset = (config["light_min"] + config["light_max"]) / 2.0
-
-    light_amplitude = (config["light_max"] - config["light_min"]) / 2.0
-
+def get_harmonic_model(
+    period: float,
+    offset: float,
+    amplitudes: list[float],
+    lags: list[float],
+    light_min: float,
+    light_max: float,
+) -> Model:
+    r"""Get the harmonic model."""
+    light_offset = (light_min + light_max) / 2.0
+    light_amplitude = (light_max - light_min) / 2.0
     variables = {
         "Light": light_offset - light_amplitude,
         "Fit": _harmonic_sum(
@@ -237,7 +237,7 @@ def get_induction_model(
     decline: float,
     tau_decline: float,
 ) -> Model:
-    """Get the induction model."""
+    r"""Get the induction model."""
     return (
         Model()
         .add_variables(
@@ -293,7 +293,7 @@ def get_ojip_model(
     tau_i: float,
     tau_p: float,
 ) -> Model:
-    """Get the ojip model."""
+    r"""Get the ojip model."""
     return (
         Model()
         .add_variables(
