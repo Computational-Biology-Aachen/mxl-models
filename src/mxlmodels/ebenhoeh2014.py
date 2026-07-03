@@ -14,9 +14,9 @@ Core dynamic model of the thylakoid electron transport chain used to study
 short-term light acclimation (state transitions) in *Chlamydomonas*. Covers
 PSII/PSI, cytochrome b6f, FNR, ATP synthase, cyclic electron flow, PTOX/NDH and
 LHCII state transitions. Non-photochemical quenching is a constant base term
-(kH0); the xanthophyll/PsbS machinery of the later Matuszynska models is
-absent. ATP and NADPH are consumed by lumped linear sinks instead of a Calvin
-cycle.
+(kH0); the xanthophyll/PsbS machinery of the later Matuszynska models is absent.
+ATP and NADPH are consumed by lumped linear sinks instead of a Calvin cycle.
+
 """
 
 import math
@@ -182,11 +182,10 @@ def _ps1states(
     keq_fafd: float,
     keq_pcp700: float,
     k_pc_ox: float,
-    pfd: float,
-    c_pfd: float,
+    ppfd: float,
 ) -> float:
-    r"""QSSA open state of PSI as a function of PC and Fd redox states."""
-    L = (1 - ps2cs) * c_pfd * pfd
+    """QSSA open state of PSI as a function of PC and Fd redox states."""
+    L = (1 - ps2cs) * ppfd
     return psi_tot / (
         1
         + L / (k_fd_red * fd_ox)
@@ -288,9 +287,9 @@ def _rate_ps2(
     return 0.5 * k2 * b1
 
 
-def _rate_ps1(a: float, ps2cs: float, pfd: float, c_pfd: float) -> float:
+def _rate_ps1(a: float, ps2cs: float, ppfd: float) -> float:
     r"""PSI electron transfer rate: open PSI centres (a) * light absorbed by PSI antenna."""
-    return (1 - ps2cs) * c_pfd * pfd * a
+    return (1 - ps2cs) * ppfd * a
 
 
 def _rate_leak(
@@ -325,8 +324,7 @@ def _ps2states_surrogate(
     _kh: float,
     keq_pq_red: float,
     k_pq_red: float,
-    pfd: float,
-    c_pfd: float,
+    ppfd: float,
     k_h0: float,
 ) -> tuple[float, float, float, float]:
     r"""PSII state populations via the analytical closed-form of the 4-state QSSA.
@@ -351,7 +349,7 @@ def _ps2states_surrogate(
     x13 = k_pq_red * keq_pq_red * pq_ox
     x14 = k_pq_red * pq_red
     x15 = k2 * x14
-    x16 = pfd * c_pfd * ps2cs
+    x16 = ppfd * ps2cs
     x17 = k_f * x14
     x18 = k_h0 * x14
     x19 = x14 * x6
@@ -374,7 +372,7 @@ def _ps2states_surrogate(
     x23 = psii_tot / (
         k_f * x20
         + k_h0 * x20
-        + (c_pfd * pfd) ** 2 * ps2cs**2 * x12
+        + (ppfd) ** 2 * ps2cs**2 * x12
         + x0 * x13
         + x1 * x13
         + x10 * x13
@@ -447,9 +445,8 @@ def get_ebenhoeh2014() -> Model:
     m.add_variable("protons_lumen", initial_value=4000.0 * 10 ** (-7.2))
     m.add_variable("Light-harvesting complex", initial_value=0.9)
     # Stroma pH (constant) and light
-    m.add_parameter("pH", value=7.8)
-    m.add_parameter("PPFD", value=100.0)
-    m.add_parameter("cPPFD", value=1 / 3)  # incorporate this into the other equations
+    m = m.add_parameter("pH", value=7.8)
+    m = m.add_parameter("PPFD", value=100.0)
     # Total pool sizes
     m.add_parameter("PSII_total", value=2.5)
     m.add_parameter("PSI_total", value=2.5)
@@ -489,7 +486,7 @@ def get_ebenhoeh2014() -> Model:
     m.add_parameter("HPR", value=14.0 / 3.0)
     m.add_parameter("kf_nadph_consumption", value=15.0)
     # Proton leak / membrane
-    m.add_parameter(
+    m = m.add_parameter(
         "kf_proton_leak", value=0.01
     )  # this value is not specified in the paper
     # Electron transfer rate constants
@@ -611,7 +608,6 @@ def get_ebenhoeh2014() -> Model:
             "keq_PCP700",
             "kPCox",
             "PPFD",
-            "cPPFD",
         ],
     )
     # Reactions
@@ -627,7 +623,7 @@ def get_ebenhoeh2014() -> Model:
     m.add_reaction(
         "PSI",
         fn=_rate_ps1,
-        args=["A1", "PSII_cross_section", "PPFD", "cPPFD"],
+        args=["A1", "PSII_cross_section", "PPFD"],
         stoichiometry={
             "Ferredoxine (oxidised)": -1,
             "Plastocyanine (oxidised)": 1,
@@ -755,7 +751,6 @@ def get_ebenhoeh2014() -> Model:
                 "keq_Plastoquinone (reduced)",
                 "kPQred",
                 "PPFD",
-                "cPPFD",
                 "kH0",
             ],
             outputs=["B0", "B1", "B2", "B3"],

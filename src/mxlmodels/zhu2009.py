@@ -55,11 +55,11 @@ def get_zhu_2009() -> Model:
             "V2_max": 11.75,  # [mM/S] Zhu et al 2009
             "V3_max": 5.04,  # [mM/S] Zhu et al 2009
             "V4_max": 3.05,  # [mM/S] estimate by Zhu et al.
-            "V5_max": 3,  # [mM/S] Zhu et al 2009
+            "V5_max": 3.0,  # [mM/S] Zhu et al 2009
             "V6_max": 0.1,  # [mM/S] estimate by Zhu et al.
-            "V13_max": 8,
+            "V13_max": 8.0,
             # Km:
-            "K_m1": 1,  # [mM] Zhu et al 2009
+            "K_m1": 1.0,  # [mM] Zhu et al 2009
             "K_m21": 0.24,  # [mM] Zhu et al 2009
             "K_m22": 0.39,  # [mM] Zhu et al 2009
             "K_m3": 0.5,  # [mM] Zhu et al 2009
@@ -69,7 +69,7 @@ def get_zhu_2009() -> Model:
             "K_m6": 5,  # [mM] Zhu et al 2009
             "K_m131": 0.15,  # [mM] Zhu et al 2009
             "K_m132": 0.059,  # [mM] Zhu et al 2009
-            "ATP": 0.2,  # [mM]Not in Zhu et al 2009 but in the  reference [9] in the paper
+            "ATP": 0.2,  # [mM]Not in Zhu et al 2009 but in the reference [9] in the paper
         }
     )
     m.add_variables(
