@@ -24,7 +24,7 @@ repos:
         files: \.py$
         stages: [pre-commit]
         language: system
-        entry: uv run python scripts/format_docstrings.py --check
+        entry: uv run python scripts/format_docstrings.py
 
       - id: jupyter-nb-clear-output
         name: jupyter-nb-clear-output
