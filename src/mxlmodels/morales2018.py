@@ -605,15 +605,5 @@ def get_morales2018() -> Model:
 
     for name in observed:
         m = m.add_readout(f"obs_{name}", fn=_identity, args=[name])
-        
-# ==========================================================
-# Solver settings recovered from original Morales R wrapper
-# ==========================================================
-
-        # Original Morales R wrapper solver settings:
-    # rtol = 1e-6, atol = 1e-6, method = "bdf", positive = 1
-    m = m.add_parameter("solver_rtol", value=1e-6)
-    m = m.add_parameter("solver_atol", value=1e-6)
-    m = m.add_parameter("solver_positive", value=1.0)
 
     return m
