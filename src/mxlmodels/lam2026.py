@@ -17,6 +17,9 @@ Combined with a rigorous fitting and optimization schedule for parameters, the
 model brings up quantified contributions of different NPQ components and how it
 changes overtime.
 
+The model provide a detailed, up-to-date descriptions regarding NPQ compoents within higher plants, along with detailed dataset of fluorescence lifetime and pigment qunatification from mutants that
+lacks one or more compoents of NPQ. Combined with a rigorous fitting and optimization schedule for parameters, the model brings up quantified contributions of different NPQ components and how it changes overtime.
+
 Compoents: energy-depedent quenching (qE), zeaxanthin-depdent quenching (qZ)
 and photoinhibition (qI)
 """
@@ -303,7 +306,7 @@ def get_lam2026() -> Model:
             "kappa_qZ": 0.030,
             "kappa_qI": 3.86,
             "kappa_qI_double_mut": 7.05,
-            "ppfd": 0,
+            "PPFD": 0,
             "tau_0": 1.73089079100000,  # from the paper WT tau_0 for 5-10-5 dataset
             "PSII_tot": 1,
         }
@@ -319,27 +322,27 @@ def get_lam2026() -> Model:
     m.add_derived(
         "Keq_a",
         _keq_light_dark,
-        args=["k_D_VA", "k_AV", "k_D_VA", "k_AV", "ppfd"],
+        args=["k_D_VA", "k_AV", "k_D_VA", "k_AV", "PPFD"],
     )
     m.add_derived(
         "Keq_z",
         _keq_light_dark,
-        args=["k_D_AZ", "k_ZA", "k_D_AZ", "k_ZA", "ppfd"],
+        args=["k_D_AZ", "k_ZA", "k_D_AZ", "k_ZA", "PPFD"],
     )
     m.add_derived(
         "Keq_qv",
         _keq_light_dark,
-        args=["k_L_QV_f", "k_QV_b", "k_D_QV_f", "k_QV_b", "ppfd"],
+        args=["k_L_QV_f", "k_QV_b", "k_D_QV_f", "k_QV_b", "PPFD"],
     )
     m.add_derived(
         "Keq_qa",
         _keq_light_dark,
-        args=["k_L_QA_f", "k_QA_b", "k_D_QA_f", "k_QA_b", "ppfd"],
+        args=["k_L_QA_f", "k_QA_b", "k_D_QA_f", "k_QA_b", "PPFD"],
     )
     m.add_derived(
         "Keq_qz",
         _keq_light_dark,
-        args=["k_L_QZ_f", "k_QZ_b", "k_D_QZ_f", "k_QZ_b", "ppfd"],
+        args=["k_L_QZ_f", "k_QZ_b", "k_D_QZ_f", "k_QZ_b", "PPFD"],
     )
 
     m.add_derived(
@@ -446,7 +449,7 @@ def get_lam2026() -> Model:
         "VA",
         _mass_action_light_dark_2s,
         stoichiometry={"V": -1, "A": 1},
-        args=["ppfd", "k_L_VA", "k_L_VA", "alpha_VDE", "V"],
+        args=["PPFD", "k_L_VA", "k_L_VA", "alpha_VDE", "V"],
     )
     m.add_reaction(
         "AV",
@@ -458,7 +461,7 @@ def get_lam2026() -> Model:
         "AZ",
         _mass_action_light_dark_2s,
         stoichiometry={"A": -1, "Z": 1},
-        args=["ppfd", "k_L_AZ", "k_L_AZ", "alpha_VDE", "A"],
+        args=["PPFD", "k_L_AZ", "k_L_AZ", "alpha_VDE", "A"],
     )
     m.add_reaction(
         "ZA",
@@ -508,7 +511,7 @@ def get_lam2026() -> Model:
         "QVf",
         _mass_action_light_dark_1s,
         stoichiometry={"PV": -1, "QV": 1},
-        args=["ppfd", "k_L_QV_f", "k_D_QX_f", "PV"],
+        args=["PPFD", "k_L_QV_f", "k_D_QX_f", "PV"],
     )
     m.add_reaction(
         "QVb",
@@ -520,7 +523,7 @@ def get_lam2026() -> Model:
         "QAf",
         _mass_action_light_dark_1s,
         stoichiometry={"PA": -1, "QA": 1},
-        args=["ppfd", "k_L_QA_f", "k_D_QX_f", "PA"],
+        args=["PPFD", "k_L_QA_f", "k_D_QX_f", "PA"],
     )
     m.add_reaction(
         "QAb",
@@ -532,7 +535,7 @@ def get_lam2026() -> Model:
         "QZf",
         _mass_action_light_dark_1s,
         stoichiometry={"PZ": -1, "QZ": 1},
-        args=["ppfd", "k_L_QZ_f", "k_D_QX_f", "PZ"],
+        args=["PPFD", "k_L_QZ_f", "k_D_QX_f", "PZ"],
     )
     m.add_reaction(
         "QZb",
@@ -545,7 +548,7 @@ def get_lam2026() -> Model:
         "QLf",
         _mass_action_light_dark_1s,
         stoichiometry={"PL": -1, "QL": 1},
-        args=["ppfd", "k_L_QL_f", "k_D_QX_f", "PL"],
+        args=["PPFD", "k_L_QL_f", "k_D_QX_f", "PL"],
     )
     m.add_reaction(
         "QLb",
@@ -558,14 +561,14 @@ def get_lam2026() -> Model:
         "damage",
         _damage,
         stoichiometry={"PSIId": 1},
-        args=["ppfd", "k_L_damage", "k_D_damage", "tau_Fluo", "PSIId"],
+        args=["PPFD", "k_L_damage", "k_D_damage", "tau_Fluo", "PSIId"],
     )
 
     m.add_reaction(
         "v_alpha_VDE",
         _v_alpha_vde,
         stoichiometry={"alpha_VDE": 1},
-        args=["ppfd", "k_L_VDE", "k_D_VDE", "k_L_VA", "k_D_VA", "alpha_VDE"],
+        args=["PPFD", "k_L_VDE", "k_D_VDE", "k_L_VA", "k_D_VA", "alpha_VDE"],
     )
 
     m.add_readout("NPQ_V", _mul, args=["kappa_QV", "QV"])

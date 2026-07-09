@@ -109,7 +109,7 @@ def get_salvatori2022(load: Literal["Minn", "Eiko"] = "Eiko") -> Model:
     if load == "Minn":
         m.add_parameters(
             {
-                "PAR": 0,  # Photosynthetically active radiation
+                "PPFD": 0,  # Photosynthetically active radiation
                 "alpha": 0.54,  # Absorption coefficient
                 "c_in": 0.25,  # Energy input coefficient
                 "Ec_PSII": 9.98,  # PSII energy carrying capacity
@@ -130,7 +130,7 @@ def get_salvatori2022(load: Literal["Minn", "Eiko"] = "Eiko") -> Model:
     else:
         m.add_parameters(
             {
-                "PAR": 0,  # Photosynthetically active radiation
+                "PPFD": 0,  # Photosynthetically active radiation
                 "alpha": 0.78,  # Absorption coefficient
                 "c_in": 0.23,  # Energy input coefficient
                 "Ec_PSII": 157.56,  # PSII energy carrying capacity
@@ -160,7 +160,7 @@ def get_salvatori2022(load: Literal["Minn", "Eiko"] = "Eiko") -> Model:
         "Energy_input",
         _energy_input,
         stoichiometry={"E_PSII": 1},
-        args=["E_PSII", "alpha", "c_in", "PAR", "Ec_PSII"],
+        args=["E_PSII", "alpha", "c_in", "PPFD", "Ec_PSII"],
     )
     m.add_reaction(
         "ETR_out",
@@ -180,7 +180,12 @@ def get_salvatori2022(load: Literal["Minn", "Eiko"] = "Eiko") -> Model:
         stoichiometry={"E_PSII": -1, "Q": 1},
         args=["E_PSII", "P_NPQ", "Q", "v_d", "Qc"],
     )
-    m.add_reaction("NPQ", _npq_func, stoichiometry={"Q": -1}, args=["Q", "v_NPQ"])
+    m.add_reaction(
+        "NPQ",
+        _npq_func,
+        stoichiometry={"Q": -1},
+        args=["Q", "v_NPQ"],
+    )
     m.add_reaction(
         "NPQ_activation",
         _activation_p_npq,
@@ -191,7 +196,7 @@ def get_salvatori2022(load: Literal["Minn", "Eiko"] = "Eiko") -> Model:
             "NADP",
             "alpha",
             "c_in",
-            "PAR",
+            "PPFD",
             "Ec_PSII",
             "v_ETR",
             "c_y",

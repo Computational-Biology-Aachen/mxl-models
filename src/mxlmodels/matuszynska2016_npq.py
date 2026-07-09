@@ -231,14 +231,14 @@ def _b0(
 
 def _fluorescence(
     q: float,
-    _b0: float,
-    _b2: float,
+    b0: float,
+    b2: float,
     k_h: float,
     k_f: float,
     k_p: float,
 ) -> float:
     r"""Fluorescence function."""
-    return k_f / (k_h * q + k_f + k_p) * _b0 + k_f / (k_h * q + k_f) * _b2
+    return k_f / (k_h * q + k_f + k_p) * b0 + k_f / (k_h * q + k_f) * b2
 
 
 def _b1(

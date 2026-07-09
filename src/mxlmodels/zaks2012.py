@@ -313,19 +313,12 @@ def _lumen_ion_flux(
     return flux / lumen_volume_per_area
 
 
-def _same(x: float) -> float:
-    return x
-
-
 def _frac(x: float, xtot: float) -> float:
     return x / xtot
 
 
 def _qb_moiety(qb_n: float, qb_r1: float, qb_r2: float) -> float:
     return 1.0 - qb_n - qb_r1 - qb_r2
-
-
-# Output
 
 
 def _k_f_rate(k_f: float, chl_ex: float) -> float:
@@ -466,7 +459,7 @@ PARAMS = {
     "ElectronsPerPC": 1.0,
     "fracIntactRC": 1.0,
     "voltsperlog": 0.02585065036015961,
-    "LightIntensity": 0.0,
+    "PPFD": 0.0,
     "P680neut": 1.0,
     # quench-mode trigger flags (quenchmodel=1)
     "qtrigg1": 1.0,
@@ -674,8 +667,6 @@ def get_zaks2012() -> Model:
     m.add_derived("InactiveATPs", _complement, args=["ActiveATPs"])
 
     # Output
-    m.add_readout("light", _same, args=["LightIntensity"])
-
     m.add_readout("kF_obs", _k_f_rate, args=["kF", "PSIIChlEx"])
 
     m.add_readout("kqE_obs", _kq_e_rate, args=["kQ", "PSIIChlEx", "q_total"])
@@ -770,7 +761,7 @@ def get_zaks2012() -> Model:
     m.add_reaction(
         "v1",
         fn=_mass_action_1s_act,
-        args=["LightIntensity", "crosssection", "fracIntactRC"],
+        args=["PPFD", "crosssection", "fracIntactRC"],
         stoichiometry={"PSIIChlEx": 1},
     )
     # v2: quenching by NPQ
@@ -981,7 +972,7 @@ def get_zaks2012() -> Model:
     m.add_reaction(
         "psi_2",
         fn=_psi_2,
-        args=["LightIntensity", "PSIcrossSection", "kETP700Fdx", "P700r", "Fdxox"],
+        args=["PPFD", "PSIcrossSection", "kETP700Fdx", "P700r", "Fdxox"],
         stoichiometry={"P700r": -1, "P700ox": 1, "Fdxr": 1, "Fdxox": -1, "TotalLEF": 1},
     )
 
