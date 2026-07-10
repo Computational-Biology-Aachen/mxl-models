@@ -27,6 +27,7 @@ from .lotka_volterra_v2 import get_lotka_volterra_v2
 from .matuszynska2016_npq import get_matuszynska2016_npq
 from .matuszynska2016_phd import get_matuszynska2016_phd
 from .matuszynska2019 import get_matuszynska2019
+from .morales2018 import get_morales2018
 from .nedbal2021_frequency import (
     get_harmonic_model as get_nedbal_2021_harmonic,
 )
@@ -75,6 +76,7 @@ __all__ = [
     "get_matuszynska2016_npq",
     "get_matuszynska2016_phd",
     "get_matuszynska2019",
+    "get_morales2018",
     "get_nedbal_2021_harmonic",
     "get_nedbal_2021_induction",
     "get_nedbal_2021_ojip",
