@@ -45,7 +45,7 @@ from .saadat2021 import get_saadat2021 as get_saadat2021
 from .salvatori2022 import get_salvatori2022
 from .selkov1968_oscillator import get_selkov1968_glycolysis_oscillator
 from .sir import get_sir, get_sird
-from .ss.bernacchi2023 import get_bernacchi_2023
+from .ss.bernacchi2013 import get_bernacchi_2013
 from .ss.fvcb1980 import get_fvcb_1980
 from .ss.johnson2021 import get_johnson2021
 from .yokota1985 import get_yokota1985
@@ -57,7 +57,7 @@ __all__ = [
     "data",
     "fit",
     "get_bellasio_2019",
-    "get_bernacchi_2023",
+    "get_bernacchi_2013",
     "get_davis2017",
     "get_davis2017",
     "get_dynamic_enterobactin",
