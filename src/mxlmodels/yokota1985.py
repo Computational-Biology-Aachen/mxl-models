@@ -1,14 +1,19 @@
 r"""Yokota 1985 photorespiratory carbon oxidation cycle model.
 
-|             |                                                                             |
-| ----------- | --------------------------------------------------------------------------- |
-| doi         | 10.1080/00021369.1985.10867259                                              |
-| main author | Akiho Yokota                                                                |
-| paper title | Refixation of Photorespired CO2 during Photosynthesis in Euglena gracilis z |
-| published   | 1985                                                                        |
-| journal     | Agricultural and Biological Chemistry                                       |
-| organism    | Euglena gracilis                                                            |
-| Ported by   | Marvin van Aalst ( @marvinvanaalst )                                        |
+|             |                                                                                                                   |
+| ----------- | ----------------------------------------------------------------------------------------------------------------- |
+| doi         | 10.1007/BF00392212                                                                                                |
+| main author | Akiho Yokota                                                                                                      |
+| paper title | Reactivity of glyoxylate with hydrogen perioxide and simulation of the glycolate pathway of C3 plants and Euglena |
+| published   | 1985                                                                                                              |
+| journal     | Planta                                                                                                            |
+| organism    | Euglena gracilis                                                                                                  |
+| Ported by   | Marvin van Aalst ( @marvinvanaalst )                                                                              |
+
+Units:
+
+- Vmax: umol mg^-1 Chl h^-1
+- Km: mM
 """
 
 from mxlpy import Model
