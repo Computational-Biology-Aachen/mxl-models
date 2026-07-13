@@ -1,14 +1,14 @@
 r"""Nedbal and Lazár (2021) photosynthesis dynamics model.
 
-|             |                                 |
-| ----------- | ------------------------------- |
-| doi         | FIXME                           |
-| main author | FIXME                           |
-| paper title | FIXME                           |
-| published   | FIXME                           |
-| journal     | FIXME                           |
-| organism    | FIXME                           |
-| Ported by   | Tanvir Hassan ( @Tanvir96rwth ) |
+|             |                                                                       |
+| ----------- | --------------------------------------------------------------------- |
+| doi         | 10.1093/plphys/kiab317                                                |
+| main author | Ladislav Nedbal                                                       |
+| paper title | Photosynthesis dynamics and regulation sensed in the frequency domain |
+| published   | July 2021                                                             |
+| journal     | Plant Physiology                                                      |
+| organism    | Chlorella sorokiniana                                                 |
+| Ported by   | Tanvir Hassan ( @Tanvir96rwth )                                       |
 
 The model represents chlorophyll-fluorescence responses to constant and
 sinusoidally modulated light using harmonic and induction kinetics. Figures F1,
