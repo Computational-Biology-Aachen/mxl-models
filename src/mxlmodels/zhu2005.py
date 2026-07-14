@@ -1,5 +1,15 @@
 r"""Zhu et al. 2005 chlorophyll fluorescence induction model.
 
+|             |                                                                                                                                                                                        |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| doi         | 10.1007/s00425-005-0064-4                                                                                                                                                              |
+| main author | Xin-Guang Zhu                                                                                                                                                                          |
+| paper title | Chlorophyll a fluorescence induction kinetics in leaves predicted from a model describing each discrete step of excitation energy and electron transfer associated with Photosystem II |
+| published   | October 2005                                                                                                                                                                           |
+| journal     | Planta                                                                                                                                                                                 |
+| organism    | C3                                                                                                                                                                                     |
+| Ported by   | Malick Cisse ( @kosmosofmalick-spec )                                                                                                                                                  |
+
 mxlpy implementation:
 
 - 40 state variables
