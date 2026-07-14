@@ -1,13 +1,13 @@
-"""
-Zhu et al. 2005 chlorophyll fluorescence induction model.
+r"""Zhu et al. 2005 chlorophyll fluorescence induction model.
 
 mxlpy implementation:
+
 - 40 state variables
 - 1 environmental forcing as a temporary parameter
 - model and structural parameters
 - antenna excitation, fluorescence, heat dissipation, P680/Pheo electron
-  transfer, OEC S-state transitions, QA/QB redox reactions, and
-  plastoquinone exchange and oxidation
+  transfer, OEC S-state transitions, QA/QB redox reactions, and plastoquinone
+  exchange and oxidation
 """
 
 import math
@@ -196,14 +196,14 @@ def _combined_reduction_fraction(
 
 
 def _add_nonreducing_center(m: Model, pool_size: float) -> Model:
-    """Add the paper-described QB-nonreducing PSII population.
+    r"""Add the paper-described QB-nonreducing PSII population.
 
     Zhu et al. state that this population uses the same differential-equation
-    system as the printed QB-reducing population.  The duplicated system below
+    system as the printed QB-reducing population. The duplicated system below
     follows that instruction and sets all electron-transfer rates beyond QA to
-    zero, which is the defining kinetic difference of a QB-nonreducing centre.
-    The duplicated PQ exchange reactions retain the paper's shared-PQ-pool
-    topology and are inactive under those zero downstream rates.
+    zero, which is the defining kinetic difference of a QB-nonreducing centre. The
+    duplicated PQ exchange reactions retain the paper's shared-PQ-pool topology and
+    are inactive under those zero downstream rates.
     """
     m = m.add_parameters(
         {
@@ -447,8 +447,8 @@ def _add_nonreducing_center(m: Model, pool_size: float) -> Model:
     )
 
 
-def get_zhu2005() -> Model:
-    """Return Zhu et al. 2005 chlorophyll fluorescence model."""
+def get_zhu_2005() -> Model:
+    r"""Return Zhu et al. 2005 chlorophyll fluorescence model."""
     m: Model = Model()
 
     m = m.add_parameters(

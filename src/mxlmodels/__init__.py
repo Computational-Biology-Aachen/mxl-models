@@ -50,7 +50,7 @@ from .ss.fvcb1980 import get_fvcb_1980
 from .ss.johnson2021 import get_johnson2021
 from .yokota1985 import get_yokota1985
 from .zaks2012 import get_zaks2012
-from .zhu2005 import get_zhu2005
+from .zhu2005 import get_zhu_2005
 from .zhu2009 import get_zhu_2009
 
 __all__ = [
@@ -94,7 +94,7 @@ __all__ = [
     "get_tripartite_dynamics",
     "get_yokota1985",
     "get_zaks2012",
-    "get_zhu2005",
+    "get_zhu_2005",
     "get_zhu_2009",
     "mc",
     "mca",
