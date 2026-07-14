@@ -46,7 +46,7 @@ from .salvatori2022 import get_salvatori2022
 from .selkov1968_oscillator import get_selkov1968_glycolysis_oscillator
 from .sir import get_sir, get_sird
 from .ss.bernacchi2013 import get_bernacchi_2013
-from .ss.fvcb1980 import get_fvcb_1980
+from .ss.fvcb1980 import get_fvcb
 from .ss.johnson2021 import get_johnson2021
 from .yokota1985 import get_yokota1985
 from .zaks2012 import get_zaks2012
