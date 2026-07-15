@@ -1,8 +1,5 @@
 import math
 
-from mxlpy import Model
-
-
 def f_q(q: float, a_q: float) -> float:
     """Redox poise balance between Cyt b6f and PSII."""
     return (1.0 + a_q) / (1.0 + a_q * q)
@@ -66,7 +63,8 @@ def get_gu2023(
     a_q: float = 0.0,
     b_s: float = 0.0,
     c_s: float = 0.0,
-    Jg: float = 500.0,
+    alpha: float = 0.85,
+    PAR: float = 500 / 0.85,
     T: float = 298.15,
     T0: float = 298.15,
     E_T: float = 0.0,
@@ -74,13 +72,14 @@ def get_gu2023(
     
     ft = 1.0 if E_T == 0 else math.exp(E_T * (T - T0) / (T * T0))
     fq = (1.0 + a_q) / (1.0 + a_q * q)
-    fs = 1.0 / (1.0 + c_s * (1.0 - math.exp(-b_s * Jg)))
-
+    fs = 1.0 / (1.0 + c_s * (1.0 - math.exp(-b_s * alpha * PAR)))
 
     numerator = 2.0 * U * ft * fs * fq * (q_r - q) * q
     denominator = (R1 + 2.0 * R2 * fs * fq - 1.0) * q + q_r
     
     j_psii = numerator / denominator
     h_cyt = q * (1.0 + a_q) / (1.0 + a_q * q)
+    h_pqh2 = j_psii / (2 * U * ft * fs * fq * q)
+    h_pq = 1 - h_pqh2
     
-    return {"J_PSII": j_psii, "h_cyt": h_cyt}
+    return {"J_PSII": j_psii, "h_cyt": h_cyt, "h_pqh2": h_pqh2, "h_pq": h_pq}
