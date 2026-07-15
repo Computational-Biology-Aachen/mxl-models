@@ -4,7 +4,7 @@ The model represents net leaf CO2 assimilation limited by Rubisco
 carboxylation, RuBP regeneration, and triose-phosphate utilization. Figures
 F2-F7 reproduce the steady-state and diurnal responses described in the paper.
 
-https://doi.org/
+https://doi.org/10.1111/pce.12118
 
 |             |                                                                   |
 | ----------- | ----------------------------------------------------------------- |
