@@ -57,49 +57,30 @@ def j_psii_gu(
     return numerator / denominator
 
 
-def get_gu_2023() -> Model:
-    return (
-        Model()
-        .add_variables(
-            {
-                # q is treated as externally supplied measured open PSII fraction
-                "q": 0.7,
-            }
-        )
-        .add_parameters(
-            {
-                # composite PET parameters
-                "U": 250.0,  # µmol m-2 s-1, max PQ/PQH2 oxidation potential
-                "R1": 0.2,  # first resistance
-                "R2": 0.5,  # second resistance
-                "q_r": 1.0,  # reversible PSII fraction
-                # regulatory functions
-                "a_q": 0.0,  # Cyt/PSII redox-poise parameter
-                "b_s": 0.0,  # swelling/crowding parameter
-                "c_s": 0.0,  # max crowding impact
-                "Jg": 500.0,  # gross excitation flux
-                # temperature response
-                "T": 298.15,
-                "T0": 298.15,
-                "E_T": 0.0,
-            }
-        )
-        .add_derived(
-            "J_PSII",
-            j_psii_gu,
-            args=[
-                "q",
-                "U",
-                "R1",
-                "R2",
-                "q_r",
-                "a_q",
-                "b_s",
-                "c_s",
-                "Jg",
-                "T",
-                "T0",
-                "E_T",
-            ],
-        )
-    )
+def get_gu2023(
+    q: float = 0.7,
+    U: float = 250.0,
+    R1: float = 0.2,
+    R2: float = 0.5,
+    q_r: float = 1.0,
+    a_q: float = 0.0,
+    b_s: float = 0.0,
+    c_s: float = 0.0,
+    Jg: float = 500.0,
+    T: float = 298.15,
+    T0: float = 298.15,
+    E_T: float = 0.0,
+) -> Model:
+    
+    ft = 1.0 if E_T == 0 else math.exp(E_T * (T - T0) / (T * T0))
+    fq = (1.0 + a_q) / (1.0 + a_q * q)
+    fs = 1.0 / (1.0 + c_s * (1.0 - math.exp(-b_s * Jg)))
+
+
+    numerator = 2.0 * U * ft * fs * fq * (q_r - q) * q
+    denominator = (R1 + 2.0 * R2 * fs * fq - 1.0) * q + q_r
+    
+    j_psii = numerator / denominator
+    h_cyt = q * (1.0 + a_q) / (1.0 + a_q * q)
+    
+    return {"J_PSII": j_psii, "h_cyt": h_cyt}
