@@ -1,11 +1,14 @@
 [build-system]
 build-backend = "hatchling.build"
-requires = ["hatchling"]
+requires      = ["hatchling"]
 
 [dependency-groups]
 dev = [
   "coverage>=7.6.4",
   "jupyter>=1.1.1",
+  "libcst>=1.8.6",
+  "mdformat-gfm>=1.0.0",
+  "mdformat>=1.0.0",
   "mike>=2.1.3",
   "mkdocs-jupyter>=0.25.1",
   "mkdocs-material>=9.5.42",
@@ -15,6 +18,7 @@ dev = [
   "pytest-cov>=5.0.0",
   "pytest>=8.3.3",
   "ruff>=0.15.11",
+  "typer>=0.24.1",
 ]
 
 [project]
@@ -48,7 +52,7 @@ requires-python = ">=3.13"
 version = "1.3.0"
 
 [tool.hatchling]
-from = "src"
+from    = "src"
 include = ["mxlmodels"]
 
 [tool.pyright]
@@ -68,7 +72,7 @@ strict = []
 
 [tool.ruff]
 indent-width = 4
-line-length = 88
+line-length  = 88
 
 [tool.ruff.lint]
 fixable = ["ALL"]
@@ -94,7 +98,6 @@ ignore = [
   "PLR0913", # max num of arguments
   "PLR0915", # too many lines
   "PT011",   # pytest.raises is too broad
-  "RUF022",  # unsorted all
   "S110",    # try-except-pass
   "S301",    # pickle usage
   "TC006",   # cast("type")
@@ -111,6 +114,15 @@ select = ["ALL"]
 "*.ipynb" = [
   "D",    # all of documentation
   "T201", # print statements
+]
+"scripts/format_docstrings.py" = [
+  "ARG002", # libcst leave_* requires original_node arg
+  "B008",   # typer.Argument/Option defaults in signature
+  "D",      # docstring requirements for utility script
+  "FBT001", # typer boolean options
+  "FBT003", # typer boolean default values
+  "N802",   # libcst leave_* method naming
+  "TC003",  # runtime Path import used by typer
 ]
 "tests/*" = [
   "D",       # all of documentation
@@ -131,12 +143,28 @@ convention = "numpy"
 
 [tool.tomlsort]
 spaces_before_inline_comment = 2
-spaces_indent_inline_array = 2
-trailing_comma_inline_array = true
+spaces_indent_inline_array   = 2
+trailing_comma_inline_array  = true
 
 [tool.uv]
-package = true
 exclude-newer = "3 days"
+package       = true
 
 [tool.uv.sources]
 mxlmodels = { workspace = true }
+
+[tool.pixi.workspace]
+channels  = ["conda-forge"]
+platforms = ["linux-64"]
+
+[tool.pixi.pypi-dependencies]
+mxlmodels = { path = ".", editable = true }
+
+[tool.pixi.environments]
+default = { solve-group = "default" }
+dev     = { features = ["dev"], solve-group = "default" }
+
+[tool.pixi.tasks]
+
+[tool.pixi.dependencies]
+assimulo = ">=3.8.0,<4"

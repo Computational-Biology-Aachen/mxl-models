@@ -1,13 +1,16 @@
-"""Lotka-Volterra predator-prey model (v2): predation uses derived stoichiometry.
+r"""Lotka-Volterra predator-prey model (v2).
 
-|  |  |
-| --- | --- |
-| doi | N/A |
-| main author | Alfred J. Lotka; Vito Volterra |
-| paper title | classic predator–prey model |
-| published | 1925 / 1926 |
-| journal | N/A |
-| organism | N/A (abstract predator–prey) |
+Predation uses derived stoichiometry.
+
+|             |                                      |
+| ----------- | ------------------------------------ |
+| doi         | N/A                                  |
+| main author | Alfred J. Lotka; Vito Volterra       |
+| paper title | classic predator-prey model          |
+| published   | 1925 / 1926                          |
+| journal     | N/A                                  |
+| organism    | N/A (abstract predator-prey)         |
+| Ported by   | Marvin van Aalst ( @marvinvanaalst ) |
 """
 
 from mxlpy import Model, fns
@@ -18,7 +21,7 @@ def _prey_growth(
     alpha: float,
     prey: float,
 ) -> float:
-    """Prey intrinsic growth: Alpha * Prey."""
+    r"""Prey intrinsic growth: Alpha * Prey."""
     return alpha * prey
 
 
@@ -26,7 +29,7 @@ def _predation(
     predator: float,
     prey: float,
 ) -> float:
-    """Predation encounter rate: Predator * Prey."""
+    r"""Predation encounter rate: Predator * Prey."""
     return predator * prey
 
 
@@ -34,12 +37,12 @@ def _predator_death(
     predator: float,
     gamma: float,
 ) -> float:
-    """Predator natural death: Gamma * Predator."""
+    r"""Predator natural death: Gamma * Predator."""
     return gamma * predator
 
 
 def get_lotka_volterra_v2() -> Model:
-    """Build the Lotka-Volterra predator-prey model (v2) with derived stoichiometry."""
+    r"""Build the Lotka-Volterra predator-prey model (v2) with derived stoichiometry."""
     return (
         Model()
         .add_variable(

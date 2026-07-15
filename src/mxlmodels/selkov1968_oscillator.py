@@ -1,12 +1,15 @@
-"""Sel'kov glycolysis oscillator (Sel'kov 1968): autocatalytic ADP activation of PFK drives sustained oscillations.
+r"""Sel'kov glycolysis oscillator (Sel'kov 1968).
 
-|  |  |
-| --- | --- |
-| doi | 10.1111/j.1432-1033.1968.tb00175.x |
-| main author | E. E. Sel'kov |
+Autocatalytic ADP activation of PFK drives sustained oscillations.
+
+|             |                                                            |
+| ----------- | ---------------------------------------------------------- |
+| doi         | 10.1111/j.1432-1033.1968.tb00175.x                         |
+| main author | E. E. Sel'kov                                              |
 | paper title | Self-Oscillations in Glycolysis. 1. A Simple Kinetic Model |
-| published | 1968 |
-| journal | European Journal of Biochemistry |
+| published   | 1968                                                       |
+| journal     | European Journal of Biochemistry                           |
+| Ported by   | Marvin van Aalst ( @marvinvanaalst )                       |
 """
 
 from mxlpy import Model
@@ -17,26 +20,26 @@ def _pfk(
     x: float,
     y: float,
 ) -> float:
-    """PFK rate: product-activated (ADP²) consumption of F6P."""
+    r"""PFK rate: product-activated (ADP²) consumption of F6P."""
     return (a + x**2) * y
 
 
 def _atp_consumption(
     x: float,
 ) -> float:
-    """First-order ADP removal."""
+    r"""First-order ADP removal."""
     return x
 
 
 def _f6p_influx(
     b: float,
 ) -> float:
-    """Constant F6P influx."""
+    r"""Constant F6P influx."""
     return b
 
 
 def get_selkov1968_glycolysis_oscillator() -> Model:
-    """Build the Sel'kov oscillator: two-variable dimensionless model of glycolytic oscillations via autocatalytic PFK activation."""
+    r"""Build the Sel'kov oscillator: two-variable dimensionless model of glycolytic oscillations via autocatalytic PFK activation."""
     return (
         Model()
         .add_variable("X", initial_value=0.5)

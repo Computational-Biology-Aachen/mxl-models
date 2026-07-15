@@ -1,14 +1,15 @@
-"""Poolman 2000 Calvin-Benson-Bassham cycle model.
+r"""Poolman 2000 Calvin-Benson-Bassham cycle model.
 
-|  |  |
-| --- | --- |
-| doi | 10.1093/jexbot/51.suppl_1.319 |
-| main author | Mark G. Poolman |
+|             |                                          |
+| ----------- | ---------------------------------------- |
+| doi         | 10.1093/jexbot/51.suppl_1.319            |
+| main author | Mark G. Poolman                          |
 | paper title | Modelling photosynthesis and its control |
-| published | February 2000 |
-| journal | Journal of Experimental Botany |
-| organism | C3 plant (chloroplast) |
-| biomodels | BIOMD0000000013 |
+| published   | February 2000                            |
+| journal     | Journal of Experimental Botany           |
+| organism    | C3 plant (chloroplast)                   |
+| biomodels   | BIOMD0000000013                          |
+| Ported by   | Marvin van Aalst ( @marvinvanaalst )     |
 """
 
 from mxlpy import Model
@@ -18,7 +19,7 @@ def _moiety_1(
     concentration: float,
     total: float,
 ) -> float:
-    """Conservation moiety: total - concentration."""
+    r"""Conservation moiety: total - concentration."""
     return total - concentration
 
 
@@ -41,7 +42,7 @@ def _pi_cbb(
     ru5p: float,
     atp: float,
 ) -> float:
-    """Free orthophosphate from total minus all phosphorylated CBB intermediates (bisphosphates count twice)."""
+    r"""Free orthophosphate from total minus all phosphorylated CBB intermediates (bisphosphates count twice)."""
     return phosphate_total - (
         pga
         + 2 * bpga
@@ -66,7 +67,7 @@ def _mass_action_1s(
     s1: float,
     k_fwd: float,
 ) -> float:
-    """Mass-action rate for one substrate."""
+    r"""Mass-action rate for one substrate."""
     return k_fwd * s1
 
 
@@ -82,7 +83,7 @@ def _rate_translocator(
     k_gap: float,
     k_dhap: float,
 ) -> float:
-    """Denominator term N for the phosphate translocator shared by all triose-P export reactions."""
+    r"""Denominator term N for the phosphate translocator shared by all triose-P export reactions."""
     return 1 + (1 + k_pxt / p_ext) * (
         pi / k_pi + pga / k_pga + gap / k_gap + dhap / k_dhap
     )
@@ -106,7 +107,7 @@ def _rate_poolman_5i(
     nadph: float,
     ki_nadph: float,
 ) -> float:
-    """Rubisco carboxylation rate (Poolman 2000): bi-substrate with 5 competitive inhibitors."""
+    r"""Rubisco carboxylation rate (Poolman 2000): bi-substrate with 5 competitive inhibitors."""
     top = vmax * rubp * co2
     btm = (
         rubp
@@ -131,7 +132,7 @@ def _rapid_equilibrium_2s_2p(
     k_re: float,
     q: float,
 ) -> float:
-    """Rapid-equilibrium rate for two substrates, two products."""
+    r"""Rapid-equilibrium rate for two substrates, two products."""
     return k_re * (s1 * s2 - p1 * p2 / q)
 
 
@@ -145,7 +146,7 @@ def _rapid_equilibrium_3s_3p(
     k_re: float,
     q: float,
 ) -> float:
-    """Rapid-equilibrium rate for three substrates, three products."""
+    r"""Rapid-equilibrium rate for three substrates, three products."""
     return k_re * (s1 * s2 * s3 - p1 * p2 * p3 / q)
 
 
@@ -155,7 +156,7 @@ def _rapid_equilibrium_1s_1p(
     k_re: float,
     q: float,
 ) -> float:
-    """Rapid-equilibrium rate for one substrate, one product."""
+    r"""Rapid-equilibrium rate for one substrate, one product."""
     return k_re * (s1 - p1 / q)
 
 
@@ -166,7 +167,7 @@ def _rapid_equilibrium_2s_1p(
     k_re: float,
     q: float,
 ) -> float:
-    """Rapid-equilibrium rate for two substrates, one product."""
+    r"""Rapid-equilibrium rate for two substrates, one product."""
     return k_re * (s1 * s2 - p1 / q)
 
 
@@ -179,7 +180,7 @@ def _michaelis_menten_1s_2i(
     ki1: float,
     ki2: float,
 ) -> float:
-    """Irreversible Michaelis-Menten rate for one substrate with two inhibitors."""
+    r"""Irreversible Michaelis-Menten rate for one substrate with two inhibitors."""
     return vmax * s / (s + km * (1 + i1 / ki1 + i2 / ki2))
 
 
@@ -190,7 +191,7 @@ def _michaelis_menten_1s_1i(
     km: float,
     ki: float,
 ) -> float:
-    """Irreversible Michaelis-Menten rate for one substrate with one inhibitor."""
+    r"""Irreversible Michaelis-Menten rate for one substrate with one inhibitor."""
     return vmax * s / (s + km * (1 + i / ki))
 
 
@@ -210,7 +211,7 @@ def _rate_prk(
     ki134: float,
     ki135: float,
 ) -> float:
-    """Phosphoribulokinase rate: ordered bi-substrate kinetics with PGA, RuBP, Pi and ADP inhibition."""
+    r"""Phosphoribulokinase rate: ordered bi-substrate kinetics with PGA, RuBP, Pi and ADP inhibition."""
     return (
         v13
         * ru5p
@@ -228,7 +229,7 @@ def _rate_out(
     vmax_efflux: float,
     k_efflux: float,
 ) -> float:
-    """Individual substrate export rate normalised by the translocator occupancy N."""
+    r"""Individual substrate export rate normalised by the translocator occupancy N."""
     return vmax_efflux * s1 / (n_total * k_efflux)
 
 
@@ -248,7 +249,7 @@ def _rate_starch(
     kast2: float,
     kast3: float,
 ) -> float:
-    """Starch synthesis rate via G1P+ATP with ADP inhibition and allosteric activation by PGA/F6P/FBP."""
+    r"""Starch synthesis rate via G1P+ATP with ADP inhibition and allosteric activation by PGA/F6P/FBP."""
     return (
         v_st
         * g1p
@@ -270,120 +271,120 @@ def _rate_atp_synthase_2000(
     km161: float,
     km162: float,
 ) -> float:
-    """ATP synthase rate (Poolman 2000): bi-substrate Michaelis-Menten on ADP and Pi."""
+    r"""ATP synthase rate (Poolman 2000): bi-substrate Michaelis-Menten on ADP and Pi."""
     return v16 * adp * pi / ((adp + km161) * (pi + km162))
 
 
 def get_poolman2000() -> Model:
-    """Poolman 2000 Calvin-Benson-Bassham cycle model.
+    r"""Poolman 2000 Calvin-Benson-Bassham cycle model.
 
-    Reference: Poolman, Mark G., David A. Fell, and Simon Thomas.
-    "Modelling photosynthesis and its control."
-    Journal of experimental botany 51.suppl_1 (2000): 319-328
+    Reference: Poolman, Mark G., David A. Fell, and Simon Thomas. "Modelling
+    photosynthesis and its control." Journal of experimental botany 51.suppl_1
+    (2000): 319-328
     """
     m: Model = Model()
-    m = m.add_variable("3PGA", initial_value=0.6387788347932627)
-    m = m.add_variable("BPGA", initial_value=0.0013570885908749779)
-    m = m.add_variable("GAP", initial_value=0.011259431827358068)
-    m = m.add_variable("DHAP", initial_value=0.24770748227012374)
-    m = m.add_variable("FBP", initial_value=0.01980222074817044)
-    m = m.add_variable("F6P", initial_value=1.093666906864421)
-    m = m.add_variable("G6P", initial_value=2.5154338857582377)
-    m = m.add_variable("G1P", initial_value=0.14589516537322303)
-    m = m.add_variable("SBP", initial_value=0.09132688566151095)
-    m = m.add_variable("S7P", initial_value=0.23281380022778891)
-    m = m.add_variable("E4P", initial_value=0.02836065066520614)
-    m = m.add_variable("X5P", initial_value=0.03647242425941113)
-    m = m.add_variable("R5P", initial_value=0.06109130988031577)
-    m = m.add_variable("RUBP", initial_value=0.2672164362349537)
-    m = m.add_variable("RU5P", initial_value=0.0244365238237522)
-    m = m.add_variable("ATP", initial_value=0.43633201706180874)
-    m = m.add_parameter("CO2 (dissolved)", value=0.2)
-    m = m.add_parameter("NADPH", value=0.21)
-    m = m.add_parameter("protons", value=1.2589254117941661e-05)
-    m = m.add_parameter("A*P", value=0.5)
-    m = m.add_parameter("NADP*", value=0.5)
-    m = m.add_parameter("Pi_tot", value=15.0)
-    m = m.add_parameter("E0_rubisco_carboxylase", value=1.0)
-    m = m.add_parameter("kcat_rubisco_carboxylase", value=2.72)
-    m = m.add_parameter("km_rubisco_carboxylase_RUBP", value=0.02)
-    m = m.add_parameter("km_rubisco_carboxylase_CO2 (dissolved)", value=0.0107)
-    m = m.add_parameter("ki_rubisco_carboxylase_3PGA", value=0.04)
-    m = m.add_parameter("ki_rubisco_carboxylase_FBP", value=0.04)
-    m = m.add_parameter("ki_rubisco_carboxylase_SBP", value=0.075)
-    m = m.add_parameter("ki_rubisco_carboxylase_Orthophosphate", value=0.9)
-    m = m.add_parameter("ki_rubisco_carboxylase_NADPH", value=0.07)
-    m = m.add_parameter("kre_phosphoglycerate_kinase", value=800000000.0)
-    m = m.add_parameter("keq_phosphoglycerate_kinase", value=0.00031)
-    m = m.add_parameter("kre_gadph", value=800000000.0)
-    m = m.add_parameter("keq_gadph", value=16000000.0)
-    m = m.add_parameter("kre_triose_phosphate_isomerase", value=800000000.0)
-    m = m.add_parameter("keq_triose_phosphate_isomerase", value=22.0)
-    m = m.add_parameter("kre_aldolase_dhap_gap", value=800000000.0)
-    m = m.add_parameter("keq_aldolase_dhap_gap", value=7.1)
-    m = m.add_parameter("kre_aldolase_dhap_e4p", value=800000000.0)
-    m = m.add_parameter("keq_aldolase_dhap_e4p", value=13.0)
-    m = m.add_parameter("E0_fbpase", value=1.0)
-    m = m.add_parameter("kcat_fbpase", value=1.6)
-    m = m.add_parameter("km_fbpase_s", value=0.03)
-    m = m.add_parameter("ki_fbpase_F6P", value=0.7)
-    m = m.add_parameter("ki_fbpase_Orthophosphate", value=12.0)
-    m = m.add_parameter("kre_transketolase_gap_f6p", value=800000000.0)
-    m = m.add_parameter("keq_transketolase_gap_f6p", value=0.084)
-    m = m.add_parameter("kre_transketolase_gap_s7p", value=800000000.0)
-    m = m.add_parameter("keq_transketolase_gap_s7p", value=0.85)
-    m = m.add_parameter("E0_SBPase", value=1.0)
-    m = m.add_parameter("kcat_SBPase", value=0.32)
-    m = m.add_parameter("km_SBPase_s", value=0.013)
-    m = m.add_parameter("ki_SBPase_Orthophosphate", value=12.0)
-    m = m.add_parameter("kre_ribose_phosphate_isomerase", value=800000000.0)
-    m = m.add_parameter("keq_ribose_phosphate_isomerase", value=0.4)
-    m = m.add_parameter("kre_ribulose_phosphate_epimerase", value=800000000.0)
-    m = m.add_parameter("keq_ribulose_phosphate_epimerase", value=0.67)
-    m = m.add_parameter("E0_phosphoribulokinase", value=1.0)
-    m = m.add_parameter("kcat_phosphoribulokinase", value=7.9992)
-    m = m.add_parameter("km_phosphoribulokinase_RU5P", value=0.05)
-    m = m.add_parameter("km_phosphoribulokinase_ATP", value=0.05)
-    m = m.add_parameter("ki_phosphoribulokinase_3PGA", value=2.0)
-    m = m.add_parameter("ki_phosphoribulokinase_RUBP", value=0.7)
-    m = m.add_parameter("ki_phosphoribulokinase_Orthophosphate", value=4.0)
-    m = m.add_parameter("ki_phosphoribulokinase_4", value=2.5)
-    m = m.add_parameter("ki_phosphoribulokinase_5", value=0.4)
-    m = m.add_parameter("kre_g6pi", value=800000000.0)
-    m = m.add_parameter("keq_g6pi", value=2.3)
-    m = m.add_parameter("kre_phosphoglucomutase", value=800000000.0)
-    m = m.add_parameter("keq_phosphoglucomutase", value=0.058)
-    m = m.add_parameter("Orthophosphate (external)", value=0.5)
-    m = m.add_parameter("km_ex_pga", value=0.25)
-    m = m.add_parameter("km_ex_gap", value=0.075)
-    m = m.add_parameter("km_ex_dhap", value=0.077)
-    m = m.add_parameter("km_N_translocator_Orthophosphate (external)", value=0.74)
-    m = m.add_parameter("km_N_translocator_Orthophosphate", value=0.63)
-    m = m.add_parameter("kcat_N_translocator", value=2.0)
-    m = m.add_parameter("E0_N_translocator", value=1.0)
-    m = m.add_parameter("km_ex_g1p_G1P", value=0.08)
-    m = m.add_parameter("km_ex_g1p_ATP", value=0.08)
-    m = m.add_parameter("ki_ex_g1p", value=10.0)
-    m = m.add_parameter("ki_ex_g1p_3PGA", value=0.1)
-    m = m.add_parameter("ki_ex_g1p_F6P", value=0.02)
-    m = m.add_parameter("ki_ex_g1p_FBP", value=0.02)
-    m = m.add_parameter("E0_ex_g1p", value=1.0)
-    m = m.add_parameter("kcat_ex_g1p", value=0.32)
-    m = m.add_parameter("km_atp_synthase_ADP", value=0.014)
-    m = m.add_parameter("km_atp_synthase_Orthophosphate", value=0.3)
-    m = m.add_parameter("kcat_atp_synthase", value=2.8)
-    m = m.add_parameter("E0_atp_synthase", value=1.0)
-    m = m.add_derived(
+    m.add_variable("3PGA", initial_value=0.6387788347932627)
+    m.add_variable("BPGA", initial_value=0.0013570885908749779)
+    m.add_variable("GAP", initial_value=0.011259431827358068)
+    m.add_variable("DHAP", initial_value=0.24770748227012374)
+    m.add_variable("FBP", initial_value=0.01980222074817044)
+    m.add_variable("F6P", initial_value=1.093666906864421)
+    m.add_variable("G6P", initial_value=2.5154338857582377)
+    m.add_variable("G1P", initial_value=0.14589516537322303)
+    m.add_variable("SBP", initial_value=0.09132688566151095)
+    m.add_variable("S7P", initial_value=0.23281380022778891)
+    m.add_variable("E4P", initial_value=0.02836065066520614)
+    m.add_variable("X5P", initial_value=0.03647242425941113)
+    m.add_variable("R5P", initial_value=0.06109130988031577)
+    m.add_variable("RUBP", initial_value=0.2672164362349537)
+    m.add_variable("RU5P", initial_value=0.0244365238237522)
+    m.add_variable("ATP", initial_value=0.43633201706180874)
+    m.add_parameter("CO2 (dissolved)", value=0.2)
+    m.add_parameter("NADPH", value=0.21)
+    m.add_parameter("protons", value=1.2589254117941661e-05)
+    m.add_parameter("A*P", value=0.5)
+    m.add_parameter("NADP*", value=0.5)
+    m.add_parameter("Pi_tot", value=15.0)
+    m.add_parameter("E0_rubisco_carboxylase", value=1.0)
+    m.add_parameter("kcat_rubisco_carboxylase", value=2.72)
+    m.add_parameter("km_rubisco_carboxylase_RUBP", value=0.02)
+    m.add_parameter("km_rubisco_carboxylase_CO2 (dissolved)", value=0.0107)
+    m.add_parameter("ki_rubisco_carboxylase_3PGA", value=0.04)
+    m.add_parameter("ki_rubisco_carboxylase_FBP", value=0.04)
+    m.add_parameter("ki_rubisco_carboxylase_SBP", value=0.075)
+    m.add_parameter("ki_rubisco_carboxylase_Orthophosphate", value=0.9)
+    m.add_parameter("ki_rubisco_carboxylase_NADPH", value=0.07)
+    m.add_parameter("kre_phosphoglycerate_kinase", value=800000000.0)
+    m.add_parameter("keq_phosphoglycerate_kinase", value=0.00031)
+    m.add_parameter("kre_gadph", value=800000000.0)
+    m.add_parameter("keq_gadph", value=16000000.0)
+    m.add_parameter("kre_triose_phosphate_isomerase", value=800000000.0)
+    m.add_parameter("keq_triose_phosphate_isomerase", value=22.0)
+    m.add_parameter("kre_aldolase_dhap_gap", value=800000000.0)
+    m.add_parameter("keq_aldolase_dhap_gap", value=7.1)
+    m.add_parameter("kre_aldolase_dhap_e4p", value=800000000.0)
+    m.add_parameter("keq_aldolase_dhap_e4p", value=13.0)
+    m.add_parameter("E0_fbpase", value=1.0)
+    m.add_parameter("kcat_fbpase", value=1.6)
+    m.add_parameter("km_fbpase_s", value=0.03)
+    m.add_parameter("ki_fbpase_F6P", value=0.7)
+    m.add_parameter("ki_fbpase_Orthophosphate", value=12.0)
+    m.add_parameter("kre_transketolase_gap_f6p", value=800000000.0)
+    m.add_parameter("keq_transketolase_gap_f6p", value=0.084)
+    m.add_parameter("kre_transketolase_gap_s7p", value=800000000.0)
+    m.add_parameter("keq_transketolase_gap_s7p", value=0.85)
+    m.add_parameter("E0_SBPase", value=1.0)
+    m.add_parameter("kcat_SBPase", value=0.32)
+    m.add_parameter("km_SBPase_s", value=0.013)
+    m.add_parameter("ki_SBPase_Orthophosphate", value=12.0)
+    m.add_parameter("kre_ribose_phosphate_isomerase", value=800000000.0)
+    m.add_parameter("keq_ribose_phosphate_isomerase", value=0.4)
+    m.add_parameter("kre_ribulose_phosphate_epimerase", value=800000000.0)
+    m.add_parameter("keq_ribulose_phosphate_epimerase", value=0.67)
+    m.add_parameter("E0_phosphoribulokinase", value=1.0)
+    m.add_parameter("kcat_phosphoribulokinase", value=7.9992)
+    m.add_parameter("km_phosphoribulokinase_RU5P", value=0.05)
+    m.add_parameter("km_phosphoribulokinase_ATP", value=0.05)
+    m.add_parameter("ki_phosphoribulokinase_3PGA", value=2.0)
+    m.add_parameter("ki_phosphoribulokinase_RUBP", value=0.7)
+    m.add_parameter("ki_phosphoribulokinase_Orthophosphate", value=4.0)
+    m.add_parameter("ki_phosphoribulokinase_4", value=2.5)
+    m.add_parameter("ki_phosphoribulokinase_5", value=0.4)
+    m.add_parameter("kre_g6pi", value=800000000.0)
+    m.add_parameter("keq_g6pi", value=2.3)
+    m.add_parameter("kre_phosphoglucomutase", value=800000000.0)
+    m.add_parameter("keq_phosphoglucomutase", value=0.058)
+    m.add_parameter("Orthophosphate (external)", value=0.5)
+    m.add_parameter("km_ex_pga", value=0.25)
+    m.add_parameter("km_ex_gap", value=0.075)
+    m.add_parameter("km_ex_dhap", value=0.077)
+    m.add_parameter("km_N_translocator_Orthophosphate (external)", value=0.74)
+    m.add_parameter("km_N_translocator_Orthophosphate", value=0.63)
+    m.add_parameter("kcat_N_translocator", value=2.0)
+    m.add_parameter("E0_N_translocator", value=1.0)
+    m.add_parameter("km_ex_g1p_G1P", value=0.08)
+    m.add_parameter("km_ex_g1p_ATP", value=0.08)
+    m.add_parameter("ki_ex_g1p", value=10.0)
+    m.add_parameter("ki_ex_g1p_3PGA", value=0.1)
+    m.add_parameter("ki_ex_g1p_F6P", value=0.02)
+    m.add_parameter("ki_ex_g1p_FBP", value=0.02)
+    m.add_parameter("E0_ex_g1p", value=1.0)
+    m.add_parameter("kcat_ex_g1p", value=0.32)
+    m.add_parameter("km_atp_synthase_ADP", value=0.014)
+    m.add_parameter("km_atp_synthase_Orthophosphate", value=0.3)
+    m.add_parameter("kcat_atp_synthase", value=2.8)
+    m.add_parameter("E0_atp_synthase", value=1.0)
+    m.add_derived(
         "ADP",
         fn=_moiety_1,
         args=["ATP", "A*P"],
     )
-    m = m.add_derived(
+    m.add_derived(
         "NADP",
         fn=_moiety_1,
         args=["NADPH", "NADP*"],
     )
-    m = m.add_derived(
+    m.add_derived(
         "Orthophosphate",
         fn=_pi_cbb,
         args=[
@@ -406,32 +407,32 @@ def get_poolman2000() -> Model:
             "ATP",
         ],
     )
-    m = m.add_derived(
+    m.add_derived(
         "vmax_rubisco_carboxylase",
         fn=_mass_action_1s,
         args=["kcat_rubisco_carboxylase", "E0_rubisco_carboxylase"],
     )
-    m = m.add_derived(
+    m.add_derived(
         "vmax_fbpase",
         fn=_mass_action_1s,
         args=["kcat_fbpase", "E0_fbpase"],
     )
-    m = m.add_derived(
+    m.add_derived(
         "vmax_SBPase",
         fn=_mass_action_1s,
         args=["kcat_SBPase", "E0_SBPase"],
     )
-    m = m.add_derived(
+    m.add_derived(
         "vmax_phosphoribulokinase",
         fn=_mass_action_1s,
         args=["kcat_phosphoribulokinase", "E0_phosphoribulokinase"],
     )
-    m = m.add_derived(
+    m.add_derived(
         "vmax_ex_pga",
         fn=_mass_action_1s,
         args=["kcat_N_translocator", "E0_N_translocator"],
     )
-    m = m.add_derived(
+    m.add_derived(
         "N_translocator",
         fn=_rate_translocator,
         args=[
@@ -447,17 +448,17 @@ def get_poolman2000() -> Model:
             "km_ex_dhap",
         ],
     )
-    m = m.add_derived(
+    m.add_derived(
         "vmax_ex_g1p",
         fn=_mass_action_1s,
         args=["kcat_ex_g1p", "E0_ex_g1p"],
     )
-    m = m.add_derived(
+    m.add_derived(
         "vmax_atp_synthase",
         fn=_mass_action_1s,
         args=["kcat_atp_synthase", "E0_atp_synthase"],
     )
-    m = m.add_reaction(
+    m.add_reaction(
         "rubisco_carboxylase",
         fn=_rate_poolman_5i,
         args=[
@@ -479,7 +480,7 @@ def get_poolman2000() -> Model:
         ],
         stoichiometry={"RUBP": -1.0, "3PGA": 2.0},
     )
-    m = m.add_reaction(
+    m.add_reaction(
         "phosphoglycerate_kinase",
         fn=_rapid_equilibrium_2s_2p,
         args=[
@@ -492,7 +493,7 @@ def get_poolman2000() -> Model:
         ],
         stoichiometry={"3PGA": -1.0, "ATP": -1.0, "BPGA": 1.0},
     )
-    m = m.add_reaction(
+    m.add_reaction(
         "gadph",
         fn=_rapid_equilibrium_3s_3p,
         args=[
@@ -507,7 +508,7 @@ def get_poolman2000() -> Model:
         ],
         stoichiometry={"BPGA": -1.0, "GAP": 1.0},
     )
-    m = m.add_reaction(
+    m.add_reaction(
         "triose_phosphate_isomerase",
         fn=_rapid_equilibrium_1s_1p,
         args=[
@@ -518,19 +519,19 @@ def get_poolman2000() -> Model:
         ],
         stoichiometry={"GAP": -1, "DHAP": 1},
     )
-    m = m.add_reaction(
+    m.add_reaction(
         "aldolase_dhap_gap",
         fn=_rapid_equilibrium_2s_1p,
         args=["GAP", "DHAP", "FBP", "kre_aldolase_dhap_gap", "keq_aldolase_dhap_gap"],
         stoichiometry={"GAP": -1, "DHAP": -1, "FBP": 1},
     )
-    m = m.add_reaction(
+    m.add_reaction(
         "aldolase_dhap_e4p",
         fn=_rapid_equilibrium_2s_1p,
         args=["DHAP", "E4P", "SBP", "kre_aldolase_dhap_e4p", "keq_aldolase_dhap_e4p"],
         stoichiometry={"DHAP": -1, "E4P": -1, "SBP": 1},
     )
-    m = m.add_reaction(
+    m.add_reaction(
         "fbpase",
         fn=_michaelis_menten_1s_2i,
         args=[
@@ -544,7 +545,7 @@ def get_poolman2000() -> Model:
         ],
         stoichiometry={"FBP": -1, "F6P": 1},
     )
-    m = m.add_reaction(
+    m.add_reaction(
         "transketolase_gap_f6p",
         fn=_rapid_equilibrium_2s_2p,
         args=[
@@ -557,7 +558,7 @@ def get_poolman2000() -> Model:
         ],
         stoichiometry={"GAP": -1, "F6P": -1, "E4P": 1, "X5P": 1},
     )
-    m = m.add_reaction(
+    m.add_reaction(
         "transketolase_gap_s7p",
         fn=_rapid_equilibrium_2s_2p,
         args=[
@@ -570,7 +571,7 @@ def get_poolman2000() -> Model:
         ],
         stoichiometry={"GAP": -1, "S7P": -1, "R5P": 1, "X5P": 1},
     )
-    m = m.add_reaction(
+    m.add_reaction(
         "SBPase",
         fn=_michaelis_menten_1s_1i,
         args=[
@@ -582,7 +583,7 @@ def get_poolman2000() -> Model:
         ],
         stoichiometry={"SBP": -1, "S7P": 1},
     )
-    m = m.add_reaction(
+    m.add_reaction(
         "ribose_phosphate_isomerase",
         fn=_rapid_equilibrium_1s_1p,
         args=[
@@ -593,7 +594,7 @@ def get_poolman2000() -> Model:
         ],
         stoichiometry={"R5P": -1, "RU5P": 1},
     )
-    m = m.add_reaction(
+    m.add_reaction(
         "ribulose_phosphate_epimerase",
         fn=_rapid_equilibrium_1s_1p,
         args=[
@@ -604,7 +605,7 @@ def get_poolman2000() -> Model:
         ],
         stoichiometry={"X5P": -1, "RU5P": 1},
     )
-    m = m.add_reaction(
+    m.add_reaction(
         "phosphoribulokinase",
         fn=_rate_prk,
         args=[
@@ -625,37 +626,37 @@ def get_poolman2000() -> Model:
         ],
         stoichiometry={"RU5P": -1.0, "ATP": -1.0, "RUBP": 1.0},
     )
-    m = m.add_reaction(
+    m.add_reaction(
         "g6pi",
         fn=_rapid_equilibrium_1s_1p,
         args=["F6P", "G6P", "kre_g6pi", "keq_g6pi"],
         stoichiometry={"F6P": -1, "G6P": 1},
     )
-    m = m.add_reaction(
+    m.add_reaction(
         "phosphoglucomutase",
         fn=_rapid_equilibrium_1s_1p,
         args=["G6P", "G1P", "kre_phosphoglucomutase", "keq_phosphoglucomutase"],
         stoichiometry={"G6P": -1, "G1P": 1},
     )
-    m = m.add_reaction(
+    m.add_reaction(
         "ex_pga",
         fn=_rate_out,
         args=["3PGA", "N_translocator", "vmax_ex_pga", "km_ex_pga"],
         stoichiometry={"3PGA": -1},
     )
-    m = m.add_reaction(
+    m.add_reaction(
         "ex_gap",
         fn=_rate_out,
         args=["GAP", "N_translocator", "vmax_ex_pga", "km_ex_gap"],
         stoichiometry={"GAP": -1},
     )
-    m = m.add_reaction(
+    m.add_reaction(
         "ex_dhap",
         fn=_rate_out,
         args=["DHAP", "N_translocator", "vmax_ex_pga", "km_ex_dhap"],
         stoichiometry={"DHAP": -1},
     )
-    m = m.add_reaction(
+    m.add_reaction(
         "ex_g1p",
         fn=_rate_starch,
         args=[
@@ -676,7 +677,7 @@ def get_poolman2000() -> Model:
         ],
         stoichiometry={"G1P": -1.0, "ATP": -1.0},
     )
-    m = m.add_reaction(
+    m.add_reaction(
         "atp_synthase",
         fn=_rate_atp_synthase_2000,
         args=[
@@ -688,4 +689,4 @@ def get_poolman2000() -> Model:
         ],
         stoichiometry={"ATP": 1.0},
     )
-    return m  # noqa: RET504
+    return m

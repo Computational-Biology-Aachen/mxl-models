@@ -1,4 +1,14 @@
-"""Three-strain public-goods game: cooperators, cheaters, and private-goods producers."""
+r"""Three-strain public-goods game: cooperators, cheaters, and private-goods producers.
+
+|             |       |
+| ----------- | ----- |
+| doi         | FIXME |
+| main author | FIXME |
+| paper title | FIXME |
+| published   | FIXME |
+| journal     | FIXME |
+| organism    | FIXME |
+"""
 
 from mxlpy import Model
 
@@ -12,7 +22,7 @@ def _d_pdt(
     cheater: float,
     private: float,
 ) -> float:
-    """Net growth rate of public-goods producers; lost to cheaters and private producers."""
+    r"""Net growth rate of public-goods producers; lost to cheaters and private producers."""
     return (
         -cheater * public * alpha
         - private * public * beta
@@ -27,7 +37,7 @@ def _d_cdt(
     cheater: float,
     nu: float,
 ) -> float:
-    """Net growth rate of cheaters; exploits public-goods producers, density-limited."""
+    r"""Net growth rate of cheaters; exploits public-goods producers, density-limited."""
     return cheater * public * alpha - cheater**2.0 * nu
 
 
@@ -38,12 +48,12 @@ def _d_mdt(
     r_m: float,
     private: float,
 ) -> float:
-    """Net growth rate of private-goods producers; grows on public goods, density-limited."""
+    r"""Net growth rate of private-goods producers; grows on public goods, density-limited."""
     return -private * public * beta + private * r_m - private**2.0 * gamma
 
 
 def get_tripartite_dynamics() -> Model:
-    """Build the three-strain public-goods game model (Public / Cheater / Private)."""
+    r"""Build the three-strain public-goods game model (Public / Cheater / Private)."""
     return (
         Model()
         .add_variable(

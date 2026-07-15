@@ -10,7 +10,7 @@ EMPTY: Literal[""] = ""
 
 
 def loc(name: str, compartment: str, tissue: str) -> str:
-    """Localise a component to a compartment and tissue."""
+    r"""Localise a component to a compartment and tissue."""
     return f"{name}{compartment}{tissue}"
 
 
@@ -43,7 +43,7 @@ def kf(enzyme: str) -> str:
 
 
 def kh(enzyme: str) -> str:
-    """Hill constant"""
+    r"""Hill constant"""
     return f"kh_{enzyme}"
 
 
@@ -103,7 +103,7 @@ def q10(n: str) -> str:
 
 
 def a0(compartment: str = EMPTY, tissue: str = EMPTY) -> str:
-    """Photosystem II reaction center 0"""
+    r"""Photosystem II reaction center 0"""
     return loc("A0", compartment, tissue)
 
 
@@ -124,12 +124,12 @@ def p700_plus_fa(compartment: str = EMPTY, tissue: str = EMPTY) -> str:
 
 
 def a1(compartment: str = EMPTY, tissue: str = EMPTY) -> str:
-    """Photosystem II reaction center 1"""
+    r"""Photosystem II reaction center 1"""
     return loc("A1", compartment, tissue)
 
 
 def a2(compartment: str = EMPTY, tissue: str = EMPTY) -> str:
-    """Photosystem II reaction center 2"""
+    r"""Photosystem II reaction center 2"""
     return loc("A2", compartment, tissue)
 
 
@@ -174,7 +174,7 @@ def pq_red(compartment: str = EMPTY, tissue: str = EMPTY) -> str:
 
 
 def pfd(compartment: str = EMPTY, tissue: str = EMPTY) -> str:
-    """Photosynthetic Photon Flux Density"""
+    r"""Photosynthetic Photon Flux Density"""
     return loc("PPFD", compartment, tissue)
 
 

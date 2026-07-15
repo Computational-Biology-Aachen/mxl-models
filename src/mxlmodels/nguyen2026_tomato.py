@@ -1,16 +1,17 @@
-"""NPQ model for tomato.
+r"""NPQ model for tomato.
 
-|  |  |
-| --- | --- |
-| doi | tbd |
-| main author | tbd |
-| paper title | tbd |
-| published | tbd |
-| journal | tbd |
-| organism | tomato (Solanum lycopersicum) |
+|             |                                            |
+| ----------- | ------------------------------------------ |
+| doi         | tbd                                        |
+| main author | tbd                                        |
+| paper title | tbd                                        |
+| published   | tbd                                        |
+| journal     | tbd                                        |
+| organism    | tomato (Solanum lycopersicum)              |
+| Ported by   | Quang Huy Nguyen ( @PhotosyntheticBatman ) |
 
-Adapted from the original NPQ model for Arabidopsis - without the light conversion fn.
-Rewritten for better implementation.
+Adapted from the original NPQ model for Arabidopsis - without the light
+conversion fn. Rewritten for better implementation.
 """
 
 import numpy as np
@@ -213,7 +214,7 @@ def _calculate_p_hinv(
     volume_per_area_membrane: float,
     chl_per_area_membrane: float,
 ) -> float:
-    """New"""
+    r"""New"""
     H_conc = 10 ** (-p_h)
     return _conc_to_mmol(
         H_conc,
@@ -227,13 +228,15 @@ def _calculate_p_h(
     volume_per_area_membrane: float,
     chl_per_area_membrane: float,
 ) -> float:
-    """New"""
+    r"""New"""
     H_conc = _mmol_to_conc(
         h_mmol_per_mol_chl,
         volume_per_area_membrane,
         chl_per_area_membrane,
     )
-    return -np.log10(H_conc)
+    # Clamp log to physiological state & prevent numerical instabilities
+    # -log10(1e-14) = pH 14 <= protons <= -log10(1e-11) = pH 1
+    return -np.log10(min(max(H_conc, 1e-14), 1e-1))
 
 
 def _moiety(
@@ -274,7 +277,7 @@ def _keq_cytb6f(
     r: float,
     t: float,
 ) -> float:
-    """Equilibrium constant of cytb6f.
+    r"""Equilibrium constant of cytb6f.
 
     Adjusted from Matuszynska et al 2019 - calculated from pmf instead of deltapH
     """
@@ -297,7 +300,7 @@ def _keq_at_psyn(
     hpr: float,
     pi_mol: float,
 ) -> float:
-    """Equilibrium constant of ATP synthase. Adjusted for pmf description.
+    r"""Equilibrium constant of ATP synthase. Adjusted for pmf description.
 
     For more information see Matuszynska et al 2016 or Ebenhöh et al. 2011,2014
     """
@@ -314,7 +317,7 @@ def _atp_pmf_act(
     r: float,
     t: float,  # K
 ) -> float:
-    """Pmf regulation of ATPsynthase"""
+    r"""Pmf regulation of ATPsynthase"""
     x = np.log(10 ** (-p_k0_e)) + b * (pmf * f) / (r * t)
     return e**x / (1 + e**x)
 
@@ -352,11 +355,10 @@ def _quencher(
     gamma2: float,
     gamma3: float,
 ) -> float:
-    """Quencher mechanism - Anna 2016 model
+    r"""Quencher mechanism - Anna 2016 model
 
-    accepts:
-    Pr: fraction of non-protonated PsbS protein
-    V: fraction of Violaxanthin
+    accepts: Pr: fraction of non-protonated PsbS protein V: fraction of
+    Violaxanthin
     """
     Z = xtot - vx
     P = psb_stot - psb_s
@@ -375,7 +377,7 @@ def _quencher_q0(
     vx: float,
     y0: float,
 ) -> float:
-    """co-operative 4-state quenching mechanism"""
+    r"""co-operative 4-state quenching mechanism"""
     # gamma0: slow quenching of (Vx - protonation)
     return y0 * vx * psbs
 
@@ -385,7 +387,7 @@ def _quencher_q1(
     psbsp: float,
     y1: float,
 ) -> float:
-    """co-operative 4-state quenching mechanism"""
+    r"""co-operative 4-state quenching mechanism"""
     # gamma1: fast quenching (Vx + protonation)
     return y1 * vx * psbsp
 
@@ -395,7 +397,7 @@ def _quencher_q2(
     zx: float,
     y2: float,
 ) -> float:
-    """co-operative 4-state quenching mechanism"""
+    r"""co-operative 4-state quenching mechanism"""
     # gamma2: fastest possible quenching (Zx + protonation)
     return y2 * zx * psbsp
 
@@ -405,7 +407,7 @@ def _quencher_q3(
     zx: float,
     y3: float,
 ) -> float:
-    """co-operative 4-state quenching mechanism"""
+    r"""co-operative 4-state quenching mechanism"""
     # gamma3: slow quenching of Zx present (Zx - protonation)
     return y3 * zx * (psbs)
 
@@ -432,14 +434,9 @@ def _delta_ph(
     p_h_lumen: float,
     p_h_stoma: float,
 ) -> float:
-    """
-    Calculation of pH difference between stroma and thylakoid lumen
+    r"""Calculate the pH difference between stroma and thylakoid lumen.
 
-    Accepts:
-
-    pH_lumen: thylakoid lumen pH
-    pH_stroma: stroma pH
-
+    p_h_lumen is the thylakoid lumen pH, p_h_stoma is the stroma pH.
     """
     return p_h_lumen - p_h_stoma
 
@@ -459,7 +456,7 @@ def _initial_delta_psi(
     f: float,
     t: float,
 ) -> float:
-    """Estimation of delta psi in the dark - assuming delta_pH and delta_psi have equal contribution to pmf"""
+    r"""Estimation of delta psi in the dark - assuming delta_pH and delta_psi have equal contribution to pmf"""
     return -np.log(10) * ((r * t) / f) * delta_p_h
 
 
@@ -470,16 +467,13 @@ def _proton_motive_force(
     t: float,
     r: float,
 ) -> float:
-    """Proton motive force formula - taken from Lowe & Jones (1984).
+    r"""Proton motive force formula - taken from Lowe & Jones (1984).
 
     https://doi.org/10.1016/0968-0004(84)90038-0
 
-    Accepts:
-    delta_ph: pH different between the thylakoid lumen and the stroma
-    delta_psi: thylakoid membrane potential
-    F: Faraday constant
-    R: gas constant
-    T: temperature (K)
+    Accepts: delta_ph: pH different between the thylakoid lumen and the stroma
+    delta_psi: thylakoid membrane potential F: Faraday constant R: gas constant T:
+    temperature (K)
     """
     return delta_psi - np.log(10) * ((r * t) / f) * _delta_ph
 
@@ -565,7 +559,7 @@ def _vps2(
     b1: float,
     k_p: float,
 ) -> float:
-    """Reduction of PQ due to ps2"""
+    r"""Reduction of PQ due to ps2"""
     return k_p * 0.5 * b1
 
 
@@ -578,7 +572,7 @@ def _v_p_qox(
     p_qtot: float,
     keq: float,
 ) -> float:
-    """Oxidation of the PQ pool through cytochrome and PTOX"""
+    r"""Oxidation of the PQ pool through cytochrome and PTOX"""
     kPFD = k_cytb6f * (pfd)
     k_ptox = k_ptox * o2ex
     a1 = kPFD * keq / (keq + 1)
@@ -592,7 +586,7 @@ def _v_atp_activity(
     k_act_atp_ase: float,
     k_deact_atp_ase: float,
 ) -> float:
-    """Activation of ATPsynthase by light"""
+    r"""Activation of ATPsynthase by light"""
     if light > 0.0:
         return k_act_atp_ase * (1 - atp_activity)
     return -k_deact_atp_ase * atp_activity
@@ -606,7 +600,7 @@ def _v_at_psynthase(
     _atp_pmf_act: float,
     k_at_psynthase: float,  # mmol per mol Chl
 ) -> float:
-    """Production of ATP by ATPsynthase - pmf regulation implemented"""
+    r"""Production of ATP by ATPsynthase - pmf regulation implemented"""
     return at_pactivity * _atp_pmf_act * k_at_psynthase * (adp - atp / _keq_at_psyn)
 
 
@@ -614,7 +608,7 @@ def _v_at_pcons(
     atp: float,
     k_at_pconsumption: float,
 ) -> float:
-    """ATP consuming reaction"""
+    r"""ATP consuming reaction"""
     return k_at_pconsumption * atp
 
 
@@ -623,7 +617,7 @@ def _v_leak(
     kleak: float,
     h_stroma_conc: float,
 ) -> float:
-    """Transmembrane proton leak"""
+    r"""Transmembrane proton leak"""
     return kleak * (h_lumen_conc - h_stroma_conc)
 
 
@@ -636,7 +630,7 @@ def _v_xdeepox(
     volume_per_area_membrane: float,
     chl_per_area_membrane: float,
 ) -> float:
-    """Deepoxidation of Vx"""
+    r"""Deepoxidation of Vx"""
     a = h**n_hx / (
         h**n_hx
         + _calculate_p_hinv(
@@ -654,7 +648,7 @@ def _v_epox_z(
     zx: float,
     k_epox_z: float,
 ) -> float:
-    """Deepoxidation of Vx"""
+    r"""Deepoxidation of Vx"""
     return k_epox_z * zx
 
 
@@ -667,7 +661,7 @@ def _v_psb_sp(
     volume_per_area_membrane: float,
     chl_per_area_membrane: float,
 ) -> float:
-    """Protonation of PsbS protein - Modified for Zx inhibition effect.
+    r"""Protonation of PsbS protein - Modified for Zx inhibition effect.
 
     Zx is assmuned to inhibit the deprotonation of PsbS
     """
@@ -688,7 +682,7 @@ def _deprot_act(
     n_hz: float,
     zx: float,
 ) -> float:
-    """Inhibition effect of Zx on PsbS deprotonation."""
+    r"""Inhibition effect of Zx on PsbS deprotonation."""
     return k_zsat**n_hz / (k_zsat**n_hz + zx**n_hz)
 
 
@@ -697,7 +691,7 @@ def _v_psb_s(
     k_deprot: float,
     psbs_deprot_act: float,
 ) -> float:
-    """Deprotonation of PsbS protein - Modified for Zx inhibition effect.
+    r"""Deprotonation of PsbS protein - Modified for Zx inhibition effect.
 
     Zx is assmuned to inhibit the deprotonation of PsbS
     """
@@ -709,10 +703,10 @@ def _ql(b1: float, b2: float, psii_tot: float) -> float:
 
 
 def get_nguyen2026_tomato() -> Model:
-    """NPQ model for tomato.
+    r"""NPQ model for tomato.
 
-    Adapted from the original NPQ model for Arabidopsis - without the light conversion fn
-    Rewritten for better implentation
+    Adapted from the original NPQ model for Arabidopsis - without the light
+    conversion fn Rewritten for better implentation
     """
     m = Model()
 

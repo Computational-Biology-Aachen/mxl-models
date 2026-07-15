@@ -1,4 +1,4 @@
-"""Fuente 2024 model.
+r"""Fuente 2024 model.
 
 |             |                                                                                                                      |
 | ----------- | -------------------------------------------------------------------------------------------------------------------- |
@@ -8,33 +8,32 @@
 | published   | September 2024                                                                                                       |
 | journal     | Plant Physiology and Biochemistry                                                                                    |
 | organism    | Chlamydomonas reinhardtii                                                                                            |
+| Ported by   | Marvin van Aalst ( @marvinvanaalst )                                                                                 |
 
-The Fuente2024 model is a kinetic model of photosynthesis designed
-according to Occam's razor, aiming to capture the core processes of
-photosynthesis with minimal complexity. The model focuses on responses
-of the photosynthetic machinery to dynamic light oscillations and
-includes only light-dependent reactions. It contains simplified
-representations of photosystem II, photosystem I, the plastoquinone
-pool, and proton and ATP concentrations in the lumen and stroma. The
-model also describes activation of non-photochemical quenching (NPQ),
-chlorophyll fluorescence dynamics, and oxygen evolution rates.
+The Fuente2024 model is a kinetic model of photosynthesis designed according to
+Occam's razor, aiming to capture the core processes of photosynthesis with
+minimal complexity. The model focuses on responses of the photosynthetic
+machinery to dynamic light oscillations and includes only light-dependent
+reactions. It contains simplified representations of photosystem II,
+photosystem I, the plastoquinone pool, and proton and ATP concentrations in the
+lumen and stroma. The model also describes activation of non-photochemical
+quenching (NPQ), chlorophyll fluorescence dynamics, and oxygen evolution rates.
 
 Light intensity is represented as a sinusoidal function with adjustable
-amplitude and frequency. To facilitate comparison with models that
-assume constant irradiance, the oscillation is defined around a base
-light intensity. The use of frequency-dependent light inputs enables
-additional analyses that are not possible under steady-state
-conditions. In the original study, the model was used to generate Bode
-plots of fluorescence responses to light oscillations and to compare
-them with experimental data from Chlamydomonas reinhardtii.
+amplitude and frequency. To facilitate comparison with models that assume
+constant irradiance, the oscillation is defined around a base light intensity.
+The use of frequency-dependent light inputs enables additional analyses that
+are not possible under steady-state conditions. In the original study, the
+model was used to generate Bode plots of fluorescence responses to light
+oscillations and to compare them with experimental data from Chlamydomonas
+reinhardtii.
 
-Consistent with its minimalist design, the model serves as a foundation
-for further extension while demonstrating a novel approach to
-photosynthesis modeling. The authors show that dynamic light protocols
-can reveal insights that may be missed by traditional steady-state
-models. To support reuse and extension, they provide a detailed
-Wolfram Language notebook that reproduces several figures from the
-publication.
+Consistent with its minimalist design, the model serves as a foundation for
+further extension while demonstrating a novel approach to photosynthesis
+modeling. The authors show that dynamic light protocols can reveal insights
+that may be missed by traditional steady-state models. To support reuse and
+extension, they provide a detailed Wolfram Language notebook that reproduces
+several figures from the publication.
 """
 
 from collections.abc import Iterable
@@ -446,34 +445,32 @@ def _initial_combined(
 
 
 def get_fuente_2024(*, at_reference: bool = False) -> Model:
-    """Fuente 2024 model
+    r"""Fuente 2024 model
 
-    The Fuente2024 model is a kinetic model of photosynthesis designed
-    according to Occam's razor, aiming to capture the core processes of
-    photosynthesis with minimal complexity. The model focuses on responses
-    of the photosynthetic machinery to dynamic light oscillations and
-    includes only light-dependent reactions. It contains simplified
-    representations of photosystem II, photosystem I, the plastoquinone
-    pool, and proton and ATP concentrations in the lumen and stroma. The
-    model also describes activation of non-photochemical quenching (NPQ),
-    chlorophyll fluorescence dynamics, and oxygen evolution rates.
+    The Fuente2024 model is a kinetic model of photosynthesis designed according to
+    Occam's razor, aiming to capture the core processes of photosynthesis with
+    minimal complexity. The model focuses on responses of the photosynthetic
+    machinery to dynamic light oscillations and includes only light-dependent
+    reactions. It contains simplified representations of photosystem II,
+    photosystem I, the plastoquinone pool, and proton and ATP concentrations in the
+    lumen and stroma. The model also describes activation of non-photochemical
+    quenching (NPQ), chlorophyll fluorescence dynamics, and oxygen evolution rates.
 
     Light intensity is represented as a sinusoidal function with adjustable
-    amplitude and frequency. To facilitate comparison with models that
-    assume constant irradiance, the oscillation is defined around a base
-    light intensity. The use of frequency-dependent light inputs enables
-    additional analyses that are not possible under steady-state
-    conditions. In the original study, the model was used to generate Bode
-    plots of fluorescence responses to light oscillations and to compare
-    them with experimental data from Chlamydomonas reinhardtii.
+    amplitude and frequency. To facilitate comparison with models that assume
+    constant irradiance, the oscillation is defined around a base light intensity.
+    The use of frequency-dependent light inputs enables additional analyses that
+    are not possible under steady-state conditions. In the original study, the
+    model was used to generate Bode plots of fluorescence responses to light
+    oscillations and to compare them with experimental data from Chlamydomonas
+    reinhardtii.
 
-    Consistent with its minimalist design, the model serves as a foundation
-    for further extension while demonstrating a novel approach to
-    photosynthesis modeling. The authors show that dynamic light protocols
-    can reveal insights that may be missed by traditional steady-state
-    models. To support reuse and extension, they provide a detailed
-    Wolfram Language notebook that reproduces several figures from the
-    publication.
+    Consistent with its minimalist design, the model serves as a foundation for
+    further extension while demonstrating a novel approach to photosynthesis
+    modeling. The authors show that dynamic light protocols can reveal insights
+    that may be missed by traditional steady-state models. To support reuse and
+    extension, they provide a detailed Wolfram Language notebook that reproduces
+    several figures from the publication.
     """
     m = Model()
 

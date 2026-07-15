@@ -1,13 +1,14 @@
-"""Compartmental models of infectious disease spread.
+r"""Compartmental models of infectious disease spread.
 
-|  |  |
-| --- | --- |
-| doi | 10.1098/rspa.1927.0118 |
-| main author | William Ogilvy Kermack |
+|             |                                                        |
+| ----------- | ------------------------------------------------------ |
+| doi         | 10.1098/rspa.1927.0118                                 |
+| main author | William Ogilvy Kermack                                 |
 | paper title | A Contribution to the Mathematical Theory of Epidemics |
-| published | August 1927 |
-| journal | Proceedings of the Royal Society A |
-| organism | N/A (epidemiological compartments) |
+| published   | August 1927                                            |
+| journal     | Proceedings of the Royal Society A                     |
+| organism    | N/A (epidemiological compartments)                     |
+| Ported by   | Marvin van Aalst ( @marvinvanaalst )                   |
 
 These models are based on the SIR (Susceptible-Infectious-Recovered) framework,
 which is commonly used to model the spread of infectious diseases.
@@ -21,7 +22,7 @@ __all__ = ["get_sir", "get_sird"]
 
 
 def get_sir() -> Model:
-    """Create a simple SIR model."""
+    r"""Create a simple SIR model."""
     return (
         Model()
         .add_variables({"s": 0.9, "i": 0.1, "r": 0.0})
@@ -42,7 +43,7 @@ def get_sir() -> Model:
 
 
 def get_sird() -> Model:
-    """Create a simple SIR model with death."""
+    r"""Create a simple SIR model with death."""
     return (
         get_sir()
         .add_variable("d", 0.0)

@@ -1,8 +1,8 @@
-"""MxlModels is a Python package of reference mechanistic models.
+r"""MxlModels is a Python package of reference mechanistic models.
 
-It contains the same models as in the [MxlBricks](https://github.com/Computational-Biology-Aachen/mxl-bricks) repo,
+It contains the same models as in the
+[MxlBricks](https://github.com/Computational-Biology-Aachen/mxl-bricks) repo,
 but written as single, flat files to make inspection easier.
-
 """
 
 # Re-export mxlpy modules for easy access
@@ -20,6 +20,7 @@ from .elowitz2000_repressilator import get_elowitz2000_repressilator
 from .fuente2024 import get_fuente_2024
 from .gu_2023 import get_gu_2023
 from .hahn1987 import get_hahn1987
+from .lam2026 import get_lam2026
 from .lazar1997 import get_lazar1997
 from .li2021 import get_li_2021
 from .lotka_volterra_v1 import get_lotka_volterra_v1
@@ -27,14 +28,30 @@ from .lotka_volterra_v2 import get_lotka_volterra_v2
 from .matuszynska2016_npq import get_matuszynska2016_npq
 from .matuszynska2016_phd import get_matuszynska2016_phd
 from .matuszynska2019 import get_matuszynska2019
+from .morales2018 import get_morales2018
+from .nedbal2021_frequency import (
+    get_harmonic_model as get_nedbal_2021_harmonic,
+)
+from .nedbal2021_frequency import (
+    get_induction_model as get_nedbal_2021_induction,
+)
+from .nedbal2021_frequency import (
+    get_ojip_model as get_nedbal_2021_ojip,
+)
 from .nguyen2026_tomato import get_nguyen2026_tomato
 from .pfennig2024_synechocystis import get_pfennig2024_synechocystis
 from .poolman2000 import get_poolman2000
 from .prigogine1968_brusselator import get_prigogine1968_brusselator
 from .saadat2021 import get_saadat2021 as get_saadat2021
+from .salvatori2022 import get_salvatori2022
 from .selkov1968_oscillator import get_selkov1968_glycolysis_oscillator
 from .sir import get_sir, get_sird
+from .ss.bernacchi2013 import get_bernacchi_2013
+from .ss.fvcb1980 import get_fvcb
+from .ss.johnson2021 import get_johnson2021
 from .yokota1985 import get_yokota1985
+from .zaks2012 import get_zaks2012
+from .zhu2005 import get_zhu_2005
 from .zhu2009 import get_zhu_2009
 
 __all__ = [
@@ -42,14 +59,18 @@ __all__ = [
     "data",
     "fit",
     "get_bellasio_2019",
+    "get_bernacchi_2013",
+    "get_davis2017",
     "get_davis2017",
     "get_dynamic_enterobactin",
     "get_ebeling_2026",
     "get_ebenhoeh2014",
     "get_elowitz2000_repressilator",
     "get_fuente_2024",
-    "get_gu_2023",
+    "get_fvcb_1980",
     "get_hahn1987",
+    "get_johnson2021",
+    "get_lam2026",
     "get_lazar1997",
     "get_li_2021",
     "get_lotka_volterra_v1",
@@ -57,17 +78,24 @@ __all__ = [
     "get_matuszynska2016_npq",
     "get_matuszynska2016_phd",
     "get_matuszynska2019",
+    "get_morales2018",
+    "get_nedbal_2021_harmonic",
+    "get_nedbal_2021_induction",
+    "get_nedbal_2021_ojip",
     "get_nguyen2026_tomato",
     "get_pfennig2024_synechocystis",
     "get_poolman2000",
     "get_population_dynamics",
     "get_prigogine1968_brusselator",
     "get_saadat2021",
+    "get_salvatori2022",
     "get_selkov1968_glycolysis_oscillator",
     "get_sir",
     "get_sird",
     "get_tripartite_dynamics",
     "get_yokota1985",
+    "get_zaks2012",
+    "get_zhu_2005",
     "get_zhu_2009",
     "mc",
     "mca",
