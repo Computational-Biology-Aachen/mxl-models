@@ -1,58 +1,32 @@
 import math
 
-def f_q(q: float, a_q: float) -> float:
-    """Redox poise balance between Cyt b6f and PSII."""
+# from mxlpy import SteadyStateModelBuilder
+# from mxlpy.meta import generate_model_code_mxlweb
+
+
+def _derived_ft(E_T: float, T: float, T0: float) -> float:
+    return 1.0 if E_T == 0 else math.sqrt(T0 / T) * math.exp(E_T * (1.0 / T0 - 1.0 / T))
+
+def _derived_fq(q: float, a_q: float) -> float:
     return (1.0 + a_q) / (1.0 + a_q * q)
 
+def _derived_fs(alpha: float, PAR: float, b_s: float, c_s: float) -> float:
+    return 1.0 / (1.0 + c_s * (math.exp(-b_s * alpha * PAR)))
 
-def f_T(T: float, T0: float, E_T: float) -> float:
-    """
-    Placeholder standardized temperature response.
-    Set E_T=0 or f_T=1 if temperature response is not fitted.
-    """
-    if E_T == 0:
-        return 1.0
-    return math.exp(E_T * (T - T0) / (T * T0))
-
-
-def f_s(Jg: float, b_s: float, c_s: float) -> float:
-    """
-    Placeholder swelling/crowding function.
-    Set b_s=0 or c_s=0 to collapse to 1.
-    The exact functional form should be checked against the paper text.
-    """
-    return 1.0 / (1.0 + c_s * (1.0 - math.exp(-b_s * Jg)))
-
-
-def j_psii_gu(
-    q: float,
-    U: float,
-    R1: float,
-    R2: float,
-    q_r: float,
-    a_q: float,
-    b_s: float,
-    c_s: float,
-    Jg: float,
-    T: float,
-    T0: float,
-    E_T: float,
-) -> float:
-    """
-    Gu et al. steady-state redox PET model.
-
-    J_PSII = 2 U f_T f_s f_q (q_r - q) q /
-             [ (R1 + 2 R2 f_s f_q - 1) q + q_r ]
-    """
-    fq = f_q(q, a_q)
-    fs = f_s(Jg, b_s, c_s)
-    ft = f_T(T, T0, E_T)
-
+def _derived_j_psii(U: float, R1: float, R2: float, q_r: float, q: float, ft: float, fs: float, fq: float) -> float:
     numerator = 2.0 * U * ft * fs * fq * (q_r - q) * q
     denominator = (R1 + 2.0 * R2 * fs * fq - 1.0) * q + q_r
-
+    
     return numerator / denominator
 
+def _derived_h_cyt(q: float, a_q: float) -> float:
+    return q * (1.0 + a_q) / (1.0 + a_q * q)
+
+def _derived_h_pqh2(j_psii: float, U: float, ft: float, fs: float, fq: float, q: float) -> float:
+    return j_psii / (2 * U * ft * fs * fq * q)
+
+def _derived_h_pq(h_pqh2: float) -> float:
+    return 1.0 - h_pqh2
 
 def get_gu2023(
     q: float = 0.7,
@@ -67,19 +41,51 @@ def get_gu2023(
     PAR: float = 500 / 0.85,
     T: float = 298.15,
     T0: float = 298.15,
-    E_T: float = 0.0,
-) -> Model:
-    
-    ft = 1.0 if E_T == 0 else math.exp(E_T * (T - T0) / (T * T0))
-    fq = (1.0 + a_q) / (1.0 + a_q * q)
-    fs = 1.0 / (1.0 + c_s * (1.0 - math.exp(-b_s * alpha * PAR)))
+    E_T: float = 0.0
+):
+    ft = _derived_ft(E_T, T, T0)
+    fq = _derived_fq(q, a_q)
+    fs = _derived_fs(alpha, PAR, b_s, c_s)
+    J_PSII = _derived_j_psii(U, R1, R2, q_r, q, ft, fs, fq)
+    h_cyt = _derived_h_cyt(q, a_q)
+    h_pqh2 = _derived_h_pqh2(J_PSII, U, ft, fs, fq, q)
+    h_pq = _derived_h_pq(h_pqh2)
+    return {
+        "J_PSII": J_PSII,
+        "h_cyt": h_cyt,
+        "h_pqh2": h_pqh2,
+        "h_pq": h_pq,
+        "ft": ft,
+        "fq": fq,
+        "fs": fs,
+    }
 
-    numerator = 2.0 * U * ft * fs * fq * (q_r - q) * q
-    denominator = (R1 + 2.0 * R2 * fs * fq - 1.0) * q + q_r
+
+# def get_gu2023() -> SteadyStateModelBuilder:
+#     """
+#     Returns a SteadyStateModelBuilder for the Gu et al. 2023 model.
+#     """
+#     model = SteadyStateModelBuilder()
+#     model.add_parameter("q", 0.7)
+#     model.add_parameter("U", 250.0)
+#     model.add_parameter("R1", 0.2)
+#     model.add_parameter("R2", 0.5)
+#     model.add_parameter("q_r", 1.0)
+#     model.add_parameter("a_q", 0.0)
+#     model.add_parameter("b_s", 0.0)
+#     model.add_parameter("c_s", 0.0)
+#     model.add_parameter("alpha", 0.85)
+#     model.add_parameter("PAR", 500 / 0.85)
+#     model.add_parameter("T", 298.15)
+#     model.add_parameter("T0", 298.15)
+#     model.add_parameter("E_T", 0.0)
     
-    j_psii = numerator / denominator
-    h_cyt = q * (1.0 + a_q) / (1.0 + a_q * q)
-    h_pqh2 = j_psii / (2 * U * ft * fs * fq * q)
-    h_pq = 1 - h_pqh2
-    
-    return {"J_PSII": j_psii, "h_cyt": h_cyt, "h_pqh2": h_pqh2, "h_pq": h_pq}
+#     model.add_derived("ft", _derived_ft, args=["E_T", "T", "T0"])
+#     model.add_derived("fq", _derived_fq, args=["q", "a_q"])
+#     model.add_derived("fs", _derived_fs, args=["alpha", "PAR", "b_s", "c_s"])
+#     model.add_derived("J_PSII", _derived_j_psii, args=["U", "R1", "R2", "q_r", "q", "ft", "fs", "fq"])
+#     model.add_derived("h_cyt", _derived_h_cyt, args=["q", "a_q"])
+#     model.add_derived("h_pqh2", _derived_h_pqh2, args=["J_PSII", "U", "ft", "fs", "fq", "q"])
+#     model.add_derived("h_pq", _derived_h_pq, args=["h_pqh2"])
+
+#     return model
