@@ -48,6 +48,7 @@ from .sir import get_sir, get_sird
 from .ss.bernacchi2013 import get_bernacchi_2013
 from .ss.fvcb1980 import get_fvcb
 from .ss.johnson2021 import get_johnson2021
+from .ss.gu2023 import get_gu2023
 from .yokota1985 import get_yokota1985
 from .zaks2012 import get_zaks2012
 from .zhu2005 import get_zhu_2005
@@ -67,6 +68,7 @@ __all__ = [
     "get_elowitz2000_repressilator",
     "get_fuente_2024",
     "get_fvcb_1980",
+    "get_gu2023",
     "get_hahn1987",
     "get_johnson2021",
     "get_lam2026",
