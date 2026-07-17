@@ -31,9 +31,8 @@ def _safe_sqrt(
 def _safe_div(
     num: float,
     den: float,
-    eps: float = 1e-30,
 ) -> float:
-    return num / den if abs(den) > eps else num / eps
+    return num / max(den, 1e-30)
 
 
 def _par(
