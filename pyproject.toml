@@ -17,7 +17,7 @@ dev = [
   "pyright>=1.1.403",
   "pytest-cov>=5.0.0",
   "pytest>=8.3.3",
-  "ruff>=0.15.11",
+  "ruff>=0.16.9",
   "typer>=0.24.1",
 ]
 
@@ -83,6 +83,7 @@ ignore = [
   "ANN401",  # any
   "C901",    # too complex
   "COM812",  # missing trailing comma  # "D", # all of documentation
+  "CPY001",  # missing copyright notice, LICENSE covers the repo
   "D105",    # magic methods
   "D203",    # blank line before docstring
   "D213",    # multi-line summary first line
@@ -100,6 +101,7 @@ ignore = [
   "PLR0912", # too many branches
   "PLR0913", # max num of arguments
   "PLR0915", # too many lines
+  "PLR0917", # too many positional arguments, mxlpy rate functions are positional
   "PT011",   # pytest.raises is too broad
   "S110",    # try-except-pass
   "S301",    # pickle usage
@@ -115,8 +117,14 @@ select = ["ALL"]
 
 [tool.ruff.lint.per-file-ignores]
 "*.ipynb" = [
-  "D",    # all of documentation
-  "T201", # print statements
+  "ANN",     # type annotations
+  "B905",    # zip without strict
+  "D",       # all of documentation
+  "N803",    # non-lowercase argument, physics notation
+  "N816",    # mixed-case global, physics notation
+  "PD011",   # .values
+  "PLR2004", # magic comparisons
+  "T201",    # print statements
 ]
 "scripts/format_docstrings.py" = [
   "ARG002", # libcst leave_* requires original_node arg
@@ -126,6 +134,9 @@ select = ["ALL"]
   "FBT003", # typer boolean default values
   "N802",   # libcst leave_* method naming
   "TC003",  # runtime Path import used by typer
+]
+"src/mxlmodels/ss/*" = [
+  "N803", # non-lowercase argument, physics notation from the source papers
 ]
 "tests/*" = [
   "D",       # all of documentation

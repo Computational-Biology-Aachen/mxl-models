@@ -9,14 +9,19 @@ repos:
         pass_filenames: true
         stages: [commit-msg]
   # Lint & format
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.15.20
+  # Uses the uv.lock ruff so pre-commit, CI and editors agree on the rule set
+  - repo: local
     hooks:
       - id: ruff
+        name: ruff
         types_or: [python, pyi, jupyter]
-        args: [--fix]
+        language: system
+        entry: uv run ruff check --fix --force-exclude
       - id: ruff-format
+        name: ruff-format
         types_or: [python, pyi, jupyter]
+        language: system
+        entry: uv run ruff format --force-exclude
 
   - repo: local
     hooks:

@@ -61,7 +61,6 @@ __all__ = [
     "get_bellasio_2019",
     "get_bernacchi_2013",
     "get_davis2017",
-    "get_davis2017",
     "get_dynamic_enterobactin",
     "get_ebeling_2026",
     "get_ebenhoeh2014",
