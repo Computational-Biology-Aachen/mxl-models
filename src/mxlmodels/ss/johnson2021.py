@@ -33,10 +33,26 @@ difficult as the model to publication connection is not clear from time to
 time.
 """
 
+from typing import Literal
+
 import numpy as np
+import numpy.typing as npt
+
+type Array = npt.NDArray[np.float64]
 
 
-def solve_xcs(Abs, CB6F, Kd, Kf, Kp2, Ku2, Q, eta, kq, phi1P_max):
+def solve_xcs(
+    Abs: float,
+    CB6F: float,
+    Kd: float,
+    Kf: float,
+    Kp2: float,
+    Ku2: float,
+    Q: npt.ArrayLike,
+    eta: Array,
+    kq: float,
+    phi1P_max: float,
+) -> Array:
 
     Q = np.array(Q, dtype=float)
 
@@ -130,36 +146,36 @@ def solve_xcs(Abs, CB6F, Kd, Kf, Kp2, Ku2, Q, eta, kq, phi1P_max):
 
 
 def get_johnson2021(
-    PAR=800,
-    Temp=25,
-    CO2=200,
-    O2=209,
-    Abs=0.85,
-    beta=0.52,
-    CB6F=(350 / 300) / 1e6,
-    RUB=(100 / 3.6) / 1e6,
-    Rds=0.01,
-    Ku2=0e09,
-    theta1=1,
-    eps1=0,
-    eps2=1,
-    alpha_opt="static",
-    nl=0.75,
-    nc=1.00,
-    case_id=0,
-):
+    PAR: npt.ArrayLike = 800,
+    Temp: float = 25,
+    CO2: float = 200,
+    O2: float = 209,
+    Abs: float = 0.85,
+    beta: float = 0.52,
+    CB6F: float = (350 / 300) / 1e6,
+    RUB: float = (100 / 3.6) / 1e6,
+    Rds: float = 0.01,
+    Ku2: float = 0e09,
+    theta1: float = 1,
+    eps1: float = 0,
+    eps2: float = 1,
+    alpha_opt: Literal["static", "dynamic"] = "static",
+    nl: float = 0.75,
+    nc: float = 1.00,
+    case_id: int = 0,
+) -> dict[str, Array | float]:
 
     # Ensure arrays
     PAR = np.atleast_1d(np.array(PAR, dtype=float))
-    Temp = np.full_like(PAR, Temp, dtype=float)
-    CO2 = np.full_like(PAR, CO2, dtype=float)
-    O2 = np.full_like(PAR, O2, dtype=float)
+    Temp_arr = np.full_like(PAR, Temp, dtype=float)
+    CO2_arr = np.full_like(PAR, CO2, dtype=float)
+    O2_arr = np.full_like(PAR, O2, dtype=float)
 
     # Broadcast to common shape
     Q = PAR / 1e6
-    Tc = Temp / 1e6
-    C = CO2 / 1e6
-    O = O2 / 1e3
+    Tc = Temp_arr / 1e6
+    C = CO2_arr / 1e6
+    O = O2_arr / 1e3
 
     # Photochemical constants
     Kf = 0.05e09
@@ -211,7 +227,7 @@ def get_johnson2021(
     JP700_c = JP680_c * eta
 
     # Quadratic smoothing function tr(l1, l2, th)
-    def tr(l1, l2, th):
+    def tr(l1: npt.ArrayLike, l2: npt.ArrayLike, th: float) -> tuple[Array, Array]:
         l1 = np.array(l1, dtype=float)
         l2 = np.array(l2, dtype=float)
         th = float(th)
@@ -235,7 +251,7 @@ def get_johnson2021(
     Ag_min = np.minimum(q1_Ag, q2_Ag)
     Ag_max = np.maximum(q1_Ag, q2_Ag)
 
-    Ag_a = np.where(C > gammas, Ag_min, Ag_max)
+    Ag_a = np.where(gammas < C, Ag_min, Ag_max)
 
     # Net assimilation
     An_a = Ag_a - Rd
@@ -364,9 +380,9 @@ def get_johnson2021(
     # Build result dict (vector outputs)
     return {
         "PAR": PAR,
-        "Temp": Temp,
-        "CO2": CO2,
-        "O2": O2,
+        "Temp": Temp_arr,
+        "CO2": CO2_arr,
+        "O2": O2_arr,
         "Q": Q,
         "C": C,
         "O_bar": O,

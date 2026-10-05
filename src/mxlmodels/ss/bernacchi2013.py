@@ -18,28 +18,33 @@ https://doi.org/10.1111/pce.12118
 """
 
 import numpy as np
+import numpy.typing as npt
+
+type Array = npt.NDArray[np.float64]
 
 
-def electron_transport(PPFD, Jmax, alpha, theta):
+def electron_transport(
+    PPFD: npt.ArrayLike, Jmax: float, alpha: float, theta: float
+) -> Array:
     absorbed = alpha * np.asarray(PPFD, dtype=float)
     discriminant = (absorbed + Jmax) ** 2 - 4 * theta * absorbed * Jmax
     return (absorbed + Jmax - np.sqrt(np.maximum(discriminant, 0))) / (2 * theta)
 
 
 def get_bernacchi_2013(
-    Ci,
-    PPFD,
-    Vcmax,
-    Jmax,
-    TPU,
-    Rd,
-    Gamma_star,
-    Kc,
-    Ko,
-    O,
-    alpha,
-    theta,
-):
+    Ci: npt.ArrayLike,
+    PPFD: npt.ArrayLike,
+    Vcmax: float,
+    Jmax: float,
+    TPU: float,
+    Rd: float,
+    Gamma_star: float,
+    Kc: float,
+    Ko: float,
+    O: float,
+    alpha: float,
+    theta: float,
+) -> tuple[Array, Array, Array, Array]:
     Ci, PPFD = np.broadcast_arrays(
         np.asarray(Ci, dtype=float),
         np.asarray(PPFD, dtype=float),

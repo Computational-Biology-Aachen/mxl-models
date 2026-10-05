@@ -6,8 +6,8 @@ import typer
 app = typer.Typer(add_completion=False)
 
 
-def get_modules(pkg_dir: Path):
-    modules = set()
+def get_modules(pkg_dir: Path) -> set[str]:
+    modules: set[str] = set()
 
     for entry in pkg_dir.iterdir():
         if not entry.is_file():
@@ -22,12 +22,12 @@ def get_modules(pkg_dir: Path):
     return modules
 
 
-def extract_imported_modules(init_file: Path):
+def extract_imported_modules(init_file: Path) -> set[str]:
     if not init_file.exists():
         return set()
 
     tree = ast.parse(init_file.read_text(encoding="utf-8"))
-    imported = set()
+    imported: set[str] = set()
 
     for node in ast.walk(tree):
         if isinstance(node, ast.Import):
@@ -41,7 +41,7 @@ def extract_imported_modules(init_file: Path):
     return imported
 
 
-def analyze_package(pkg_dir: Path):
+def analyze_package(pkg_dir: Path) -> tuple[set[str], set[str], list[str]]:
     modules = get_modules(pkg_dir)
     imported = extract_imported_modules(pkg_dir / "__init__.py")
 
@@ -54,7 +54,7 @@ def analyze_package(pkg_dir: Path):
 def check(
     path: Path = typer.Argument(..., exists=True, file_okay=False, dir_okay=True),
     verbose: bool = typer.Option(False, "--verbose", "-v"),
-):
+) -> None:
     """
     Check which modules in a package are not referenced in __init__.py.
     """

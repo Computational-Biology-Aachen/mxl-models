@@ -7,26 +7,44 @@ import math
 def _derived_ft(E_T: float, T: float, T0: float) -> float:
     return 1.0 if E_T == 0 else math.sqrt(T0 / T) * math.exp(E_T * (1.0 / T0 - 1.0 / T))
 
+
 def _derived_fq(q: float, a_q: float) -> float:
     return (1.0 + a_q) / (1.0 + a_q * q)
+
 
 def _derived_fs(alpha: float, PAR: float, b_s: float, c_s: float) -> float:
     return 1.0 / (1.0 + c_s * (math.exp(-b_s * alpha * PAR)))
 
-def _derived_j_psii(U: float, R1: float, R2: float, q_r: float, q: float, ft: float, fs: float, fq: float) -> float:
+
+def _derived_j_psii(
+    U: float,
+    R1: float,
+    R2: float,
+    q_r: float,
+    q: float,
+    ft: float,
+    fs: float,
+    fq: float,
+) -> float:
     numerator = 2.0 * U * ft * fs * fq * (q_r - q) * q
     denominator = (R1 + 2.0 * R2 * fs * fq - 1.0) * q + q_r
-    
+
     return numerator / denominator
+
 
 def _derived_h_cyt(q: float, a_q: float) -> float:
     return q * (1.0 + a_q) / (1.0 + a_q * q)
 
-def _derived_h_pqh2(j_psii: float, U: float, ft: float, fs: float, fq: float, q: float) -> float:
+
+def _derived_h_pqh2(
+    j_psii: float, U: float, ft: float, fs: float, fq: float, q: float
+) -> float:
     return j_psii / (2 * U * ft * fs * fq * q)
+
 
 def _derived_h_pq(h_pqh2: float) -> float:
     return 1.0 - h_pqh2
+
 
 def get_gu2023(
     q: float = 0.7,
@@ -41,8 +59,8 @@ def get_gu2023(
     PAR: float = 500 / 0.85,
     T: float = 298.15,
     T0: float = 298.15,
-    E_T: float = 0.0
-):
+    E_T: float = 0.0,
+) -> dict[str, float]:
     ft = _derived_ft(E_T, T, T0)
     fq = _derived_fq(q, a_q)
     fs = _derived_fs(alpha, PAR, b_s, c_s)
@@ -79,7 +97,7 @@ def get_gu2023(
 #     model.add_parameter("T", 298.15)
 #     model.add_parameter("T0", 298.15)
 #     model.add_parameter("E_T", 0.0)
-    
+
 #     model.add_derived("ft", _derived_ft, args=["E_T", "T", "T0"])
 #     model.add_derived("fq", _derived_fq, args=["q", "a_q"])
 #     model.add_derived("fs", _derived_fs, args=["alpha", "PAR", "b_s", "c_s"])
