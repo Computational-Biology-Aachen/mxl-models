@@ -120,11 +120,18 @@ select = ["ALL"]
   "ANN",     # type annotations
   "B905",    # zip without strict
   "D",       # all of documentation
+  "E741",    # ambiguous name, physics notation (I, O)
   "N803",    # non-lowercase argument, physics notation
   "N816",    # mixed-case global, physics notation
   "PD011",   # .values
   "PLR2004", # magic comparisons
   "T201",    # print statements
+]
+"scripts/check_if_imported.py" = [
+  "B008",   # typer.Argument/Option defaults in signature
+  "D",      # docstring requirements for utility script
+  "FBT001", # typer boolean options
+  "FBT003", # typer boolean default values
 ]
 "scripts/format_docstrings.py" = [
   "ARG002", # libcst leave_* requires original_node arg
@@ -136,6 +143,7 @@ select = ["ALL"]
   "TC003",  # runtime Path import used by typer
 ]
 "src/mxlmodels/ss/*" = [
+  "E741", # ambiguous name, physics notation from the source papers (I, O)
   "N803", # non-lowercase argument, physics notation from the source papers
 ]
 "tests/*" = [

@@ -1,5 +1,23 @@
+"""Farquhar, von Caemmerer & Berry (1980) C3 photosynthesis model.
+
+Steady-state leaf CO2 assimilation as the minimum of Rubisco-limited and
+electron-transport-limited rates. `model_version="2025"` switches to the
+modern min-W formulation with triose-phosphate utilisation limitation.
+
+|             |                                                                                       |
+| ----------- | ------------------------------------------------------------------------------------- |
+| doi         | 10.1007/BF00386231                                                                    |
+| main author | Graham D. Farquhar                                                                    |
+| paper title | A biochemical model of photosynthetic CO2 assimilation in leaves of C3 species        |
+| published   | June 1980                                                                             |
+| journal     | Planta                                                                                |
+| organism    | C3 leaf                                                                               |
+"""
+
 import math
 from typing import Literal
+
+T_REF = 298.0  # reference temperature (K) of the 298 K parameter values
 
 
 def min_solve(a: float, b: float, c: float) -> float:
@@ -11,14 +29,16 @@ def min_solve(a: float, b: float, c: float) -> float:
 
 
 def arrhenius(param_298: float, Ea: float, T: float) -> float:
-    return param_298 * math.exp(Ea * (T - 298) / (298 * 8.314 * T))
+    """Scale a parameter given at T_REF to temperature T (Arrhenius)."""
+    return param_298 * math.exp(Ea * (T - T_REF) / (T_REF * 8.314 * T))
 
 
 def jmax_tempscaling(
     jmax_298: float, Ea_jmax: float, S: float, H: float, T: float
 ) -> float:
+    """Scale Jmax from T_REF to temperature T with high-temperature deactivation."""
     R = 8.314
-    den_298 = 1 + math.exp((S * 298 - H) / (R * 298))
+    den_298 = 1 + math.exp((S * T_REF - H) / (R * T_REF))
     den_T = 1 + math.exp((S * T - H) / (R * T))
     return arrhenius(jmax_298, Ea_jmax, T) * (den_298 / den_T)
 
@@ -38,11 +58,12 @@ def get_fvcb(
     f: float = 0.23,
     z: float = 0.0,
     r_light: float = 1.1,
+    *,
     j_infinite: bool = False,
     model_version: Literal["1980", "2025"] = "1980",
     use_2025_default: bool = False,
 ) -> dict[str, float]:
-
+    """Net assimilation and its limiting rates at intercellular pCO2 `pco2`."""
     if use_2025_default:
         # Override parameters with 2025 defaults
         vc_max = 100.0
@@ -60,7 +81,7 @@ def get_fvcb(
     # ----------------------------------------
     # A. Shared Temperature Scaling
     # ----------------------------------------
-    if T != 298.0:
+    if T != T_REF:
         km_co2 = arrhenius(km_co2, 59356, T)
         km_o2 = arrhenius(km_o2, 35948, T)
         kc = arrhenius(kc, 58520, T)
@@ -121,7 +142,8 @@ def get_fvcb(
         vc = min(Wc, Wj, Wp)
 
     else:
-        raise ValueError("model_version must be either '1980' or '2025'")
+        msg = "model_version must be either '1980' or '2025'"
+        raise ValueError(msg)
 
     # ----------------------------------------
     # D. Final Assimilation

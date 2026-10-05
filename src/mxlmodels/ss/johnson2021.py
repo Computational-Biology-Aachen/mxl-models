@@ -40,6 +40,11 @@ import numpy.typing as npt
 
 type Array = npt.NDArray[np.float64]
 
+# Regulation scenarios from the paper, selected via `case_id`
+CASE_B6F_ONLY = 5  # Cyt b6f feedback alone, no NPQ
+CASE_NPQ_ONLY = 6  # NPQ alone, Cyt b6f at max turnover
+CASE_REGULATORY_CEF = 8  # PSI ignores Rubisco limitation (regulatory CEF)
+
 
 def solve_xcs(
     Abs: float,
@@ -53,7 +58,7 @@ def solve_xcs(
     kq: float,
     phi1P_max: float,
 ) -> Array:
-
+    """Solve for the PSII absorption cross-section (`alpha_opt="dynamic"`)."""
     Q = np.array(Q, dtype=float)
 
     num_sqrt = (Kd + Kf + Ku2) * (
@@ -141,8 +146,7 @@ def solve_xcs(
         * 2.0
     )
 
-    xcs = (-np.sqrt(num_sqrt) + num_linear) / denom
-    return xcs
+    return (-np.sqrt(num_sqrt) + num_linear) / denom
 
 
 def get_johnson2021(
@@ -164,7 +168,11 @@ def get_johnson2021(
     nc: float = 1.00,
     case_id: int = 0,
 ) -> dict[str, Array | float]:
+    """Steady-state fluxes, yields and PAM indices over the PAR values.
 
+    `case_id` selects the regulation scenario: `CASE_B6F_ONLY`, `CASE_NPQ_ONLY`,
+    `CASE_REGULATORY_CEF`, or anything else for NPQ and Cyt b6f together.
+    """
     # Ensure arrays
     PAR = np.atleast_1d(np.array(PAR, dtype=float))
     Temp_arr = np.full_like(PAR, Temp, dtype=float)
@@ -210,7 +218,8 @@ def get_johnson2021(
         a2 = solve_xcs(Abs, CB6F, Kd, Kf, Kp2, Ku2, Q, eta, kq, phi1P_max)
         a1 = Abs - a2
     else:
-        raise ValueError("argument alpha_opt not identified")
+        msg = "argument alpha_opt not identified"
+        raise ValueError(msg)
 
     # Potential Cyt b6f-limited rates (_j)
     JP700_j = (Q * Vqmax) / (Q + Vqmax / (a1 * phi1P_max))
@@ -241,10 +250,11 @@ def get_johnson2021(
     JP680_a = np.minimum(*tr(JP680_j, JP680_c, theta1))
 
     # Case 8 Override: PSI ignores Rubisco limitations
-    if case_id == 8:
-        JP700_a = JP700_j
-    else:
-        JP700_a = np.minimum(*tr(JP700_j, JP700_c, theta1))
+    JP700_a = (
+        JP700_j
+        if case_id == CASE_REGULATORY_CEF
+        else np.minimum(*tr(JP700_j, JP700_c, theta1))
+    )
 
     # Select minimum Ag_a (gross)
     q1_Ag, q2_Ag = tr(Ag_j, Ag_c, theta1)
@@ -274,7 +284,7 @@ def get_johnson2021(
     q1_a = phi1P_a / phi1P_max
     phi2P_a = JP680_a / (Q * a2)
 
-    if case_id == 5:
+    if case_id == CASE_B6F_ONLY:
         # CASE 5: Cyt b6f feedback alone (NO NPQ)
         # PSII closure (q2_a) is driven entirely by the lack of heat dissipation
         q2_a = np.clip(phi2P_a * (Kp2 + Kd + Kf) / Kp2, 0.0, 1.0)
@@ -285,12 +295,12 @@ def get_johnson2021(
         # Force NPQ to exactly zero to bypass the polynomial and avoid math errors
         Kn2_a = np.zeros_like(Q)
 
-    elif case_id == 6:
+    elif case_id == CASE_NPQ_ONLY:
         # CASE 6: NPQ alone (Cyt b6f at max turnover)
         CB6F_a = JP700_a / kq
         q2_a = np.clip(1 - CB6F_a / CB6F, 0.0, 1.0)
 
-    elif case_id == 8:
+    elif case_id == CASE_REGULATORY_CEF:
         # CASE 8: Regulatory CEF
         # Cyt b6f runs at maximum turnover (kq) using the massive actual PSI flow
         CB6F_a = JP700_a / kq
@@ -303,7 +313,7 @@ def get_johnson2021(
         q2_a = np.clip(1 - CB6F_a / CB6F, 0.0, 1.0)
 
     # Kn2_a from rearranged Eq. 25a
-    if case_id == 5:
+    if case_id == CASE_B6F_ONLY:
         Kn2_a = np.zeros_like(Q)
     else:
         num_kn = (
@@ -369,7 +379,7 @@ def get_johnson2021(
     NPQ = Fm_a / Fmp_a - 1
 
     # Calculate active Cyt b6f sites
-    if case_id == 6:
+    if case_id == CASE_NPQ_ONLY:
         active_cb6f = np.maximum(CB6F_a, 1e-12)
     else:
         active_cb6f = np.maximum(CB6F * (1 - q2_a), 1e-12)

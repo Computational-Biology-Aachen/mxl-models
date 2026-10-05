@@ -26,6 +26,7 @@ type Array = npt.NDArray[np.float64]
 def electron_transport(
     PPFD: npt.ArrayLike, Jmax: float, alpha: float, theta: float
 ) -> Array:
+    """Potential electron transport rate J from the non-rectangular hyperbola."""
     absorbed = alpha * np.asarray(PPFD, dtype=float)
     discriminant = (absorbed + Jmax) ** 2 - 4 * theta * absorbed * Jmax
     return (absorbed + Jmax - np.sqrt(np.maximum(discriminant, 0))) / (2 * theta)
@@ -45,6 +46,7 @@ def get_bernacchi_2013(
     alpha: float,
     theta: float,
 ) -> tuple[Array, Array, Array, Array]:
+    """Rubisco-, RuBP- and TPU-limited rates and net assimilation (their minimum)."""
     Ci, PPFD = np.broadcast_arrays(
         np.asarray(Ci, dtype=float),
         np.asarray(PPFD, dtype=float),

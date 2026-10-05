@@ -55,9 +55,7 @@ def check(
     path: Path = typer.Argument(..., exists=True, file_okay=False, dir_okay=True),
     verbose: bool = typer.Option(False, "--verbose", "-v"),
 ) -> None:
-    """
-    Check which modules in a package are not referenced in __init__.py.
-    """
+    """Check which modules in a package are not referenced in __init__.py."""
     modules, imported, missing = analyze_package(path)
 
     if verbose:

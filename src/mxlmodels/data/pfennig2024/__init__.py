@@ -97,6 +97,7 @@ def default(data_dir: Path = _default) -> Data:
 
 
 def lights(data_dir: Path = _default) -> pd.DataFrame:
+    """Load the light spectra, one column per light source, scaled by 100."""
     return (
         pd.DataFrame(
             {

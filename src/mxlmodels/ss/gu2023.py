@@ -1,3 +1,12 @@
+"""Gu et al. (2023) steady-state redox model of linear electron transport.
+
+Links chlorophyll-fluorescence-derived PSII openness (q) to the PSII electron
+transport rate and the redox state of the plastoquinone pool and cytochrome
+b6f, using composite redox parameters rather than elementary reaction steps.
+
+https://doi.org/10.1111/pce.14563
+"""
+
 import math
 
 # from mxlpy import SteadyStateModelBuilder
@@ -61,6 +70,7 @@ def get_gu2023(
     T0: float = 298.15,
     E_T: float = 0.0,
 ) -> dict[str, float]:
+    """PSII electron transport rate and PQ/Cyt b6f redox fractions."""
     ft = _derived_ft(E_T, T, T0)
     fq = _derived_fq(q, a_q)
     fs = _derived_fs(alpha, PAR, b_s, c_s)
