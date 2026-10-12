@@ -1,4 +1,5 @@
 import pandas as pd
+from mxlpy.units import second
 
 from mxlmodels import get_matuszynska2019
 
@@ -39,3 +40,15 @@ def test_rhs() -> None:
         atol=1e-9,
         rtol=1e-9,
     )
+
+
+def test_units() -> None:
+    check = get_matuszynska2019().check_units(time_unit=second)
+    # The b6f clamp max(rate, -kcat_b6f) is dimensionally inconsistent in the original model
+    known_inconsistent = {"b6f"}
+    assert {
+        (var, rxn): result
+        for var, per_rxn in check.per_variable.items()
+        for rxn, result in per_rxn.items()
+        if result is not True and rxn not in known_inconsistent
+    } == {}

@@ -16,6 +16,23 @@ Non-photochemical quenching via PsbS and xanthophyll cycle.
 import numpy as np
 from mxlpy import Derived, Model
 from mxlpy.surrogates import qss
+from mxlpy.units import (
+    dimensionless,
+    joule,
+    kelvin,
+    kilo,
+    mmol_mol_chl,
+    mol,
+    second,
+    volt,
+)
+
+_mmol_mol_chl = mmol_mol_chl
+_per_s = 1 / second
+_per_mmol_mol_chl_s = 1 / (mmol_mol_chl * second)
+_kj_mol = joule * kilo / mol
+_kj_mol_v = _kj_mol / volt
+_kj_mol_k = _kj_mol / kelvin
 
 
 def _ph(
@@ -474,72 +491,79 @@ def get_matuszynska2016_npq() -> Model:
     Acta (BBA)-Bioenergetics 1857.12 (2016): 1860-1869
     """
     m: Model = Model()
-    m.add_variable("pq_red", initial_value=0)
-    m.add_variable("protons", initial_value=6.32975752e-05)
-    m.add_variable("vmax_atp_synthase", initial_value=0)
-    m.add_variable("atp", initial_value=25.0)
-    m.add_variable("psbs_de", initial_value=1)
-    m.add_variable("vx", initial_value=1)
-    m.add_parameter("PSII_tot", value=2.5)
-    m.add_parameter("PQ_tot", value=20)
-    m.add_parameter("AP_tot", value=50)
-    m.add_parameter("PsbS_tot", value=1)
-    m.add_parameter("X_tot", value=1)
-    m.add_parameter("O2_ex", value=8)
-    m.add_parameter("Pi", value=0.01)
-    m.add_parameter("k_Cytb6f", value=0.104)
-    m.add_parameter("k_ActATPase", value=0.01)
-    m.add_parameter("k_DeactATPase", value=0.002)
-    m.add_parameter("k_ATPsynth", value=20.0)
-    m.add_parameter("k_ATPconsum", value=10.0)
-    m.add_parameter("k_PQH2", value=250.0)
-    m.add_parameter("k_H", value=5000000000.0)
-    m.add_parameter("k_F", value=625000000.0)
-    m.add_parameter("k_P", value=5000000000.0)
-    m.add_parameter("k_PTOX", value=0.01)
-    m.add_parameter("pH_st", value=7.8)
-    m.add_parameter("k_leak", value=1000)
-    m.add_parameter("b_H", value=100)
-    m.add_parameter("hpr", value=4.666666666666667)
-    m.add_parameter("k_DV", value=0.0024)
-    m.add_parameter("k_EZ", value=0.00024)
-    m.add_parameter("K_pHSat", value=5.8)
-    m.add_parameter("nhx", value=5.0)
-    m.add_parameter("K_ZSat", value=0.12)
-    m.add_parameter("nhl", value=3)
-    m.add_parameter("k_deprot", value=0.0096)
-    m.add_parameter("k_prot", value=0.0096)
-    m.add_parameter("K_pHSatLHC", value=5.8)
-    m.add_parameter("gamma_0", value=0.1)
-    m.add_parameter("gamma_1", value=0.25)
-    m.add_parameter("gamma_2", value=0.6)
-    m.add_parameter("gamma_3", value=0.15)
-    m.add_parameter("F", value=96.485)
-    m.add_parameter("R", value=0.0083)
-    m.add_parameter("T", value=298)
-    m.add_parameter("E0_QA", value=-0.14)
-    m.add_parameter("E0_PQ", value=0.354)
-    m.add_parameter("E0_PC", value=0.38)
-    m.add_parameter("DG_ATP", value=30.6)
-    m.add_parameter("PPFD", value=100)
+    m.add_variable("pq_red", initial_value=0, unit=_mmol_mol_chl)
+    m.add_variable("protons", initial_value=6.32975752e-05, unit=_mmol_mol_chl)
+    m.add_variable("vmax_atp_synthase", initial_value=0, unit=dimensionless)
+    m.add_variable("atp", initial_value=25.0, unit=_mmol_mol_chl)
+    m.add_variable("psbs_de", initial_value=1, unit=dimensionless)
+    m.add_variable("vx", initial_value=1, unit=dimensionless)
+    m.add_parameter("PSII_tot", value=2.5, unit=_mmol_mol_chl)
+    m.add_parameter("PQ_tot", value=20, unit=_mmol_mol_chl)
+    m.add_parameter("AP_tot", value=50, unit=_mmol_mol_chl)
+    m.add_parameter("PsbS_tot", value=1, unit=dimensionless)
+    m.add_parameter("X_tot", value=1, unit=dimensionless)
+    m.add_parameter("O2_ex", value=8, unit=_mmol_mol_chl)
+    # Activity relative to the 1 M standard state, so K_ATPsynth = Pi * exp(...) is dimensionless
+    m.add_parameter("Pi", value=0.01, unit=dimensionless)
+    m.add_parameter("k_Cytb6f", value=0.104, unit=dimensionless)
+    m.add_parameter("k_ActATPase", value=0.01, unit=_per_s)
+    m.add_parameter("k_DeactATPase", value=0.002, unit=_per_s)
+    m.add_parameter("k_ATPsynth", value=20.0, unit=_per_s)
+    m.add_parameter("k_ATPconsum", value=10.0, unit=_per_s)
+    m.add_parameter("k_PQH2", value=250.0, unit=_per_mmol_mol_chl_s)
+    m.add_parameter("k_H", value=5000000000.0, unit=_per_s)
+    m.add_parameter("k_F", value=625000000.0, unit=_per_s)
+    m.add_parameter("k_P", value=5000000000.0, unit=_per_s)
+    m.add_parameter("k_PTOX", value=0.01, unit=_per_mmol_mol_chl_s)
+    m.add_parameter("pH_st", value=7.8, unit=dimensionless)
+    m.add_parameter("k_leak", value=1000, unit=_per_s)
+    m.add_parameter("b_H", value=100, unit=dimensionless)
+    m.add_parameter("hpr", value=4.666666666666667, unit=dimensionless)
+    m.add_parameter("k_DV", value=0.0024, unit=_per_s)
+    m.add_parameter("k_EZ", value=0.00024, unit=_per_s)
+    m.add_parameter("K_pHSat", value=5.8, unit=dimensionless)
+    m.add_parameter("nhx", value=5.0, unit=dimensionless)
+    m.add_parameter("K_ZSat", value=0.12, unit=dimensionless)
+    m.add_parameter("nhl", value=3, unit=dimensionless)
+    m.add_parameter("k_deprot", value=0.0096, unit=_per_s)
+    m.add_parameter("k_prot", value=0.0096, unit=_per_s)
+    m.add_parameter("K_pHSatLHC", value=5.8, unit=dimensionless)
+    m.add_parameter("gamma_0", value=0.1, unit=dimensionless)
+    m.add_parameter("gamma_1", value=0.25, unit=dimensionless)
+    m.add_parameter("gamma_2", value=0.6, unit=dimensionless)
+    m.add_parameter("gamma_3", value=0.15, unit=dimensionless)
+    m.add_parameter("F", value=96.485, unit=_kj_mol_v)
+    m.add_parameter("R", value=0.0083, unit=_kj_mol_k)
+    m.add_parameter("T", value=298, unit=kelvin)
+    m.add_parameter("E0_QA", value=-0.14, unit=volt)
+    m.add_parameter("E0_PQ", value=0.354, unit=volt)
+    m.add_parameter("E0_PC", value=0.38, unit=volt)
+    m.add_parameter("DG_ATP", value=30.6, unit=_kj_mol)
+    # Reported in umol m^-2 s^-1, but used as excitation rate per reaction centre;
+    # the conversion factor is unknown (Matuszynska 2019)
+    m.add_parameter("PPFD", value=100, unit=_per_s)
     m.add_derived(
         "pH_lu",
         fn=_ph,
         args=["protons"],
     )
+    # pH -> concentration conversions hide the unit in a constant, so set it explicitly
     m.add_derived(
         "H_st",
         fn=_ph_inv,
+        unit=_mmol_mol_chl,
         args=["pH_st"],
     )
     m.add_derived(
         "K_pHSat_inv",
         fn=_ph_inv,
+        unit=_mmol_mol_chl,
         args=["K_pHSat"],
     )
     m.add_derived(
         "K_pHSatLHC_inv",
         fn=_ph_inv,
+        unit=_mmol_mol_chl,
         args=["K_pHSatLHC"],
     )
     m.add_derived(
@@ -678,6 +702,7 @@ def get_matuszynska2016_npq() -> Model:
                 "PSII_tot",
             ],
             outputs=["B0", "B1", "B2", "B3"],
+            units=dict.fromkeys(["B0", "B1", "B2", "B3"], _mmol_mol_chl),
         ),
     )
     return m
