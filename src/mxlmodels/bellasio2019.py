@@ -42,7 +42,26 @@ are correct or not.
 """
 
 import numpy as np
-from mxlpy import Derived, InitialAssignment, Model, Variable
+from mxlpy import Derived, InitialAssignment, Model, Parameter, Variable
+from mxlpy.units import (
+    dimensionless,
+    liter,
+    mmol,
+    mol,
+    mumol,
+    pascal,
+    ppfd,
+    second,
+    sqm,
+)
+
+# Metabolites in mM, leaf-level fluxes in mmol m^-2 s^-1 (converted to mM/s via the
+# mesophyll volume V_m), partial pressures in ubar = umol/mol (Table S2)
+_mm = mmol / liter
+_flux = mmol / sqm / second
+_mol_m2_s = mol / sqm / second
+_umol_mol = mumol / mol
+_mpa = pascal  # pressures of the stomatal model are given in MPa
 
 
 def _value(
@@ -574,106 +593,118 @@ def get_bellasio_2019() -> Model:
 
     m.add_parameters(
         {
-            "AP_tot": 1.5,
-            "Pi_tot": 15,
-            "p_o2": 210000,
-            "Kh_o2": 833300,
-            "V_m": 0.03,
-            "PPFD": 1500,
-            "RLight": 0.001,
-            "s": 0.43,
-            "PhiPSII_LL": 0.72,
-            "PhiPSI_LL": 1,
-            "alpha_ppfd_PhiPSII": 0.00125,
-            "V0_ppfd_PhiPSII": -0.8,
-            "theta_ppfd_PhiPSII": 0.7,
-            "f_pseudocycNR": 0.01,
-            "fq": 1,
-            "f_ndh": 0,
-            "h": 4,
-            "Ca": 350,
-            "alpha_ppfd_rub": 0.0018,
-            "V0_ppfd_rub": 0.16,
-            "theta_ppfd_rub": 0.95,
-            "alpha_co2": 400,
-            "V0_co2": -0.2,
-            "theta_co2": 0.98,
-            "tau_i": 360,
-            "tau_d": 1200,
-            "km_v_RuBisCO_c_CO2": 0.014,
-            "km_v_RuBisCO_c_RUBP": 0.02,
-            "km_v_RuBisCO_c_O2": 0.222,
-            "ki_v_RuBisCO_c_PGA": 2.52,
-            "ki_v_RuBisCO_c_NADP_st": 0.21,
-            "ki_v_RuBisCO_c_ADP_st": 0.2,
-            "ki_v_RuBisCO_c_Pi_st": 3.6,
-            "vmax_v_RuBisCO_c": 0.2,
-            "kcat_v_RuBisCO_c": 4.7,
-            "S_co_gas": 2200,
-            "vmax_v_PRKase": 1.17,
-            "keq_v_PRKase": 6846,
-            "km_v_PRKase_ATP_st": 0.625,
-            "ki_v_PRKase_ADP_st": 0.1,
-            "km_v_PRKase_RU5P": 0.034,
-            "ki_v_PRKase_PGA": 2,
-            "ki_v_PRKase_RUBP": 0.7,
-            "ki_v_PRKase_Pi_st": 4,
-            "vmax_v_pgareduction": 0.4,
-            "km_v_pgareduction_ATP_st": 0.3,
-            "km_v_pgareduction_PGA": 10,
-            "km_v_pgareduction_NADPH_st": 0.05,
-            "ki_v_pgareduction_ADP_st": 0.89,
-            "vmax_v_carbohydrate_synthesis": 0.2235,
-            "keq_v_carbohydrate_synthesis": 0.8,
-            "km_v_carbohydrate_synthesis_DHAP": 22,
-            "ki_v_carbohydrate_synthesis_ADP_st": 1,
-            "vmax_v_rpp": 0.0585,
-            "keq_v_rpp": 0.06,
-            "km_v_rpp_DHAP": 0.5,
-            "H": 5.012e-05,
-            "vmax_v_co2_hydration": 200,
-            "keq_v_co2_hydration": 0.00056,
-            "km_v_co2_hydration_CO2": 2.8,
-            "km_v_co2_hydration_HCO3": 34,
-            "keq_v_FNR": 502,
-            "km_v_FNR_NADP_st": 0.0072,
-            "km_v_FNR_NADPH_st": 0.036,
-            "Kj_NADPH": 200,
-            "keq_v_ATPsynth": 5734,
-            "km_v_ATPsynth_ADP_st": 0.014,
-            "km_v_ATPsynth_Pi_st": 0.3,
-            "km_v_ATPsynth_ATP_st": 0.3,
-            "Kj_ATP": 200,
-            "gm": 0.5,
-            "Kh_co2": 30303.0303030303,
-            "Kd": 150,
-            "Ki": 900,
-            "tau0": -0.1,
-            "chi_beta": 0.5,
-            "phi": 0,
-            "pi_e": 1.2,
-            "Kh": 12,
-            "Ds": 10,
-            "gs0": 0.01,
-            "NADP_tot": 0.5,
+            "AP_tot": Parameter(1.5, unit=_mm),
+            "Pi_tot": Parameter(15, unit=_mm),
+            "p_o2": Parameter(210000, unit=_umol_mol),
+            "Kh_o2": Parameter(833300, unit=_umol_mol / _mm),
+            "V_m": Parameter(0.03, unit=liter / sqm),
+            "PPFD": Parameter(1500, unit=ppfd),
+            # Table S2 lists 0.0012 umol m^-2 s^-1, but it is a flux in mmol m^-2 s^-1 like all others
+            "RLight": Parameter(0.001, unit=_flux),
+            "s": Parameter(0.43, unit=dimensionless),
+            "PhiPSII_LL": Parameter(0.72, unit=dimensionless),
+            "PhiPSI_LL": Parameter(1, unit=dimensionless),
+            "alpha_ppfd_PhiPSII": Parameter(0.00125, unit=1 / ppfd),
+            "V0_ppfd_PhiPSII": Parameter(-0.8, unit=dimensionless),
+            "theta_ppfd_PhiPSII": Parameter(0.7, unit=dimensionless),
+            "f_pseudocycNR": Parameter(0.01, unit=dimensionless),
+            "fq": Parameter(1, unit=dimensionless),
+            "f_ndh": Parameter(0, unit=dimensionless),
+            "h": Parameter(4, unit=dimensionless),
+            "Ca": Parameter(350, unit=_umol_mol),
+            "alpha_ppfd_rub": Parameter(0.0018, unit=1 / ppfd),
+            "V0_ppfd_rub": Parameter(0.16, unit=dimensionless),
+            "theta_ppfd_rub": Parameter(0.95, unit=dimensionless),
+            "alpha_co2": Parameter(400, unit=1 / _mm),
+            "V0_co2": Parameter(-0.2, unit=dimensionless),
+            "theta_co2": Parameter(0.98, unit=dimensionless),
+            "tau_i": Parameter(360, unit=second),
+            "tau_d": Parameter(1200, unit=second),
+            "km_v_RuBisCO_c_CO2": Parameter(0.014, unit=_mm),
+            "km_v_RuBisCO_c_RUBP": Parameter(0.02, unit=_mm),
+            "km_v_RuBisCO_c_O2": Parameter(0.222, unit=_mm),
+            "ki_v_RuBisCO_c_PGA": Parameter(2.52, unit=_mm),
+            "ki_v_RuBisCO_c_NADP_st": Parameter(0.21, unit=_mm),
+            "ki_v_RuBisCO_c_ADP_st": Parameter(0.2, unit=_mm),
+            "ki_v_RuBisCO_c_Pi_st": Parameter(3.6, unit=_mm),
+            "vmax_v_RuBisCO_c": Parameter(0.2, unit=_flux),
+            "kcat_v_RuBisCO_c": Parameter(4.7, unit=1 / second),
+            "S_co_gas": Parameter(2200, unit=dimensionless),
+            "vmax_v_PRKase": Parameter(1.17, unit=_flux),
+            # Table S1 lists mM, but v_PRKase requires it dimensionless
+            "keq_v_PRKase": Parameter(6846, unit=dimensionless),
+            "km_v_PRKase_ATP_st": Parameter(0.625, unit=_mm),
+            "ki_v_PRKase_ADP_st": Parameter(0.1, unit=_mm),
+            "km_v_PRKase_RU5P": Parameter(0.034, unit=_mm),
+            "ki_v_PRKase_PGA": Parameter(2, unit=_mm),
+            "ki_v_PRKase_RUBP": Parameter(0.7, unit=_mm),
+            "ki_v_PRKase_Pi_st": Parameter(4, unit=_mm),
+            "vmax_v_pgareduction": Parameter(0.4, unit=_flux),
+            "km_v_pgareduction_ATP_st": Parameter(0.3, unit=_mm),
+            "km_v_pgareduction_PGA": Parameter(10, unit=_mm),
+            "km_v_pgareduction_NADPH_st": Parameter(0.05, unit=_mm),
+            "ki_v_pgareduction_ADP_st": Parameter(0.89, unit=_mm),
+            "vmax_v_carbohydrate_synthesis": Parameter(0.2235, unit=_flux),
+            # Table S1 lists it dimensionless, but it divides Pi_st * |v_pgareduction|
+            "keq_v_carbohydrate_synthesis": Parameter(0.8, unit=_mm * _flux),
+            "km_v_carbohydrate_synthesis_DHAP": Parameter(22, unit=_mm),
+            "ki_v_carbohydrate_synthesis_ADP_st": Parameter(1, unit=_mm),
+            "vmax_v_rpp": Parameter(0.0585, unit=_flux),
+            "keq_v_rpp": Parameter(0.06, unit=dimensionless),
+            "km_v_rpp_DHAP": Parameter(0.5, unit=_mm),
+            "H": Parameter(5.012e-05, unit=_mm),
+            "vmax_v_co2_hydration": Parameter(200, unit=_flux),
+            # Table S1 lists it dimensionless, but it divides H * HCO3
+            "keq_v_co2_hydration": Parameter(0.00056, unit=_mm),
+            "km_v_co2_hydration_CO2": Parameter(2.8, unit=_mm),
+            "km_v_co2_hydration_HCO3": Parameter(34, unit=_mm),
+            # Table S1 lists mM, but v_FNR requires it dimensionless
+            "keq_v_FNR": Parameter(502, unit=dimensionless),
+            "km_v_FNR_NADP_st": Parameter(0.0072, unit=_mm),
+            "km_v_FNR_NADPH_st": Parameter(0.036, unit=_mm),
+            "Kj_NADPH": Parameter(200, unit=second),
+            # Table S1 lists it dimensionless, but v_ATPsynth requires mM^-1 (ADP * Pi vs ATP / keq)
+            "keq_v_ATPsynth": Parameter(5734, unit=1 / _mm),
+            "km_v_ATPsynth_ADP_st": Parameter(0.014, unit=_mm),
+            "km_v_ATPsynth_Pi_st": Parameter(0.3, unit=_mm),
+            "km_v_ATPsynth_ATP_st": Parameter(0.3, unit=_mm),
+            "Kj_ATP": Parameter(200, unit=second),
+            "gm": Parameter(0.5, unit=_mol_m2_s),
+            "Kh_co2": Parameter(30303.0303030303, unit=_umol_mol / _mm),
+            "Kd": Parameter(150, unit=second),
+            "Ki": Parameter(900, unit=second),
+            # Table S2 lists mM, but it is added to the dimensionless f_rubp
+            "tau0": Parameter(-0.1, unit=dimensionless),
+            "chi_beta": Parameter(0.5, unit=_mol_m2_s / _mpa),
+            "phi": Parameter(0, unit=_mpa),
+            "pi_e": Parameter(1.2, unit=_mpa),
+            "Kh": Parameter(12, unit=_flux / _mpa),
+            # leaf-to-air water vapour mole fraction difference
+            "Ds": Parameter(10, unit=mmol / mol),
+            "gs0": Parameter(0.01, unit=_mol_m2_s),
+            "NADP_tot": Parameter(0.5, unit=_mm),
         }
     )
 
     m.add_variables(
         {
-            "CO2": InitialAssignment(fn=_co2_initial, args=["Ca", "Kh_co2"]),
-            "HCO3": Variable(0.1327),
-            "RUBP": Variable(2),
-            "PGA": Variable(4),
-            "DHAP": Variable(4),
-            "ATP_st": Variable(0.68),
-            "NADPH_st": Variable(0.21),
-            "RU5P": Variable(0.34),
-            "Ract": Variable(1),
-            "J_NADPH": Variable(0.1),
-            "J_ATP": Variable(0.16),
-            "Ci": InitialAssignment(fn=_ci_initial, args=["Ca"]),
-            "gs": Variable(0.334934046786077),
+            "CO2": Variable(
+                InitialAssignment(fn=_co2_initial, args=["Ca", "Kh_co2"]), unit=_mm
+            ),
+            "HCO3": Variable(0.1327, unit=_mm),
+            "RUBP": Variable(2, unit=_mm),
+            "PGA": Variable(4, unit=_mm),
+            "DHAP": Variable(4, unit=_mm),
+            "ATP_st": Variable(0.68, unit=_mm),
+            "NADPH_st": Variable(0.21, unit=_mm),
+            "RU5P": Variable(0.34, unit=_mm),
+            "Ract": Variable(1, unit=dimensionless),
+            "J_NADPH": Variable(0.1, unit=_flux),
+            "J_ATP": Variable(0.16, unit=_flux),
+            "Ci": Variable(
+                InitialAssignment(fn=_ci_initial, args=["Ca"]), unit=_umol_mol
+            ),
+            "gs": Variable(0.334934046786077, unit=_mol_m2_s),
         }
     )
 
@@ -814,16 +845,19 @@ def get_bellasio_2019() -> Model:
         args=["J_NADPH", "O2", "v_FNR", "f_pseudocycNR"],
     )
 
+    # converts electron flow in umol m^-2 s^-1 to mmol m^-2 s^-1 with a hidden factor
     m.add_derived(
         name="J_NADPH_steady",
         fn=_j_nadph_steady,
         args=["J1", "f_cyc", "f_pseudocyc"],
+        unit=_flux,
     )
 
     m.add_derived(
         name="J_ATP_steady",
         fn=_j_atp_steady,
         args=["J2", "J1", "f_cyc", "fq", "f_ndh", "h"],
+        unit=_flux,
     )
 
     m.add_derived(

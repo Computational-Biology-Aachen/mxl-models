@@ -1,4 +1,5 @@
 import pandas as pd
+from mxlpy.units import second
 
 from mxlmodels import get_bellasio_2019
 
@@ -28,3 +29,25 @@ def test_rhs() -> None:
         atol=1e-9,
         rtol=1e-9,
     )
+
+
+def test_units() -> None:
+    model = get_bellasio_2019()
+    check = model.check_units(time_unit=second)
+    assert set(check.per_variable) == set(model.get_raw_variables())
+    # Hidden constants: DHAP - 0.4 (mM) in v_carbohydrate_synthesis and the factor 0.001
+    # (umol -> mmol) in CO2_dissolution. Ci is in umol/mol but integrates leaf-level
+    # fluxes without an airspace capacity.
+    known_inconsistent = {
+        ("DHAP", "v_carbohydrate_synthesis"),
+        ("ATP_st", "v_carbohydrate_synthesis"),
+        ("CO2", "CO2_dissolution"),
+        ("Ci", "CO2_dissolution"),
+        ("Ci", "CO2_stomatal_diffusion"),
+    }
+    assert {
+        (var, rxn): result
+        for var, per_rxn in check.per_variable.items()
+        for rxn, result in per_rxn.items()
+        if result is not True and (var, rxn) not in known_inconsistent
+    } == {}
