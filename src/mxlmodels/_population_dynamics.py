@@ -11,6 +11,10 @@ r"""Two-species population dynamics: E. coli and C. glutamicum with fixed affini
 """
 
 from mxlpy import Model
+from mxlpy.units import dimensionless, second
+
+# Populations are dimensionless abundances
+_per_s = 1 / second
 
 
 def _d_edt(
@@ -36,34 +40,13 @@ def get_population_dynamics() -> Model:
     r"""Build the two-species population dynamics model (E. coli / C. glutamicum)."""
     return (
         Model()
-        .add_variable(
-            "e_coli",
-            initial_value=5.0,
-        )
-        .add_variable(
-            "c_gluta",
-            initial_value=5.0,
-        )
-        .add_parameter(
-            "mu_e",
-            value=0.4,
-        )
-        .add_parameter(
-            "mu_c",
-            value=0.3,
-        )
-        .add_parameter(
-            "a_e",
-            value=6.0,
-        )
-        .add_parameter(
-            "a_c",
-            value=4.0,
-        )
-        .add_parameter(
-            "theta",
-            value=0.001,
-        )
+        .add_variable("e_coli", initial_value=5.0, unit=dimensionless)
+        .add_variable("c_gluta", initial_value=5.0, unit=dimensionless)
+        .add_parameter("mu_e", value=0.4, unit=_per_s)
+        .add_parameter("mu_c", value=0.3, unit=_per_s)
+        .add_parameter("a_e", value=6.0, unit=dimensionless)
+        .add_parameter("a_c", value=4.0, unit=dimensionless)
+        .add_parameter("theta", value=0.001, unit=_per_s)
         .add_reaction(
             "dEdt",
             fn=_d_edt,
