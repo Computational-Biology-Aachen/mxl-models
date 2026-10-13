@@ -46,7 +46,16 @@ GreenSloth.
 """
 
 import numpy as np
-from mxlpy import Derived, Model, Variable
+from mxlpy import Derived, Model, Parameter, Variable
+from mxlpy.units import dimensionless, liter, mol, ppfd, second, volt
+
+# Pools are relative to one reaction centre (dimensionless), ions are molar
+_molar = mol / liter
+_per_s = 1 / second
+_per_molar_s = 1 / (_molar * second)
+_per_molar2_s = 1 / (_molar**2 * second)
+_per_volt_molar_s = 1 / (volt * _molar * second)
+_per_volt_molar2_s = 1 / (volt * _molar**2 * second)
 
 
 def _neg_div(
@@ -296,8 +305,9 @@ def _v_fnr(
 def _v_mehler(
     fd_red: float,
     fd_ox: float,
+    k_mehler: float,
 ) -> float:
-    return 4 * 0.000265 * fd_red / (fd_red + fd_ox)
+    return k_mehler * fd_red / (fd_red + fd_ox)
 
 
 def _v_cbb(
@@ -327,28 +337,40 @@ def _v_kea3(
     return k_kea3 * (h_lumen * k_stroma - h_st * k_lu) * f_KEA_act
 
 
-def _v_vkc(
+def _k_delta_g(
     k_lu: float,
     dpsi: float,
     k_stroma: float,
+) -> float:
+    return -0.06 * np.log10(k_stroma / k_lu) + dpsi
+
+
+def _v_vkc(
+    k_lu: float,
+    k_delta_g: float,
+    k_stroma: float,
     p_k: float,
 ) -> float:
-    K_deltaG = -0.06 * np.log10(k_stroma / k_lu) + dpsi
-    return p_k * K_deltaG * (k_lu + k_stroma) / 2
+    return p_k * k_delta_g * (k_lu + k_stroma) / 2
+
+
+def _relative_cl_flux_vccn1(
+    driving_force_cl: float,
+) -> float:
+    return (
+        332 * (driving_force_cl**3)
+        + 30.8 * (driving_force_cl**2)
+        + 3.6 * driving_force_cl
+    )
 
 
 def _v_vccn1(
     cl_lu: float,
     cl_st: float,
-    driving_force_cl: float,
+    relative_cl_flux: float,
     k_vccn1: float,
 ) -> float:
-    relative_Cl_flux = (
-        332 * (driving_force_cl**3)
-        + 30.8 * (driving_force_cl**2)
-        + 3.6 * driving_force_cl
-    )
-    return k_vccn1 * relative_Cl_flux * (cl_st + cl_lu) / 2
+    return k_vccn1 * relative_cl_flux * (cl_st + cl_lu) / 2
 
 
 def _neg_point_one_val(
@@ -391,15 +413,20 @@ def _v_leak(
     return pmf * k_leak * h_lumen
 
 
-def _v_pmf_protons_activity(
+def _atp_synthase_activity(
     t: float,
+) -> float:
+    x = t / 165
+    return 0.2 + 0.8 * (x**4 / (x**4 + 1))
+
+
+def _v_pmf_protons_activity(
+    actvt: float,
     pmf: float,
     hpr: float,
     vmax_at_psynth: float,
     light_per_l: float,
 ) -> float:
-    x = t / 165
-    actvt = 0.2 + 0.8 * (x**4 / (x**4 + 1))
     v_proton_active = 1 - (
         1 / (10 ** ((pmf - 0.132) * 1.5 / 0.06) + 1)
     )  # reduced ATP synthase
@@ -476,67 +503,69 @@ def get_li_2021() -> Model:
 
     m.add_parameters(
         {
-            "PPFD": 50,
-            "k_recomb": 0.33,
-            "phi_triplet": 0.45,
-            "phi_1O2": 1,
-            "sigma0_II": 0.5,
-            "c_b6f": 0.433,
-            "pKa_reg": 6.2,
-            "Em_PC_pH7": 0.37,
-            "Em_PQH2_pH7": 0.11,
-            "Vmax_b6f": 300,
-            "pKa_PsbS": 6.2,
-            "NPQ_max": 3,
-            "pH_st": 7.8,
-            "Em_Fd": -0.42,
-            "k_NDH1": 1000,
-            "Vmax_PGR": 0,
-            "sigma0_I": 0.5,
-            "k_QA": 1000,
-            "Keq_QA": 200,
-            "k_PCtoP700": 5000,
-            "k_FdtoNADP": 1000,
-            "K_st": 0.1,
-            "k_KEA3": 2500000,
-            "P_K": 150,
-            "ipt_lu": 0.000587,
-            "k_VCCN1": 12,
-            "k_ClCe": 800000,
-            "HPR": 4.666666666666667,
-            "Vmax_ATPsynth": 200,
-            "b_H": 0.014,
-            "vpc": 0.047,
-            "k_EZ": 0.004,
-            "nh_VDE": 4,
-            "pKa_VDE": 5.65,
-            "Vmax_VDE": 0.08,
-            "k_leak": 30000000.0,
-            "QA_total": 1,
-            "PQ_tot": 7,
-            "P700_total": 0.667,
-            "PC_tot": 2,
-            "Fd_tot": 1,
-            "NADP_tot": 5,
-            "Carotenoids_tot": 1,
+            "PPFD": Parameter(50, unit=ppfd),
+            "k_recomb": Parameter(0.33, unit=_per_s),
+            "phi_triplet": Parameter(0.45, unit=dimensionless),
+            "phi_1O2": Parameter(1, unit=dimensionless),
+            "sigma0_II": Parameter(0.5, unit=dimensionless),
+            "c_b6f": Parameter(0.433, unit=dimensionless),
+            "pKa_reg": Parameter(6.2, unit=dimensionless),
+            "Em_PC_pH7": Parameter(0.37, unit=volt),
+            "Em_PQH2_pH7": Parameter(0.11, unit=volt),
+            "Vmax_b6f": Parameter(300, unit=_per_s),
+            "pKa_PsbS": Parameter(6.2, unit=dimensionless),
+            "NPQ_max": Parameter(3, unit=dimensionless),
+            "pH_st": Parameter(7.8, unit=dimensionless),
+            "Em_Fd": Parameter(-0.42, unit=volt),
+            "k_NDH1": Parameter(1000, unit=_per_s),
+            "Vmax_PGR": Parameter(0, unit=_per_s),
+            "sigma0_I": Parameter(0.5, unit=dimensionless),
+            "k_QA": Parameter(1000, unit=_per_s),
+            "Keq_QA": Parameter(200, unit=dimensionless),
+            "k_PCtoP700": Parameter(5000, unit=_per_s),
+            "k_FdtoNADP": Parameter(1000, unit=_per_s),
+            "K_st": Parameter(0.1, unit=_molar),
+            "k_KEA3": Parameter(2500000, unit=_per_molar2_s),
+            "P_K": Parameter(150, unit=_per_volt_molar_s),
+            "ipt_lu": Parameter(0.000587, unit=_molar),
+            "k_VCCN1": Parameter(12, unit=_per_molar_s),
+            "k_ClCe": Parameter(800000, unit=_per_volt_molar2_s),
+            "HPR": Parameter(4.666666666666667, unit=dimensionless),
+            "Vmax_ATPsynth": Parameter(200, unit=_per_s),
+            "b_H": Parameter(0.014, unit=_molar),
+            "vpc": Parameter(0.047, unit=volt),
+            "k_EZ": Parameter(0.004, unit=_per_s),
+            "nh_VDE": Parameter(4, unit=dimensionless),
+            "pKa_VDE": Parameter(5.65, unit=dimensionless),
+            "Vmax_VDE": Parameter(0.08, unit=_per_s),
+            "k_leak": Parameter(30000000.0, unit=_per_volt_molar_s),
+            "QA_total": Parameter(1, unit=dimensionless),
+            "PQ_tot": Parameter(7, unit=dimensionless),
+            "P700_total": Parameter(0.667, unit=dimensionless),
+            "PC_tot": Parameter(2, unit=dimensionless),
+            "Fd_tot": Parameter(1, unit=dimensionless),
+            "NADP_tot": Parameter(5, unit=dimensionless),
+            "Carotenoids_tot": Parameter(1, unit=dimensionless),
+            # previously a constant inside the Mehler rate
+            "k_Mehler": Parameter(4 * 0.000265, unit=_per_s),
         }
     )
 
     m.add_variables(
         {
-            "QA_red": Variable(0),
-            "PQH_2": Variable(0),
-            "pH_lumen": Variable(7.8),
-            "Dpsi": Variable(0),
-            "K_lu": Variable(0.1),
-            "PC_ox": Variable(0),
-            "Y2": Variable(0),
-            "Zx": Variable(0),
-            "singO2": Variable(0),
-            "Fd_red": Variable(0),
-            "NADPH_st": Variable(1.5),
-            "Cl_lu": Variable(0.04),
-            "Cl_st": Variable(0.04),
+            "QA_red": Variable(0, unit=dimensionless),
+            "PQH_2": Variable(0, unit=dimensionless),
+            "pH_lumen": Variable(7.8, unit=dimensionless),
+            "Dpsi": Variable(0, unit=volt),
+            "K_lu": Variable(0.1, unit=_molar),
+            "PC_ox": Variable(0, unit=dimensionless),
+            "Y2": Variable(0, unit=dimensionless),
+            "Zx": Variable(0, unit=dimensionless),
+            "singO2": Variable(0, unit=dimensionless),
+            "Fd_red": Variable(0, unit=dimensionless),
+            "NADPH_st": Variable(1.5, unit=dimensionless),
+            "Cl_lu": Variable(0.04, unit=_molar),
+            "Cl_st": Variable(0.04, unit=_molar),
         }
     )
 
@@ -582,16 +611,20 @@ def get_li_2021() -> Model:
         args=["Zx", "Carotenoids_tot"],
     )
 
+    # These functions hide unit-carrying constants (0.06 V per pH unit, the PPFD to
+    # excitation rate conversion, the maximal CBB rate), so their units are set explicitly
     m.add_derived(
         name="light_per_L",
         fn=_light_per_l,
         args=["PPFD"],
+        unit=_per_s,
     )
 
     m.add_derived(
         name="driving_force_Cl",
         fn=_driving_force_cl,
         args=["Cl_st", "Cl_lu", "Dpsi"],
+        unit=volt,
     )
 
     m.add_derived(
@@ -616,24 +649,28 @@ def get_li_2021() -> Model:
         name="H_lumen",
         fn=_calc_h,
         args=["pH_lumen"],
+        unit=_molar,
     )
 
     m.add_derived(
         name="H_st",
         fn=_calc_h,
         args=["pH_st"],
+        unit=_molar,
     )
 
     m.add_derived(
         name="pmf",
         fn=_calc_pmf,
         args=["Dpsi", "pH_lumen", "pH_st"],
+        unit=volt,
     )
 
     m.add_derived(
         name="kCBB",
         fn=_calc_k_cbb,
         args=["PPFD"],
+        unit=_per_s,
     )
 
     m.add_derived(
@@ -646,8 +683,27 @@ def get_li_2021() -> Model:
         name="delta_pH_inVolts",
         fn=_delta_p_h_in_volts,
         args=["delta_pH"],
+        unit=volt,
     )
 
+    m.add_derived(
+        name="K_deltaG",
+        fn=_k_delta_g,
+        args=["K_lu", "Dpsi", "K_st"],
+        unit=volt,
+    )
+    m.add_derived(
+        name="relative_Cl_flux_VCCN1",
+        fn=_relative_cl_flux_vccn1,
+        args=["driving_force_Cl"],
+        unit=dimensionless,
+    )
+    m.add_derived(
+        name="ATPsynth_activity",
+        fn=_atp_synthase_activity,
+        args=["time"],
+        unit=dimensionless,
+    )
     m.add_derived(
         name="qL_act",
         fn=_ql_act,
@@ -823,7 +879,7 @@ def get_li_2021() -> Model:
     m.add_reaction(
         name="v_Mehler",
         fn=_v_mehler,
-        args=["Fd_red", "Fd_ox"],
+        args=["Fd_red", "Fd_ox", "k_Mehler"],
         stoichiometry={
             "Fd_red": -1,
         },
@@ -856,7 +912,7 @@ def get_li_2021() -> Model:
     m.add_reaction(
         name="v_VKC",
         fn=_v_vkc,
-        args=["K_lu", "Dpsi", "K_st", "P_K"],
+        args=["K_lu", "K_deltaG", "K_st", "P_K"],
         stoichiometry={
             "K_lu": Derived(
                 fn=_neg,
@@ -873,7 +929,7 @@ def get_li_2021() -> Model:
     m.add_reaction(
         name="v_VCCN1",
         fn=_v_vccn1,
-        args=["Cl_lu", "Cl_st", "driving_force_Cl", "k_VCCN1"],
+        args=["Cl_lu", "Cl_st", "relative_Cl_flux_VCCN1", "k_VCCN1"],
         stoichiometry={
             "Cl_lu": Derived(
                 fn=_value,
@@ -939,7 +995,7 @@ def get_li_2021() -> Model:
     m.add_reaction(
         name="v_pmf_protons_activity",
         fn=_v_pmf_protons_activity,
-        args=["time", "pmf", "HPR", "Vmax_ATPsynth", "light_per_L"],
+        args=["ATPsynth_activity", "pmf", "HPR", "Vmax_ATPsynth", "light_per_L"],
         stoichiometry={
             "pH_lumen": Derived(
                 fn=_div,
