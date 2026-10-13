@@ -23,7 +23,14 @@ and photoinhibition (qI)
 
 from __future__ import annotations
 
-from mxlpy import InitialAssignment, Model
+from mxlpy import InitialAssignment, Model, Parameter, Variable
+from mxlpy.units import dimensionless, mmol_mol_chl, ppfd, second
+
+# Pigments and binding sites in mmol (mol Chl)^-1, the photoinhibited fraction PSIId and
+# the VDE activity are dimensionless
+_mmol_mol_chl = mmol_mol_chl
+_per_s = 1 / second
+_per_mmol_mol_chl_s = 1 / (mmol_mol_chl * second)
 
 ############INITIAL CONDITIONS##############
 
@@ -66,7 +73,11 @@ def _keq(kf: float, kr: float) -> float:
 
 # FIXME @ Huy: what is up with kf_light & kf_dark here?
 def _keq_light_dark(
-    kf_light: float, kr_light: float, kf_dark: float, kr_dark: float, ppfd: float
+    kf_light: float,  # noqa: ARG001
+    kr_light: float,  # noqa: ARG001
+    kf_dark: float,
+    kr_dark: float,
+    ppfd: float,
 ) -> float:
     if ppfd == 0:
         return kf_dark / kr_dark
@@ -250,62 +261,66 @@ def _chlorophyll_fluo_lifetime(
 
 
 def get_lam2026() -> Model:
-    """Get Lam 2026 model."""
+    r"""Get Lam 2026 model."""
     m = Model()
     m.add_parameters(
         {
-            "k_L_VA": 2.47,
-            "k_D_VA": 0.014,
-            "k_L_AZ": 0.5,
-            "k_AV": 1.12,
-            "k_ZA": 0.07,
-            "k_PV_f": 2.18,
-            "k_PV_b": 9.43,
-            "k_PA_f": 130,
-            "k_PA_b": 254,
-            "k_PZ_f": 295,
-            "k_PZ_b": 126,
-            "k_L_QV_f": 0.027,
-            "k_D_QV_f": 0,
-            "k_QV_b": 0.066,
-            "k_L_QA_f": 0.66,
-            "k_D_QA_f": 0,
-            "k_QA_b": 8.57,
-            "k_L_QZ_f": 0.56,
-            "k_D_QZ_f": 0,
-            "k_QZ_b": 1.22,
-            "k_L_QL_f": 0.056,
-            "k_QL_b": 3.68,
-            "k_D_QX_f": 0,  # for all QX complex the rate in the dark is set to 0
-            "k_L_damage": 0.0222,
-            "k_D_damage": 0.0161,
-            "k_D_VDE": 0.24,
-            "k_L_VDE": 0.28,
-            "k_AV_aba1": 0.006,
-            "k_ZA_aba1": 0.038,
-            "k_PV_f_lut2": 1.43,
-            "k_PV_b_lut2": 13.1,
-            "k_PA_f_lut2": 34.4,
-            "k_PA_b_lut2": 294,
-            "k_PZ_f_lut2": 74.1,
-            "k_PZ_b_lut2": 168,
-            "V_tot_npq1": 49.8,
-            "V_tot_lut2": 71.2,
-            "V_tot_npq4": 40.6,
-            "V_tot_aba1": 10.7,
-            "V_tot_WT": 35.9,
-            "P_tot": 45.4,
-            "P_tot_lut2": 49.9,
-            "kappa_QV": 0.040,
-            "kappa_QA": 0.174,
-            "kappa_QZ": 0.177,
-            "kappa_QL": 0.262,
-            "kappa_qZ": 0.030,
-            "kappa_qI": 3.86,
-            "kappa_qI_double_mut": 7.05,
-            "ppfd": 0,
-            "tau_0": 1.73089079100000,  # from the paper WT tau_0 for 5-10-5 dataset
-            "PSII_tot": 1,
+            "k_L_VA": Parameter(2.47, unit=_per_s),
+            "k_D_VA": Parameter(0.014, unit=_per_s),
+            "k_L_AZ": Parameter(0.5, unit=_per_s),
+            "k_AV": Parameter(1.12, unit=_per_s),
+            "k_ZA": Parameter(0.07, unit=_per_s),
+            "k_PV_f": Parameter(2.18, unit=_per_mmol_mol_chl_s),
+            "k_PV_b": Parameter(9.43, unit=_per_s),
+            "k_PA_f": Parameter(130, unit=_per_mmol_mol_chl_s),
+            "k_PA_b": Parameter(254, unit=_per_s),
+            "k_PZ_f": Parameter(295, unit=_per_mmol_mol_chl_s),
+            "k_PZ_b": Parameter(126, unit=_per_s),
+            "k_L_QV_f": Parameter(0.027, unit=_per_s),
+            "k_D_QV_f": Parameter(0, unit=_per_s),
+            "k_QV_b": Parameter(0.066, unit=_per_s),
+            "k_L_QA_f": Parameter(0.66, unit=_per_s),
+            "k_D_QA_f": Parameter(0, unit=_per_s),
+            "k_QA_b": Parameter(8.57, unit=_per_s),
+            "k_L_QZ_f": Parameter(0.56, unit=_per_s),
+            "k_D_QZ_f": Parameter(0, unit=_per_s),
+            "k_QZ_b": Parameter(1.22, unit=_per_s),
+            "k_L_QL_f": Parameter(0.056, unit=_per_s),
+            "k_QL_b": Parameter(3.68, unit=_per_s),
+            "k_D_QX_f": Parameter(
+                0, unit=_per_s
+            ),  # for all QX complex the rate in the dark is set to 0
+            "k_L_damage": Parameter(0.0222, unit=1 / second**2),
+            "k_D_damage": Parameter(0.0161, unit=1 / second**2),
+            "k_D_VDE": Parameter(0.24, unit=_per_s),
+            "k_L_VDE": Parameter(0.28, unit=_per_s),
+            "k_AV_aba1": Parameter(0.006, unit=_per_s),
+            "k_ZA_aba1": Parameter(0.038, unit=_per_s),
+            "k_PV_f_lut2": Parameter(1.43, unit=_per_mmol_mol_chl_s),
+            "k_PV_b_lut2": Parameter(13.1, unit=_per_s),
+            "k_PA_f_lut2": Parameter(34.4, unit=_per_mmol_mol_chl_s),
+            "k_PA_b_lut2": Parameter(294, unit=_per_s),
+            "k_PZ_f_lut2": Parameter(74.1, unit=_per_mmol_mol_chl_s),
+            "k_PZ_b_lut2": Parameter(168, unit=_per_s),
+            "V_tot_npq1": Parameter(49.8, unit=_mmol_mol_chl),
+            "V_tot_lut2": Parameter(71.2, unit=_mmol_mol_chl),
+            "V_tot_npq4": Parameter(40.6, unit=_mmol_mol_chl),
+            "V_tot_aba1": Parameter(10.7, unit=_mmol_mol_chl),
+            "V_tot_WT": Parameter(35.9, unit=_mmol_mol_chl),
+            "P_tot": Parameter(45.4, unit=_mmol_mol_chl),
+            "P_tot_lut2": Parameter(49.9, unit=_mmol_mol_chl),
+            "kappa_QV": Parameter(0.040, unit=_per_mmol_mol_chl_s),
+            "kappa_QA": Parameter(0.174, unit=_per_mmol_mol_chl_s),
+            "kappa_QZ": Parameter(0.177, unit=_per_mmol_mol_chl_s),
+            "kappa_QL": Parameter(0.262, unit=_per_mmol_mol_chl_s),
+            "kappa_qZ": Parameter(0.030, unit=_per_mmol_mol_chl_s),
+            "kappa_qI": Parameter(3.86, unit=_per_s),
+            "kappa_qI_double_mut": Parameter(7.05, unit=_per_s),
+            "ppfd": Parameter(0, unit=ppfd),
+            "tau_0": Parameter(
+                1.73089079100000, unit=second
+            ),  # from the paper WT tau_0 for 5-10-5 dataset
+            "PSII_tot": Parameter(1, unit=dimensionless),
         }
     )
 
@@ -383,29 +398,54 @@ def get_lam2026() -> Model:
     # Variables and initial conditions
     m.add_variables(
         {
-            "V": InitialAssignment(fn=_same, args=["V_tot_WT"]),
-            "A": InitialAssignment(fn=_a0, args=["Keq_a", "V_tot_WT"]),
-            "Z": InitialAssignment(fn=_z0, args=["Keq_a", "Keq_z", "V_tot_WT"]),
-            "PV": InitialAssignment(fn=_pv0, args=["Keq_pv", "V_tot_WT", "P0"]),
-            "PA": InitialAssignment(
-                fn=_pa0, args=["Keq_pa", "Keq_a", "V_tot_WT", "P0"]
+            "V": Variable(
+                InitialAssignment(fn=_same, args=["V_tot_WT"]), unit=_mmol_mol_chl
             ),
-            "PZ": InitialAssignment(
-                fn=_pz0, args=["Keq_pz", "Keq_z", "Keq_a", "P0", "V_tot_WT"]
+            "A": Variable(
+                InitialAssignment(fn=_a0, args=["Keq_a", "V_tot_WT"]),
+                unit=_mmol_mol_chl,
             ),
-            "QV": InitialAssignment(
-                fn=_qv0, args=["P0", "V_tot_WT", "Keq_pv", "Keq_qv"]
+            "Z": Variable(
+                InitialAssignment(fn=_z0, args=["Keq_a", "Keq_z", "V_tot_WT"]),
+                unit=_mmol_mol_chl,
             ),
-            "QA": InitialAssignment(
-                fn=_qa0, args=["P0", "V_tot_WT", "Keq_pa", "Keq_a", "Keq_qa"]
+            "PV": Variable(
+                InitialAssignment(fn=_pv0, args=["Keq_pv", "V_tot_WT", "P0"]),
+                unit=_mmol_mol_chl,
             ),
-            "QZ": InitialAssignment(
-                fn=_qz0, args=["Keq_qz", "Keq_pz", "Keq_z", "Keq_a", "P0", "V_tot_WT"]
+            "PA": Variable(
+                InitialAssignment(fn=_pa0, args=["Keq_pa", "Keq_a", "V_tot_WT", "P0"]),
+                unit=_mmol_mol_chl,
             ),
-            "QL": 0,
-            "PL": 165,  # set from HPLC data
-            "PSIId": 0,
-            "alpha_VDE": InitialAssignment(fn=_e0, args=["k_D_VA", "k_L_VA"]),
+            "PZ": Variable(
+                InitialAssignment(
+                    fn=_pz0, args=["Keq_pz", "Keq_z", "Keq_a", "P0", "V_tot_WT"]
+                ),
+                unit=_mmol_mol_chl,
+            ),
+            "QV": Variable(
+                InitialAssignment(fn=_qv0, args=["P0", "V_tot_WT", "Keq_pv", "Keq_qv"]),
+                unit=_mmol_mol_chl,
+            ),
+            "QA": Variable(
+                InitialAssignment(
+                    fn=_qa0, args=["P0", "V_tot_WT", "Keq_pa", "Keq_a", "Keq_qa"]
+                ),
+                unit=_mmol_mol_chl,
+            ),
+            "QZ": Variable(
+                InitialAssignment(
+                    fn=_qz0,
+                    args=["Keq_qz", "Keq_pz", "Keq_z", "Keq_a", "P0", "V_tot_WT"],
+                ),
+                unit=_mmol_mol_chl,
+            ),
+            "QL": Variable(0, unit=_mmol_mol_chl),
+            "PL": Variable(165, unit=_mmol_mol_chl),  # set from HPLC data
+            "PSIId": Variable(0, unit=dimensionless),
+            "alpha_VDE": Variable(
+                InitialAssignment(fn=_e0, args=["k_D_VA", "k_L_VA"]), unit=dimensionless
+            ),
         }
     )
 
@@ -422,6 +462,7 @@ def get_lam2026() -> Model:
         ],
     )
 
+    # the lifetime floor max(1e-10, ...) hides a rate unit, so set it explicitly
     m.add_derived(
         "tau_Fluo",
         _chlorophyll_fluo_lifetime,
@@ -440,6 +481,7 @@ def get_lam2026() -> Model:
             "PSIId",
             "kappa_r_nr",
         ],
+        unit=second,
     )
 
     m.add_reaction(
@@ -538,6 +580,7 @@ def get_lam2026() -> Model:
         "QZb",
         _mass_action_1s,
         stoichiometry={"QZ": -1, "PZ": 1},
+        # FIXME: uses k_QA_b, while k_QZ_b is only used for Keq_qz
         args=["k_QA_b", "QZ"],
     )
 
