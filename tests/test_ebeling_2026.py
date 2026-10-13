@@ -1,4 +1,5 @@
 import pandas as pd
+from mxlpy.units import second
 
 from mxlmodels import get_ebeling_2026
 
@@ -56,3 +57,27 @@ def test_rhs() -> None:
         atol=1e-9,
         rtol=1e-9,
     )
+
+
+def test_units() -> None:
+    model = get_ebeling_2026()
+    check = model.check_units(time_unit=second)
+    assert set(check.per_variable) == set(model.get_raw_variables())
+    # The proton-pumping reactions use bare numbers as pH stoichiometries, which hide
+    # the mmol (mol Chl)^-1 -> pH unit buffer conversion
+    known_inconsistent = {
+        (ph, rxn)
+        for ph, rxns in {
+            "pH_lumen": ["atp_synthase", "proton_leak", "B12", "b6f", "KEA3", "NDH1"],
+            "pH": ["atp_synthase", "proton_leak", "B20", "b6f", "KEA3", "NDH1"],
+        }.items()
+        for rxn in rxns
+    }
+    # gadph uses the stromal protons in mmol (mol Chl)^-1 with constants in mM
+    known_inconsistent |= {(var, "gadph") for var in ["BPGA", "GAP", "NADPH"]}
+    assert {
+        (var, rxn): result
+        for var, per_rxn in check.per_variable.items()
+        for rxn, result in per_rxn.items()
+        if result is not True and (var, rxn) not in known_inconsistent
+    } == {}

@@ -15,6 +15,30 @@ import math
 
 import numpy as np
 from mxlpy import Derived, InitialAssignment, Model
+from mxlpy.units import (
+    dimensionless,
+    joule,
+    kelvin,
+    kilo,
+    liter,
+    mmol,
+    mmol_mol_chl,
+    mol,
+    second,
+    volt,
+)
+
+_mmol_l = mmol / liter
+_per_mmol_l = 1 / _mmol_l
+_per_s = 1 / second
+_per_mmol_l_s = 1 / (_mmol_l * second)
+_per_mmol2_l2_s = 1 / (_mmol_l**2 * second)
+_mmol_mol_chl = mmol_mol_chl
+_per_mmol_mol_chl_s = 1 / (mmol_mol_chl * second)
+_per_mmol2_mol_chl2_s = 1 / (mmol_mol_chl**2 * second)
+_kj_mol = joule * kilo / mol
+_kj_mol_v = _kj_mol / volt
+_kj_mol_k = _kj_mol / kelvin
 
 
 def _initial_delta_psi(
@@ -521,10 +545,10 @@ def _protonation_hill(
     h: float,
     nh: float,
     k_fwd: float,
-    k_ph_sat: float,
+    k_h_sat: float,
 ) -> float:
     r"""Hill-type protonation rate scaled by lumenal proton concentration."""
-    return k_fwd * (h**nh / (h**nh + _protons_stroma_2016(k_ph_sat) ** nh)) * vx  # type: ignore
+    return k_fwd * (h**nh / (h**nh + k_h_sat**nh)) * vx  # type: ignore
 
 
 def _rate_cyclic_electron_flow(
@@ -541,10 +565,10 @@ def _rate_protonation_hill(
     h: float,
     k_fwd: float,
     n_h: float,
-    kph_sat: float,
+    kh_sat: float,
 ) -> float:
     r"""Hill-type deepoxidase rate activated by lumenal proton concentration."""
-    return k_fwd * (h**n_h / (h**n_h + _protons_stroma_2016(kph_sat) ** n_h)) * vx  # type: ignore
+    return k_fwd * (h**n_h / (h**n_h + kh_sat**n_h)) * vx  # type: ignore
 
 
 def _rate_fnr_2019(
@@ -572,11 +596,11 @@ def _rate_fnr_2019(
 
 def _rate_leak(
     protons_lumen: float,
-    ph_stroma: float,
+    protons_stroma: float,
     k_leak: float,
 ) -> float:
     r"""Passive proton leak across the thylakoid membrane, proportional to the proton gradient."""
-    return k_leak * (protons_lumen - _protons_stroma_2016(ph_stroma))
+    return k_leak * (protons_lumen - protons_stroma)
 
 
 def _neg_one_div(
@@ -1043,248 +1067,311 @@ def get_ebeling_2026() -> Model:
     Reference: tbd
     """
     m: Model = Model()
-    m.add_variable("3PGA", initial_value=0.9167729479368978)
-    m.add_variable("BPGA", initial_value=0.0003814495319659031)
-    m.add_variable("GAP", initial_value=0.00580821050261484)
-    m.add_variable("DHAP", initial_value=0.1277806166216142)
-    m.add_variable("FBP", initial_value=0.005269452472931973)
-    m.add_variable("F6P", initial_value=0.2874944558066638)
-    m.add_variable("G6P", initial_value=0.6612372482712676)
-    m.add_variable("G1P", initial_value=0.03835176039761378)
-    m.add_variable("SBP", initial_value=0.011101373736607443)
-    m.add_variable("S7P", initial_value=0.1494578301900007)
-    m.add_variable("E4P", initial_value=0.00668295494870102)
-    m.add_variable("X5P", initial_value=0.020988553174809618)
-    m.add_variable("R5P", initial_value=0.035155825913785584)
-    m.add_variable("RUBP", initial_value=0.11293260727162346)
-    m.add_variable("RU5P", initial_value=0.014062330254191594)
-    m.add_variable("ATP", initial_value=1.4612747767895344)
-    m.add_variable("Ferredoxine (oxidised)", initial_value=3.715702384326767)
-    m.add_variable("Light-harvesting complex", initial_value=0.7805901436176024)
-    m.add_variable("NADPH", initial_value=0.5578718406315588)
-    m.add_variable("Plastocyanine (oxidised)", initial_value=1.8083642974980014)
-    m.add_variable("Plastoquinone (oxidised)", initial_value=10.251099271612473)
-    m.add_variable("PsbS (de-protonated)", initial_value=0.9667381262477079)
-    m.add_variable("Violaxanthin", initial_value=0.9629870646993118)
-    m.add_variable("MDA", initial_value=2.0353396709300447e-07)
-    m.add_variable("H2O2", initial_value=1.2034405327140102e-07)
-    m.add_variable("DHA", initial_value=1.0296456279861962e-11)
-    m.add_variable("GSSG", initial_value=4.99986167652437e-12)
-    m.add_variable("Thioredoxin (oxidised)", initial_value=0.9334426859846461)
-    m.add_variable("E_inactive", initial_value=3.6023635680406634)
-    m.add_variable("P700FA", initial_value=1.506615384275408)
-    m.add_variable("P700+FA-", initial_value=0.019197449388051676)
-    m.add_variable("P700FA-", initial_value=0.028144516332212766)
-    m.add_variable("B0", initial_value=1.9379789566530539)
-    m.add_variable("B1", initial_value=9.786232812526368e-08)
-    m.add_variable("B2", initial_value=0.5620208537555176)
-    m.add_variable("pH_lumen", initial_value=6.8)
-    m.add_variable("pH", initial_value=7.5)
-    m.add_variable("ATPactivity", initial_value=0)
+    m.add_variable("3PGA", initial_value=0.9167729479368978, unit=_mmol_l)
+    m.add_variable("BPGA", initial_value=0.0003814495319659031, unit=_mmol_l)
+    m.add_variable("GAP", initial_value=0.00580821050261484, unit=_mmol_l)
+    m.add_variable("DHAP", initial_value=0.1277806166216142, unit=_mmol_l)
+    m.add_variable("FBP", initial_value=0.005269452472931973, unit=_mmol_l)
+    m.add_variable("F6P", initial_value=0.2874944558066638, unit=_mmol_l)
+    m.add_variable("G6P", initial_value=0.6612372482712676, unit=_mmol_l)
+    m.add_variable("G1P", initial_value=0.03835176039761378, unit=_mmol_l)
+    m.add_variable("SBP", initial_value=0.011101373736607443, unit=_mmol_l)
+    m.add_variable("S7P", initial_value=0.1494578301900007, unit=_mmol_l)
+    m.add_variable("E4P", initial_value=0.00668295494870102, unit=_mmol_l)
+    m.add_variable("X5P", initial_value=0.020988553174809618, unit=_mmol_l)
+    m.add_variable("R5P", initial_value=0.035155825913785584, unit=_mmol_l)
+    m.add_variable("RUBP", initial_value=0.11293260727162346, unit=_mmol_l)
+    m.add_variable("RU5P", initial_value=0.014062330254191594, unit=_mmol_l)
+    m.add_variable("ATP", initial_value=1.4612747767895344, unit=_mmol_l)
+    m.add_variable(
+        "Ferredoxine (oxidised)", initial_value=3.715702384326767, unit=_mmol_mol_chl
+    )
+    m.add_variable(
+        "Light-harvesting complex", initial_value=0.7805901436176024, unit=dimensionless
+    )
+    m.add_variable("NADPH", initial_value=0.5578718406315588, unit=_mmol_l)
+    m.add_variable(
+        "Plastocyanine (oxidised)", initial_value=1.8083642974980014, unit=_mmol_mol_chl
+    )
+    m.add_variable(
+        "Plastoquinone (oxidised)", initial_value=10.251099271612473, unit=_mmol_mol_chl
+    )
+    m.add_variable(
+        "PsbS (de-protonated)", initial_value=0.9667381262477079, unit=dimensionless
+    )
+    m.add_variable("Violaxanthin", initial_value=0.9629870646993118, unit=dimensionless)
+    m.add_variable("MDA", initial_value=2.0353396709300447e-07, unit=_mmol_l)
+    m.add_variable("H2O2", initial_value=1.2034405327140102e-07, unit=_mmol_l)
+    m.add_variable("DHA", initial_value=1.0296456279861962e-11, unit=_mmol_l)
+    m.add_variable("GSSG", initial_value=4.99986167652437e-12, unit=_mmol_l)
+    m.add_variable(
+        "Thioredoxin (oxidised)", initial_value=0.9334426859846461, unit=_mmol_mol_chl
+    )
+    m.add_variable("E_inactive", initial_value=3.6023635680406634, unit=_mmol_mol_chl)
+    m.add_variable("P700FA", initial_value=1.506615384275408, unit=_mmol_mol_chl)
+    m.add_variable("P700+FA-", initial_value=0.019197449388051676, unit=_mmol_mol_chl)
+    m.add_variable("P700FA-", initial_value=0.028144516332212766, unit=_mmol_mol_chl)
+    m.add_variable("B0", initial_value=1.9379789566530539, unit=_mmol_mol_chl)
+    m.add_variable("B1", initial_value=9.786232812526368e-08, unit=_mmol_mol_chl)
+    m.add_variable("B2", initial_value=0.5620208537555176, unit=_mmol_mol_chl)
+    m.add_variable("pH_lumen", initial_value=6.8, unit=dimensionless)
+    m.add_variable("pH", initial_value=7.5, unit=dimensionless)
+    m.add_variable("ATPactivity", initial_value=0, unit=dimensionless)
     m.add_variable(
         "delta_psi",
         initial_value=InitialAssignment(
             fn=_initial_delta_psi, args=["pH", "pH_lumen", "R", "F", "T"]
         ),
+        unit=volt,
     )
     m.add_variable(
         "K_stroma",
         initial_value=InitialAssignment(fn=_half, args=["K_total"]),
+        unit=_mmol_mol_chl,
     )
     m.add_variable(
         "Cl_stroma",
         initial_value=InitialAssignment(fn=_half, args=["Cl_total"]),
+        unit=_mmol_mol_chl,
     )
-    m.add_parameter("PPFD", value=100.0)
-    m.add_parameter("CO2 (dissolved)", value=0.013226)
-    m.add_parameter("O2 (dissolved)_lumen", value=8.0)
-    m.add_parameter("bH", value=100.0)
-    m.add_parameter("F", value=96.485)
-    m.add_parameter("E^0_PC", value=0.38)
-    m.add_parameter("E^0_P700", value=0.48)
-    m.add_parameter("E^0_FA", value=-0.55)
-    m.add_parameter("E^0_Fd", value=-0.43)
-    m.add_parameter("E^0_NADP", value=-0.113)
-    m.add_parameter("convf", value=0.032)
-    m.add_parameter("R", value=0.0083)
-    m.add_parameter("T", value=298.0)
-    m.add_parameter("Carotenoids_tot", value=1.0)
-    m.add_parameter("Fd*", value=5.0)
-    m.add_parameter("PC_tot", value=4.0)
-    m.add_parameter("PSBS_tot", value=1.0)
-    m.add_parameter("LHC_tot", value=1.0)
-    m.add_parameter("gamma0", value=0.06260060801266355)
-    m.add_parameter("gamma1", value=0.4053583123566203)
-    m.add_parameter("gamma2", value=0.7040758738825375)
-    m.add_parameter("gamma3", value=0.07834807781016208)
-    m.add_parameter("kZSat", value=0.12)
-    m.add_parameter("E^0_QA", value=-0.14)
-    m.add_parameter("E^0_PQ", value=0.354)
-    m.add_parameter("PQ_tot", value=17.5)
-    m.add_parameter("staticAntII", value=0.1)
-    m.add_parameter("staticAntI", value=0.37)
-    m.add_parameter("Thioredoxin_tot", value=1.0)
-    m.add_parameter("E_total", value=6.0)
-    m.add_parameter("NADP*", value=0.8)
-    m.add_parameter("A*P", value=2.55)
-    m.add_parameter("Pi_tot", value=17.05)
-    m.add_parameter("kf_ferredoxin_thioredoxin_reductase", value=0.8)
-    m.add_parameter("kf_tr_activation", value=1.0)
-    m.add_parameter("kf_tr_inactivation", value=0.1)
-    m.add_parameter("ASC_tot*", value=10)
-    m.add_parameter("Glutathion_tot", value=10.0)
-    m.add_parameter("kf_atp_synthase", value=20.0)
-    m.add_parameter("HPR", value=4.666666666666667)
-    m.add_parameter("Pi_mol", value=0.01)
-    m.add_parameter("DeltaG0_ATP", value=30.6)
-    m.add_parameter("kh_lhc_protonation", value=10)
-    m.add_parameter("kf_lhc_protonation", value=0.15837051384170664)
-    m.add_parameter("ksat_lhc_protonation", value=6.2539066418842255)
-    m.add_parameter("kf_lhc_deprotonation", value=0.015892570403695704)
-    m.add_parameter("kf_cyclic_electron_flow", value=1.0)
-    m.add_parameter("kf_violaxanthin_deepoxidase", value=0.0006091912188339879)
-    m.add_parameter("kh_violaxanthin_deepoxidase", value=4)
-    m.add_parameter("ksat_violaxanthin_deepoxidase", value=6.193595407850397)
-    m.add_parameter("kf_zeaxanthin_epoxidase", value=0.000106261953934132)
-    m.add_parameter("km_fnr_Ferredoxine (reduced)", value=1.56)
-    m.add_parameter("km_fnr_NADP", value=0.22)
-    m.add_parameter("E0_fnr", value=3.0)
-    m.add_parameter("kcat_fnr", value=500.0)
-    m.add_parameter("kf_ndh", value=0.002)
-    m.add_parameter("PSII_total", value=2.5)
-    m.add_parameter("PSI_total", value=2.5)
-    m.add_parameter("kH0", value=500000000.0)
-    m.add_parameter("kPQred", value=250.0)
-    m.add_parameter("kPCox", value=2500.0)
-    m.add_parameter("kFdred", value=250000.0)
-    m.add_parameter("k2", value=5000000000.0)
-    m.add_parameter("kH", value=5000000000.0)
-    m.add_parameter("kF", value=625000000.0)
-    m.add_parameter("kMehler", value=1.0)
-    m.add_parameter("kf_proton_leak", value=10.0)
-    m.add_parameter("kPTOX", value=0.01)
-    m.add_parameter("kStt7", value=0.0035)
-    m.add_parameter("km_lhc_state_transition_12", value=0.2)
-    m.add_parameter("n_ST", value=2.0)
-    m.add_parameter("kPph1", value=0.0013)
-    m.add_parameter("E0_rubisco", value=1.0)
-    m.add_parameter("kcat_rubisco_carboxylase", value=2.72)
-    m.add_parameter("km_rubisco_carboxylase_RUBP", value=0.02)
-    m.add_parameter("km_rubisco_carboxylase_CO2 (dissolved)", value=0.0107)
-    m.add_parameter("ki_rubisco_carboxylase_3PGA", value=0.04)
-    m.add_parameter("ki_rubisco_carboxylase_FBP", value=0.04)
-    m.add_parameter("ki_rubisco_carboxylase_SBP", value=0.075)
-    m.add_parameter("ki_rubisco_carboxylase_Orthophosphate", value=0.9)
-    m.add_parameter("ki_rubisco_carboxylase_NADPH", value=0.07)
-    m.add_parameter("kre_phosphoglycerate_kinase", value=800000000.0)
-    m.add_parameter("keq_phosphoglycerate_kinase", value=0.00031)
-    m.add_parameter("kre_gadph", value=800000000.0)
-    m.add_parameter("keq_gadph", value=16000000.0)
-    m.add_parameter("kre_triose_phosphate_isomerase", value=800000000.0)
-    m.add_parameter("keq_triose_phosphate_isomerase", value=22.0)
-    m.add_parameter("kre_aldolase_dhap_gap", value=800000000.0)
-    m.add_parameter("keq_aldolase_dhap_gap", value=7.1)
-    m.add_parameter("kre_aldolase_dhap_e4p", value=800000000.0)
-    m.add_parameter("keq_aldolase_dhap_e4p", value=13.0)
-    m.add_parameter("E0_fbpase", value=1.0)
-    m.add_parameter("kcat_fbpase", value=1.6)
-    m.add_parameter("km_fbpase_s", value=0.03)
-    m.add_parameter("ki_fbpase_F6P", value=0.7)
-    m.add_parameter("ki_fbpase_Orthophosphate", value=12.0)
-    m.add_parameter("kre_transketolase_gap_f6p", value=800000000.0)
-    m.add_parameter("keq_transketolase_gap_f6p", value=0.084)
-    m.add_parameter("kre_transketolase_gap_s7p", value=800000000.0)
-    m.add_parameter("keq_transketolase_gap_s7p", value=0.85)
-    m.add_parameter("E0_SBPase", value=1.0)
-    m.add_parameter("kcat_SBPase", value=0.32)
-    m.add_parameter("km_SBPase_s", value=0.013)
-    m.add_parameter("ki_SBPase_Orthophosphate", value=12.0)
-    m.add_parameter("kre_ribose_phosphate_isomerase", value=800000000.0)
-    m.add_parameter("keq_ribose_phosphate_isomerase", value=0.4)
-    m.add_parameter("kre_ribulose_phosphate_epimerase", value=800000000.0)
-    m.add_parameter("keq_ribulose_phosphate_epimerase", value=0.67)
-    m.add_parameter("E0_phosphoribulokinase", value=1.0)
-    m.add_parameter("kcat_phosphoribulokinase", value=7.9992)
-    m.add_parameter("km_phosphoribulokinase_RU5P", value=0.05)
-    m.add_parameter("km_phosphoribulokinase_ATP", value=0.05)
-    m.add_parameter("ki_phosphoribulokinase_3PGA", value=2.0)
-    m.add_parameter("ki_phosphoribulokinase_RUBP", value=0.7)
-    m.add_parameter("ki_phosphoribulokinase_Orthophosphate", value=4.0)
-    m.add_parameter("ki_phosphoribulokinase_4", value=2.5)
-    m.add_parameter("ki_phosphoribulokinase_5", value=0.4)
-    m.add_parameter("kre_g6pi", value=800000000.0)
-    m.add_parameter("keq_g6pi", value=2.3)
-    m.add_parameter("kre_phosphoglucomutase", value=800000000.0)
-    m.add_parameter("keq_phosphoglucomutase", value=0.058)
-    m.add_parameter("Orthophosphate (external)", value=0.5)
-    m.add_parameter("km_ex_pga", value=0.25)
-    m.add_parameter("km_ex_gap", value=0.075)
-    m.add_parameter("km_ex_dhap", value=0.077)
-    m.add_parameter("km_N_translocator_Orthophosphate (external)", value=0.74)
-    m.add_parameter("km_N_translocator_Orthophosphate", value=0.63)
-    m.add_parameter("kcat_N_translocator", value=2.0)
-    m.add_parameter("E0_N_translocator", value=1.0)
-    m.add_parameter("E0_ex_g1p", value=1.0)
-    m.add_parameter("km_ex_g1p_G1P", value=0.08)
-    m.add_parameter("km_ex_g1p_ATP", value=0.08)
-    m.add_parameter("ki_ex_g1p", value=10.0)
-    m.add_parameter("ki_ex_g1p_3PGA", value=0.1)
-    m.add_parameter("ki_ex_g1p_F6P", value=0.02)
-    m.add_parameter("ki_ex_g1p_FBP", value=0.02)
-    m.add_parameter("kcat_ex_g1p", value=0.32)
-    m.add_parameter("kf_mda_reductase_1", value=500.0)
-    m.add_parameter("E0_mda_reductase_2", value=0.002)
-    m.add_parameter("kcat_mda_reductase_2", value=300.0)
-    m.add_parameter("km_mda_reductase_2_NADPH", value=0.023)
-    m.add_parameter("km_mda_reductase_2_MDA", value=0.0014)
-    m.add_parameter("kf1", value=10000.0)
-    m.add_parameter("kr1", value=220.0)
-    m.add_parameter("kf2", value=10000.0)
-    m.add_parameter("kr2", value=4000.0)
-    m.add_parameter("kf3", value=2510.0)
-    m.add_parameter("kf4", value=10000.0)
-    m.add_parameter("kr4", value=4000.0)
-    m.add_parameter("kf5", value=2510.0)
-    m.add_parameter("XT", value=0.07)
-    m.add_parameter("E0_glutathion_reductase", value=0.0014)
-    m.add_parameter("kcat_glutathion_reductase", value=595)
-    m.add_parameter("km_glutathion_reductase_NADPH", value=0.003)
-    m.add_parameter("km_glutathion_reductase_GSSG", value=0.2)
-    m.add_parameter("km_dehydroascorbate_reductase_DHA", value=0.07)
-    m.add_parameter("km_dehydroascorbate_reductase_GSH", value=2.5)
-    m.add_parameter("K", value=0.5)
-    m.add_parameter("E0_dehydroascorbate_reductase", value=0.0017)
-    m.add_parameter("kcat_dehydroascorbate_reductase", value=142)
-    m.add_parameter("kf_ex_atp", value=0.5)
-    m.add_parameter("kf_ex_nadph", value=0.5)
-    m.add_parameter("kH_Qslope", value=30000000000.0)
-    m.add_parameter("b6f_content", value=1)
-    m.add_parameter("max_b6f", value=500)
-    m.add_parameter("pKreg", value=7)
-    m.add_parameter("stroma_buffering", value=400)
-    m.add_parameter("kActATPase", value=0.001)
-    m.add_parameter("kDeactATPase", value=0.002)
-    m.add_parameter("k_ATPsynthase", value=20)
-    m.add_parameter("b", value=1.8688304401249531)
-    m.add_parameter("pK0E", value=5.960025833706074)
-    m.add_parameter("k_import_ATP", value=0.5)
-    m.add_parameter("k_import_NADPH", value=0.5)
-    m.add_parameter("volts_per_charge", value=0.000769481926574965)
-    m.add_parameter("ClCe_PQ", value=15.87880046767565)
-    m.add_parameter("Cl_leak_PQ", value=14.92901445507139)
-    m.add_parameter("KEA3_ATP_treshold", value=0.26274793681796166)
-    m.add_parameter("KEA3_pH_reg", value=7.69)
-    m.add_parameter("K_delta_psi_treshold", value=0.08146807307624158)
-    m.add_parameter("VCCN_delta_psi_treshold", value=0.08000900979332677)
-    m.add_parameter("k_Cl_leak", value=25)
-    m.add_parameter("k_NDH1", value=7.447430768265866)
-    m.add_parameter("k_KEA", value=90)
-    m.add_parameter("perm_K", value=1.6113135416150155)
-    m.add_parameter("k_VCCN1", value=0.5)
-    m.add_parameter("k_ClCe", value=0.5)
-    m.add_parameter("K_total", value=60)
-    m.add_parameter("Cl_total", value=50)
-    m.add_parameter("ClCe_ATP_threshold", value=0.2)
+    # Used as excitation rate per reaction centre; the conversion factor from
+    # umol m^-2 s^-1 is unknown (Matuszynska 2019)
+    m.add_parameter("PPFD", value=100.0, unit=_per_s)
+    m.add_parameter("CO2 (dissolved)", value=0.013226, unit=_mmol_l)
+    m.add_parameter("O2 (dissolved)_lumen", value=8.0, unit=_mmol_mol_chl)
+    m.add_parameter("bH", value=100.0, unit=dimensionless)
+    m.add_parameter("F", value=96.485, unit=_kj_mol_v)
+    m.add_parameter("E^0_PC", value=0.38, unit=volt)
+    m.add_parameter("E^0_P700", value=0.48, unit=volt)
+    m.add_parameter("E^0_FA", value=-0.55, unit=volt)
+    m.add_parameter("E^0_Fd", value=-0.43, unit=volt)
+    m.add_parameter("E^0_NADP", value=-0.113, unit=volt)
+    # 1 mmol (mol Chl)^-1 corresponds to 3.2e-5 M in the stroma (Matuszynska 2019)
+    m.add_parameter("convf", value=0.032, unit=_mmol_l / _mmol_mol_chl)
+    m.add_parameter("R", value=0.0083, unit=_kj_mol_k)
+    m.add_parameter("T", value=298.0, unit=kelvin)
+    m.add_parameter("Carotenoids_tot", value=1.0, unit=dimensionless)
+    m.add_parameter("Fd*", value=5.0, unit=_mmol_mol_chl)
+    m.add_parameter("PC_tot", value=4.0, unit=_mmol_mol_chl)
+    m.add_parameter("PSBS_tot", value=1.0, unit=dimensionless)
+    m.add_parameter("LHC_tot", value=1.0, unit=dimensionless)
+    m.add_parameter("gamma0", value=0.06260060801266355, unit=dimensionless)
+    m.add_parameter("gamma1", value=0.4053583123566203, unit=dimensionless)
+    m.add_parameter("gamma2", value=0.7040758738825375, unit=dimensionless)
+    m.add_parameter("gamma3", value=0.07834807781016208, unit=dimensionless)
+    m.add_parameter("kZSat", value=0.12, unit=dimensionless)
+    m.add_parameter("E^0_QA", value=-0.14, unit=volt)
+    m.add_parameter("E^0_PQ", value=0.354, unit=volt)
+    m.add_parameter("PQ_tot", value=17.5, unit=_mmol_mol_chl)
+    m.add_parameter("staticAntII", value=0.1, unit=dimensionless)
+    m.add_parameter("staticAntI", value=0.37, unit=dimensionless)
+    m.add_parameter("Thioredoxin_tot", value=1.0, unit=_mmol_mol_chl)
+    m.add_parameter("E_total", value=6.0, unit=_mmol_mol_chl)
+    m.add_parameter("NADP*", value=0.8, unit=_mmol_l)
+    m.add_parameter("A*P", value=2.55, unit=_mmol_l)
+    m.add_parameter("Pi_tot", value=17.05, unit=_mmol_l)
+    m.add_parameter(
+        "kf_ferredoxin_thioredoxin_reductase", value=0.8, unit=_per_mmol_mol_chl_s
+    )
+    m.add_parameter("kf_tr_activation", value=1.0, unit=_per_mmol_mol_chl_s)
+    m.add_parameter("kf_tr_inactivation", value=0.1, unit=_per_s)
+    m.add_parameter("ASC_tot*", value=10, unit=_mmol_l)
+    m.add_parameter("Glutathion_tot", value=10.0, unit=_mmol_l)
+    # FIXME: atp_synthase passes kf_atp_synthase as its equilibrium constant, while the
+
+    # pH-dependent keq_atp_synthase is computed but unused. Annotated as used
+
+    # (dimensionless); check with the model author which one is intended
+    m.add_parameter("kf_atp_synthase", value=20.0, unit=dimensionless)
+    m.add_parameter("HPR", value=4.666666666666667, unit=dimensionless)
+    # Activity relative to the 1 M standard state, so keq_atp_synthase is dimensionless
+    m.add_parameter("Pi_mol", value=0.01, unit=dimensionless)
+    m.add_parameter("DeltaG0_ATP", value=30.6, unit=_kj_mol)
+    m.add_parameter("kh_lhc_protonation", value=10, unit=dimensionless)
+    m.add_parameter("kf_lhc_protonation", value=0.15837051384170664, unit=_per_s)
+    m.add_parameter(
+        "ksat_lhc_protonation", value=6.2539066418842255, unit=dimensionless
+    )
+    m.add_parameter("kf_lhc_deprotonation", value=0.015892570403695704, unit=_per_s)
+    m.add_parameter("kf_cyclic_electron_flow", value=1.0, unit=_per_mmol2_mol_chl2_s)
+    m.add_parameter(
+        "kf_violaxanthin_deepoxidase", value=0.0006091912188339879, unit=_per_s
+    )
+    m.add_parameter("kh_violaxanthin_deepoxidase", value=4, unit=dimensionless)
+    m.add_parameter(
+        "ksat_violaxanthin_deepoxidase", value=6.193595407850397, unit=dimensionless
+    )
+    m.add_parameter("kf_zeaxanthin_epoxidase", value=0.000106261953934132, unit=_per_s)
+    m.add_parameter("km_fnr_Ferredoxine (reduced)", value=1.56, unit=_mmol_mol_chl)
+    m.add_parameter("km_fnr_NADP", value=0.22, unit=_mmol_mol_chl)
+    m.add_parameter("E0_fnr", value=3.0, unit=_mmol_mol_chl)
+    m.add_parameter("kcat_fnr", value=500.0, unit=_per_s)
+    m.add_parameter("kf_ndh", value=0.002, unit=_per_s)
+    m.add_parameter("PSII_total", value=2.5, unit=_mmol_mol_chl)
+    m.add_parameter("PSI_total", value=2.5, unit=_mmol_mol_chl)
+    m.add_parameter("kH0", value=500000000.0, unit=_per_s)
+    m.add_parameter("kPQred", value=250.0, unit=_per_mmol_mol_chl_s)
+    m.add_parameter("kPCox", value=2500.0, unit=_per_mmol_mol_chl_s)
+    m.add_parameter("kFdred", value=250000.0, unit=_per_mmol_mol_chl_s)
+    m.add_parameter("k2", value=5000000000.0, unit=_per_s)
+    m.add_parameter("kH", value=5000000000.0, unit=_per_s)
+    m.add_parameter("kF", value=625000000.0, unit=_per_s)
+    m.add_parameter("kMehler", value=1.0, unit=_per_mmol_mol_chl_s)
+    m.add_parameter("kf_proton_leak", value=10.0, unit=_per_s)
+    m.add_parameter("kPTOX", value=0.01, unit=_per_mmol_mol_chl_s)
+    m.add_parameter("kStt7", value=0.0035, unit=_per_s)
+    m.add_parameter("km_lhc_state_transition_12", value=0.2, unit=dimensionless)
+    m.add_parameter("n_ST", value=2.0, unit=dimensionless)
+    m.add_parameter("kPph1", value=0.0013, unit=_per_s)
+    m.add_parameter("E0_rubisco", value=1.0, unit=_mmol_l / _mmol_mol_chl)
+    m.add_parameter("kcat_rubisco_carboxylase", value=2.72, unit=_per_s)
+    m.add_parameter("km_rubisco_carboxylase_RUBP", value=0.02, unit=_mmol_l)
+    m.add_parameter(
+        "km_rubisco_carboxylase_CO2 (dissolved)", value=0.0107, unit=_mmol_l
+    )
+    # Pettersson 1988 Table 3 gives K_i11 (PGA) = 0.84 mM; 0.04 is K_i12 (FBP)
+    m.add_parameter("ki_rubisco_carboxylase_3PGA", value=0.04, unit=_mmol_l)
+    m.add_parameter("ki_rubisco_carboxylase_FBP", value=0.04, unit=_mmol_l)
+    m.add_parameter("ki_rubisco_carboxylase_SBP", value=0.075, unit=_mmol_l)
+    m.add_parameter("ki_rubisco_carboxylase_Orthophosphate", value=0.9, unit=_mmol_l)
+    m.add_parameter("ki_rubisco_carboxylase_NADPH", value=0.07, unit=_mmol_l)
+    m.add_parameter(
+        "kre_phosphoglycerate_kinase", value=800000000.0, unit=_per_mmol_l_s
+    )
+    m.add_parameter("keq_phosphoglycerate_kinase", value=0.00031, unit=dimensionless)
+    m.add_parameter("kre_gadph", value=800000000.0, unit=_per_mmol2_l2_s)
+    m.add_parameter("keq_gadph", value=16000000.0, unit=dimensionless)
+    m.add_parameter("kre_triose_phosphate_isomerase", value=800000000.0, unit=_per_s)
+    m.add_parameter("keq_triose_phosphate_isomerase", value=22.0, unit=dimensionless)
+    m.add_parameter("kre_aldolase_dhap_gap", value=800000000.0, unit=_per_mmol_l_s)
+    m.add_parameter("keq_aldolase_dhap_gap", value=7.1, unit=_per_mmol_l)
+    m.add_parameter("kre_aldolase_dhap_e4p", value=800000000.0, unit=_per_mmol_l_s)
+    m.add_parameter("keq_aldolase_dhap_e4p", value=13.0, unit=_per_mmol_l)
+    m.add_parameter("E0_fbpase", value=1.0, unit=_mmol_l / _mmol_mol_chl)
+    m.add_parameter("kcat_fbpase", value=1.6, unit=_per_s)
+    m.add_parameter("km_fbpase_s", value=0.03, unit=_mmol_l)
+    m.add_parameter("ki_fbpase_F6P", value=0.7, unit=_mmol_l)
+    m.add_parameter("ki_fbpase_Orthophosphate", value=12.0, unit=_mmol_l)
+    m.add_parameter("kre_transketolase_gap_f6p", value=800000000.0, unit=_per_mmol_l_s)
+    m.add_parameter("keq_transketolase_gap_f6p", value=0.084, unit=dimensionless)
+    m.add_parameter("kre_transketolase_gap_s7p", value=800000000.0, unit=_per_mmol_l_s)
+    m.add_parameter("keq_transketolase_gap_s7p", value=0.85, unit=dimensionless)
+    m.add_parameter("E0_SBPase", value=1.0, unit=_mmol_l / _mmol_mol_chl)
+    m.add_parameter("kcat_SBPase", value=0.32, unit=_per_s)
+    m.add_parameter("km_SBPase_s", value=0.013, unit=_mmol_l)
+    m.add_parameter("ki_SBPase_Orthophosphate", value=12.0, unit=_mmol_l)
+    m.add_parameter("kre_ribose_phosphate_isomerase", value=800000000.0, unit=_per_s)
+    m.add_parameter("keq_ribose_phosphate_isomerase", value=0.4, unit=dimensionless)
+    m.add_parameter("kre_ribulose_phosphate_epimerase", value=800000000.0, unit=_per_s)
+    m.add_parameter("keq_ribulose_phosphate_epimerase", value=0.67, unit=dimensionless)
+    m.add_parameter("E0_phosphoribulokinase", value=1.0, unit=_mmol_l / _mmol_mol_chl)
+    m.add_parameter("kcat_phosphoribulokinase", value=7.9992, unit=_per_s)
+    m.add_parameter("km_phosphoribulokinase_RU5P", value=0.05, unit=_mmol_l)
+    m.add_parameter("km_phosphoribulokinase_ATP", value=0.05, unit=_mmol_l)
+    m.add_parameter("ki_phosphoribulokinase_3PGA", value=2.0, unit=_mmol_l)
+    m.add_parameter("ki_phosphoribulokinase_RUBP", value=0.7, unit=_mmol_l)
+    m.add_parameter("ki_phosphoribulokinase_Orthophosphate", value=4.0, unit=_mmol_l)
+    m.add_parameter("ki_phosphoribulokinase_4", value=2.5, unit=_mmol_l)
+    m.add_parameter("ki_phosphoribulokinase_5", value=0.4, unit=_mmol_l)
+    m.add_parameter("kre_g6pi", value=800000000.0, unit=_per_s)
+    m.add_parameter("keq_g6pi", value=2.3, unit=dimensionless)
+    m.add_parameter("kre_phosphoglucomutase", value=800000000.0, unit=_per_s)
+    m.add_parameter("keq_phosphoglucomutase", value=0.058, unit=dimensionless)
+    m.add_parameter("Orthophosphate (external)", value=0.5, unit=_mmol_l)
+    m.add_parameter("km_ex_pga", value=0.25, unit=_mmol_l)
+    m.add_parameter("km_ex_gap", value=0.075, unit=_mmol_l)
+    m.add_parameter("km_ex_dhap", value=0.077, unit=_mmol_l)
+    m.add_parameter(
+        "km_N_translocator_Orthophosphate (external)", value=0.74, unit=_mmol_l
+    )
+    m.add_parameter("km_N_translocator_Orthophosphate", value=0.63, unit=_mmol_l)
+    m.add_parameter("kcat_N_translocator", value=2.0, unit=_per_s)
+    m.add_parameter("E0_N_translocator", value=1.0, unit=_mmol_l)
+    m.add_parameter("E0_ex_g1p", value=1.0, unit=_mmol_l / _mmol_mol_chl)
+    m.add_parameter("km_ex_g1p_G1P", value=0.08, unit=_mmol_l)
+    m.add_parameter("km_ex_g1p_ATP", value=0.08, unit=_mmol_l)
+    m.add_parameter("ki_ex_g1p", value=10.0, unit=_mmol_l)
+    # Pettersson 1988 Table 3 lists K_ast1-3 in mM, but Eq. 41 requires them dimensionless
+    m.add_parameter("ki_ex_g1p_3PGA", value=0.1, unit=dimensionless)
+    m.add_parameter("ki_ex_g1p_F6P", value=0.02, unit=dimensionless)
+    m.add_parameter("ki_ex_g1p_FBP", value=0.02, unit=dimensionless)
+    m.add_parameter("kcat_ex_g1p", value=0.32, unit=_per_s)
+    m.add_parameter("kf_mda_reductase_1", value=500.0, unit=_per_mmol_l_s)
+    m.add_parameter("E0_mda_reductase_2", value=0.002, unit=_mmol_l)
+    m.add_parameter("kcat_mda_reductase_2", value=300.0, unit=_per_s)
+    m.add_parameter("km_mda_reductase_2_NADPH", value=0.023, unit=_mmol_l)
+    m.add_parameter("km_mda_reductase_2_MDA", value=0.0014, unit=_mmol_l)
+    m.add_parameter("kf1", value=10000.0, unit=_per_mmol_l_s)
+    m.add_parameter("kr1", value=220.0, unit=_per_s)
+    m.add_parameter("kf2", value=10000.0, unit=_per_mmol_l_s)
+    m.add_parameter("kr2", value=4000.0, unit=_per_s)
+    m.add_parameter("kf3", value=2510.0, unit=_per_s)
+    m.add_parameter("kf4", value=10000.0, unit=_per_mmol_l_s)
+    m.add_parameter("kr4", value=4000.0, unit=_per_s)
+    m.add_parameter("kf5", value=2510.0, unit=_per_s)
+    m.add_parameter("XT", value=0.07, unit=_mmol_l)
+    m.add_parameter("E0_glutathion_reductase", value=0.0014, unit=_mmol_l)
+    m.add_parameter("kcat_glutathion_reductase", value=595, unit=_per_s)
+    m.add_parameter("km_glutathion_reductase_NADPH", value=0.003, unit=_mmol_l)
+    m.add_parameter("km_glutathion_reductase_GSSG", value=0.2, unit=_mmol_l)
+    m.add_parameter("km_dehydroascorbate_reductase_DHA", value=0.07, unit=_mmol_l)
+    m.add_parameter("km_dehydroascorbate_reductase_GSH", value=2.5, unit=_mmol_l)
+    m.add_parameter("K", value=0.5, unit=_mmol_l / _per_mmol_l)
+    m.add_parameter("E0_dehydroascorbate_reductase", value=0.0017, unit=_mmol_l)
+    m.add_parameter("kcat_dehydroascorbate_reductase", value=142, unit=_per_s)
+    m.add_parameter("kf_ex_atp", value=0.5, unit=_per_s)
+    m.add_parameter("kf_ex_nadph", value=0.5, unit=_per_s)
+    m.add_parameter("kH_Qslope", value=30000000000.0, unit=_per_s)
+    m.add_parameter("b6f_content", value=1, unit=dimensionless)
+    m.add_parameter("max_b6f", value=500, unit=_per_s)
+    m.add_parameter("pKreg", value=7, unit=dimensionless)
+    m.add_parameter("stroma_buffering", value=400, unit=dimensionless)
+    m.add_parameter("kActATPase", value=0.001, unit=_per_s)
+    m.add_parameter("kDeactATPase", value=0.002, unit=_per_s)
+    m.add_parameter("k_ATPsynthase", value=20, unit=_per_s)
+    m.add_parameter("b", value=1.8688304401249531, unit=dimensionless)
+    m.add_parameter("pK0E", value=5.960025833706074, unit=dimensionless)
+    m.add_parameter("k_import_ATP", value=0.5, unit=_per_s)
+    m.add_parameter("k_import_NADPH", value=0.5, unit=_per_s)
+    m.add_parameter(
+        "volts_per_charge", value=0.000769481926574965, unit=volt / _mmol_mol_chl
+    )
+    m.add_parameter("ClCe_PQ", value=15.87880046767565, unit=_mmol_mol_chl)
+    m.add_parameter("Cl_leak_PQ", value=14.92901445507139, unit=_mmol_mol_chl)
+    m.add_parameter("KEA3_ATP_treshold", value=0.26274793681796166, unit=_mmol_l)
+    m.add_parameter("KEA3_pH_reg", value=7.69, unit=dimensionless)
+    m.add_parameter("K_delta_psi_treshold", value=0.08146807307624158, unit=volt)
+    m.add_parameter("VCCN_delta_psi_treshold", value=0.08000900979332677, unit=volt)
+    m.add_parameter("k_Cl_leak", value=25, unit=_mmol_mol_chl / second)
+    m.add_parameter("k_NDH1", value=7.447430768265866, unit=_per_mmol2_mol_chl2_s)
+    m.add_parameter("k_KEA", value=90, unit=_per_mmol_mol_chl_s)
+    m.add_parameter(
+        "perm_K", value=1.6113135416150155, unit=_mmol_mol_chl / (_kj_mol * second)
+    )
+    m.add_parameter("k_VCCN1", value=0.5, unit=_mmol_mol_chl / (_kj_mol * second))
+    m.add_parameter("k_ClCe", value=0.5, unit=_per_s)
+    m.add_parameter("K_total", value=60, unit=_mmol_mol_chl)
+    m.add_parameter("Cl_total", value=50, unit=_mmol_mol_chl)
+    m.add_parameter("ClCe_ATP_threshold", value=0.2, unit=_mmol_l)
+    # pH -> concentration conversions hide the unit in a constant, so set it explicitly
+    m.add_derived(
+        "protons_stroma_chl",
+        fn=_protons_stroma_2016,
+        args=["pH"],
+        unit=_mmol_mol_chl,
+    )
+    m.add_derived(
+        "ksat_lhc_protonation_protons",
+        fn=_protons_stroma_2016,
+        args=["ksat_lhc_protonation"],
+        unit=_mmol_mol_chl,
+    )
+    m.add_derived(
+        "ksat_violaxanthin_deepoxidase_protons",
+        fn=_protons_stroma_2016,
+        args=["ksat_violaxanthin_deepoxidase"],
+        unit=_mmol_mol_chl,
+    )
     m.add_derived(
         "RT",
         fn=_mass_action_1s,
@@ -1588,11 +1675,15 @@ def get_ebeling_2026() -> Model:
         "protons_lumen",
         fn=_protons_lumen,
         args=["pH_lumen"],
+        unit=_mmol_mol_chl,
     )
+    # FIXME: in mmol (mol Chl)^-1 (10^-pH / 3.2e-5), but gadph uses it together with
+    # stromal concentrations in mM (saadat2021 uses 1.26e-5 mM here)
     m.add_derived(
         "protons",
         fn=_protons_stroma_ebeling,
         args=["pH"],
+        unit=_mmol_mol_chl,
     )
     m.add_derived(
         "ATP_pmf_activity",
@@ -1718,7 +1809,7 @@ def get_ebeling_2026() -> Model:
             "protons_lumen",
             "kh_lhc_protonation",
             "kf_lhc_protonation",
-            "ksat_lhc_protonation",
+            "ksat_lhc_protonation_protons",
         ],
         stoichiometry={"PsbS (de-protonated)": -1},
     )
@@ -1746,7 +1837,7 @@ def get_ebeling_2026() -> Model:
             "protons_lumen",
             "kf_violaxanthin_deepoxidase",
             "kh_violaxanthin_deepoxidase",
-            "ksat_violaxanthin_deepoxidase",
+            "ksat_violaxanthin_deepoxidase_protons",
         ],
         stoichiometry={"Violaxanthin": -1},
     )
@@ -1784,7 +1875,7 @@ def get_ebeling_2026() -> Model:
     m.add_reaction(
         "proton_leak",
         fn=_rate_leak,
-        args=["protons_lumen", "pH", "kf_proton_leak"],
+        args=["protons_lumen", "protons_stroma_chl", "kf_proton_leak"],
         stoichiometry={
             "pH_lumen": 0.01,
             "pH": -0.0025,
