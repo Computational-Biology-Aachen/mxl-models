@@ -1,4 +1,6 @@
 import pandas as pd
+import pytest
+from mxlpy.units import second
 
 from mxlmodels import get_salvatori2022
 
@@ -21,3 +23,18 @@ def test_rhs() -> None:
         atol=1e-9,
         rtol=1e-9,
     )
+
+
+@pytest.mark.parametrize("load", ["Minn", "Eiko"])
+def test_units(load: str) -> None:
+    model = get_salvatori2022(load=load)  # type: ignore[arg-type]
+    check = model.check_units(time_unit=second)
+    assert set(check.per_variable) == set(model.get_raw_variables())
+    # flux in umol m^-2 s^-1 acting on dimensionless NADP pools, see FIXME in _etr_in
+    known_inconsistent = {"ETR_in"}
+    assert {
+        (var, rxn): result
+        for var, per_rxn in check.per_variable.items()
+        for rxn, result in per_rxn.items()
+        if result is not True and rxn not in known_inconsistent
+    } == {}

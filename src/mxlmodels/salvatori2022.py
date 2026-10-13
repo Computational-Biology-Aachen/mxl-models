@@ -37,7 +37,12 @@ wrong labels on their figures.
 from typing import Literal
 
 import numpy as np
-from mxlpy import Model
+from mxlpy import Model, Parameter, Variable
+from mxlpy.units import dimensionless, mumol, ppfd, second, sqm
+
+# Units from Table 1
+_umol_m2 = mumol / sqm
+_per_s = 1 / second
 
 
 def _energy_input(
@@ -79,6 +84,8 @@ def _activation_p_npq(
 
 
 def _etr_in(nadp: float, e_psii: float, v_etr: float, eta_nadp: float) -> float:
+    # FIXME: the flux is in umol m^-2 s^-1 (Table 1), but NADP+ and NADPH are
+    # dimensionless, so this reduction of NADP+ is dimensionally inconsistent
     return v_etr * e_psii * nadp * eta_nadp
 
 
@@ -109,47 +116,78 @@ def get_salvatori2022(load: Literal["Minn", "Eiko"] = "Eiko") -> Model:
     if load == "Minn":
         m.add_parameters(
             {
-                "PAR": 0,  # Photosynthetically active radiation
-                "alpha": 0.54,  # Absorption coefficient
-                "c_in": 0.25,  # Energy input coefficient
-                "Ec_PSII": 9.98,  # PSII energy carrying capacity
-                "v_ETR": 11.56,  # Velocity of ETR
-                "v_d": 7.00,  # Velocity of energy dissipation
-                "Qc": 0.03,  # PSII-zeax complex energy carrying capacity
-                "v_NPQ": 53.87,  # Velocity of NPQ
-                "v_p": 0.01,  # Maximum velocity of NPQ-related proteins activation
-                "v_C": 13.04,  # Maximum velocity of Calvin Cycle reactions
-                "eta_NADPH": 4.10,  # Efficiency of NADPH
-                "eta_NADP": 0.75,  # Efficiency of NADP+
-                "v_R": 14e-4,  # Maximum velocity of Rubisco activation
-                "d": 3.69,  # Maximum pH balance value
-                "c_y": 0,  # Minimum necessary cyclic electron flow
+                "PAR": Parameter(0, unit=ppfd),  # Photosynthetically active radiation
+                "alpha": Parameter(0.54, unit=dimensionless),  # Absorption coefficient
+                "c_in": Parameter(0.25, unit=dimensionless),  # Energy input coefficient
+                "Ec_PSII": Parameter(
+                    9.98, unit=_umol_m2
+                ),  # PSII energy carrying capacity
+                "v_ETR": Parameter(11.56, unit=_per_s),  # Velocity of ETR
+                "v_d": Parameter(7.00, unit=_per_s),  # Velocity of energy dissipation
+                "Qc": Parameter(
+                    0.03, unit=_umol_m2
+                ),  # PSII-zeax complex energy carrying capacity
+                "v_NPQ": Parameter(53.87, unit=_per_s),  # Velocity of NPQ
+                "v_p": Parameter(
+                    0.01, unit=_per_s
+                ),  # Maximum velocity of NPQ-related proteins activation
+                "v_C": Parameter(
+                    13.04, unit=_per_s
+                ),  # Maximum velocity of Calvin Cycle reactions
+                "eta_NADPH": Parameter(4.10, unit=dimensionless),  # Efficiency of NADPH
+                "eta_NADP": Parameter(0.75, unit=dimensionless),  # Efficiency of NADP+
+                "v_R": Parameter(
+                    14e-4, unit=_per_s
+                ),  # Maximum velocity of Rubisco activation
+                "d": Parameter(3.69, unit=dimensionless),  # Maximum pH balance value
+                "c_y": Parameter(
+                    0, unit=dimensionless
+                ),  # Minimum necessary cyclic electron flow
             }
         )
 
     else:
         m.add_parameters(
             {
-                "PAR": 0,  # Photosynthetically active radiation
-                "alpha": 0.78,  # Absorption coefficient
-                "c_in": 0.23,  # Energy input coefficient
-                "Ec_PSII": 157.56,  # PSII energy carrying capacity
-                "v_ETR": 0.78,  # Velocity of ETR
-                "v_d": 0.08,  # Velocity of energy dissipation
-                "Qc": 0.07,  # PSII-zeax complex energy carrying capacity
-                "v_NPQ": 70.58,  # Velocity of NPQ
-                "v_p": 0.07,  # Maximum velocity of NPQ-related proteins activation
-                "v_C": 11.75,  # Maximum velocity of Calvin Cycle reactions
-                "eta_NADPH": 5.07,  # Efficiency of NADPH
-                "eta_NADP": 0.89,  # Efficiency of NADP+
-                "v_R": 8.9e-4,  # Maximum velocity of Rubisco activation
-                "d": 8.40,  # Maximum pH balance value
-                "c_y": -4,  # Minimum necessary cyclic electron flow
+                "PAR": Parameter(0, unit=ppfd),  # Photosynthetically active radiation
+                "alpha": Parameter(0.78, unit=dimensionless),  # Absorption coefficient
+                "c_in": Parameter(0.23, unit=dimensionless),  # Energy input coefficient
+                "Ec_PSII": Parameter(
+                    157.56, unit=_umol_m2
+                ),  # PSII energy carrying capacity
+                "v_ETR": Parameter(0.78, unit=_per_s),  # Velocity of ETR
+                "v_d": Parameter(0.08, unit=_per_s),  # Velocity of energy dissipation
+                "Qc": Parameter(
+                    0.07, unit=_umol_m2
+                ),  # PSII-zeax complex energy carrying capacity
+                "v_NPQ": Parameter(70.58, unit=_per_s),  # Velocity of NPQ
+                "v_p": Parameter(
+                    0.07, unit=_per_s
+                ),  # Maximum velocity of NPQ-related proteins activation
+                "v_C": Parameter(
+                    11.75, unit=_per_s
+                ),  # Maximum velocity of Calvin Cycle reactions
+                "eta_NADPH": Parameter(5.07, unit=dimensionless),  # Efficiency of NADPH
+                "eta_NADP": Parameter(0.89, unit=dimensionless),  # Efficiency of NADP+
+                "v_R": Parameter(
+                    8.9e-4, unit=_per_s
+                ),  # Maximum velocity of Rubisco activation
+                "d": Parameter(8.40, unit=dimensionless),  # Maximum pH balance value
+                "c_y": Parameter(
+                    -4, unit=dimensionless
+                ),  # Minimum necessary cyclic electron flow
             }
         )
 
     m.add_variables(
-        {"E_PSII": 0, "Q": 0, "P_NPQ": 0, "NADP": 5, "NADPH": 5, "R": 0.001}
+        {
+            "E_PSII": Variable(0, unit=_umol_m2),
+            "Q": Variable(0, unit=_umol_m2),
+            "P_NPQ": Variable(0, unit=dimensionless),
+            "NADP": Variable(5, unit=dimensionless),
+            "NADPH": Variable(5, unit=dimensionless),
+            "R": Variable(0.001, unit=dimensionless),
+        }
     )
 
     m.add_derived("pH", _p_h_func, args=["NADPH", "NADP"])
