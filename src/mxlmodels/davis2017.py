@@ -302,9 +302,9 @@ def get_davis2017() -> Model:
     """
     m = Model()
 
-    m.add_parameters(  # noqa: F821
+    m.add_parameters( 
         {
-            "PPFD": Parameter(0, unit=per_second),  # not in SI; sigma0_II is a pure ratio, so PPFD acts as hits per PSII per s
+            "PPFD": Parameter(0, unit=per_second),  # not in SI
             "k_recomb": Parameter(0.33, unit=per_second),  # SI
             "phi_triplet": Parameter(0.45, unit=dimensionless),  # SI: fraction
             "phi_1O2": Parameter(1, unit=dimensionless),  # SI: fraction
@@ -313,7 +313,7 @@ def get_davis2017() -> Model:
             "pKa_reg": Parameter(6.5, unit=pH_unit),  
             "Em_PC_pH7": Parameter(0.37, unit=volt), 
             "Em_PQH2_pH7": Parameter(0.11, unit=volt), 
-            "Vmax_b6f": Parameter(500, unit=electron / (b6f * u.s)),  # SI: electrons PQH2->PC complex^-1 s^-1 (table value 300)
+            "Vmax_b6f": Parameter(500, unit=electron / (b6f * u.s)), 
             "pKa_PsbS": Parameter(6.4, unit=pH_unit),  
             "NPQ_max": Parameter(5, unit=dimensionless),  
             "pH_stroma": Parameter(7.8, unit=pH_unit),  # SI: pH units
@@ -323,8 +323,8 @@ def get_davis2017() -> Model:
             "k_PCtoP700": Parameter(500, unit=per_second / PC),  # SI: PC^-1 s^-1
             "k_FdtoNADP": Parameter(1000, unit=per_second),  # not in SI
             "K_st": Parameter(0.04, unit=_molar),  # SI: M
-            "k_KEA3": Parameter(0, unit=_molar**-1 * per_second),# v_KEA = k*(H_lu*K_st - H_st*K_lu) is M/s, so 1/(M s)
-            "P_K": Parameter(6000, unit=per_second / volt),  # SI: ions s^-1 V^-1 PSII^-1; dK/dt = P_K*dmu*(K_lu+K_st)/2 is M/s, so 1/(V s)
+            "k_KEA3": Parameter(0, unit=_molar**-1 * per_second),# v_KEA is M/s, so 1/(M s)
+            "P_K": Parameter(6000, unit=per_second / volt),  # SI: ions s^-1 V^-1 PSII^-1; dK/dt is M/s, so 1/(V s)
             "lumen_protons_per_turnover": Parameter(1.4e-05, unit=_molar * PSII / proton),  # SI text: M change per H+ per PSII
             "n": Parameter(14 / 3, unit=proton / ATP),  # SI: H+ per ATP
             "DeltaGATP": Parameter(42, unit=_kj_mol),  # SI: kJ/mol
@@ -346,7 +346,7 @@ def get_davis2017() -> Model:
         }
     )
 
-    m.add_variables(  # noqa: F821
+    m.add_variables(  
         {
             "QA_red": Variable(0, unit=QA / PSII),  # SI: relative to standard PSII
             "PQH_2": Variable(0, unit=PQH2 / PSII),  # SI: relative to standard PSII
