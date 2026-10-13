@@ -22,7 +22,10 @@ and light-scaling parameters are not reported.
 """
 
 import numpy as np
-from mxlpy import Model
+from mxlpy import Model, Parameter, Variable
+from mxlpy.units import dimensionless, ppfd, second
+
+# Fluorescence signals are in arbitrary units, so dimensionless
 
 # ------------------------------------------------------------------
 # Harmonic model
@@ -134,33 +137,42 @@ def get_harmonic_model(
     light_offset = (light_min + light_max) / 2.0
     light_amplitude = (light_max - light_min) / 2.0
     variables = {
-        "Light": light_offset - light_amplitude,
-        "Fit": _harmonic_sum(
-            0.0,
-            offset,
-            period,
-            *amplitudes,
-            *lags,
-        ),
-        **{
-            f"H{i}": _harmonic_value(
+        "Light": Variable(light_offset - light_amplitude, unit=ppfd),
+        "Fit": Variable(
+            _harmonic_sum(
                 0.0,
                 offset,
-                amplitudes[i - 1],
                 period,
-                lags[i - 1],
-                i,
+                *amplitudes,
+                *lags,
+            ),
+            unit=dimensionless,
+        ),
+        **{
+            f"H{i}": Variable(
+                _harmonic_value(
+                    0.0,
+                    offset,
+                    amplitudes[i - 1],
+                    period,
+                    lags[i - 1],
+                    i,
+                ),
+                unit=dimensionless,
             )
             for i in range(1, 5)
         },
     }
 
     parameters = {
-        "period": period,
-        "light_amplitude": light_amplitude,
-        **{f"a{i}": amplitudes[i - 1] for i in range(1, 5)},
-        **{f"p{i}": lags[i - 1] for i in range(1, 5)},
-        **{f"n{i}": float(i) for i in range(1, 5)},
+        "period": Parameter(period, unit=second),
+        "light_amplitude": Parameter(light_amplitude, unit=ppfd),
+        **{
+            f"a{i}": Parameter(amplitudes[i - 1], unit=dimensionless)
+            for i in range(1, 5)
+        },
+        **{f"p{i}": Parameter(lags[i - 1], unit=dimensionless) for i in range(1, 5)},
+        **{f"n{i}": Parameter(float(i), unit=dimensionless) for i in range(1, 5)},
     }
 
     model = (
@@ -242,15 +254,15 @@ def get_induction_model(
         Model()
         .add_variables(
             {
-                "Signal": baseline,
+                "Signal": Variable(baseline, unit=dimensionless),
             }
         )
         .add_parameters(
             {
-                "rise": rise,
-                "tau_rise": tau_rise,
-                "decline": decline,
-                "tau_decline": tau_decline,
+                "rise": Parameter(rise, unit=dimensionless),
+                "tau_rise": Parameter(tau_rise, unit=second),
+                "decline": Parameter(decline, unit=dimensionless),
+                "tau_decline": Parameter(tau_decline, unit=second),
             }
         )
         .add_reaction(
@@ -298,17 +310,17 @@ def get_ojip_model(
         Model()
         .add_variables(
             {
-                "ChlF": fluorescence_0,
+                "ChlF": Variable(fluorescence_0, unit=dimensionless),
             }
         )
         .add_parameters(
             {
-                "j": j,
-                "i": i,
-                "p": p,
-                "tau_j": tau_j,
-                "tau_i": tau_i,
-                "tau_p": tau_p,
+                "j": Parameter(j, unit=dimensionless),
+                "i": Parameter(i, unit=dimensionless),
+                "p": Parameter(p, unit=dimensionless),
+                "tau_j": Parameter(tau_j, unit=second),
+                "tau_i": Parameter(tau_i, unit=second),
+                "tau_p": Parameter(tau_p, unit=second),
             }
         )
         .add_reaction(
