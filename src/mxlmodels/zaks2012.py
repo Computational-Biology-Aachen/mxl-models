@@ -21,29 +21,65 @@ synthase F8 - Lumen ion fluxes (Mg, Cl, K)
 
 import numpy as np
 from mxlpy import Derived, Model, Parameter, Variable
-from mxlpy.units import (
-    coulomb,
-    dimensionless,
-    joule,
-    kelvin,
-    liter,
-    mol,
-    ppfd,
-    second,
-    sqm,
-    volt,
-)
 
-# States are per reaction centre (dimensionless), lumen ions and protons in M.
-# Areas are cm^2 in the original (e.g. 1 uF cm^-2 membrane capacitance); only their
-# ratios enter the equations
-_area = sqm
-_molar = mol / liter
-_per_s = 1 / second
-_conductivity = mol / (_area * volt * second)
-# membrane capacitance is F cm^-2 in the original, written as C V^-1 so that it cancels
-# permeabilities are cm s^-1 in the original; the flux converts with 1e-3 L cm^-3
-_permeability = liter / (_area * second)
+import sympy
+from sympy.physics import units as u
+from sympy.physics.units import Dimension, Quantity
+from sympy.physics.units.definitions.dimension_definitions import (
+    amount_of_substance,
+    length,
+)
+from sympy.physics.units.systems.si import SI
+ 
+# Annotation and InitialAssignment are assumed to be defined/imported elsewhere in your project.
+ 
+ 
+def _unit(
+    name: str,
+    abbrev: str | None = None,
+    dimension: Dimension | sympy.Expr = Dimension(1),
+    scale: sympy.Expr = sympy.S.One,
+) -> Quantity:
+    """Create a custom sympy unit and register it with the SI unit system."""
+    q = Quantity(name, abbrev=abbrev or name)
+    SI.set_quantity_dimension(q, dimension)
+    SI.set_quantity_scale_factor(q, scale)
+    return q
+
+
+# --- generic helpers -------------------------------------------------------
+dimensionless = sympy.Integer(1)
+per_s = u.s**-1
+
+# --- concentrations ---------------------------------------------------------
+molar = _unit("molar", "M", amount_of_substance / length**3, u.mol / u.liter)
+millimolar = _unit("millimolar", "mM", amount_of_substance / length**3, molar / 1000)
+
+micromole = _unit("micromole", "umol", amount_of_substance, u.mol / 10**6)
+
+# --- counting units (dimensionless, scale 1) --------------------------------
+# These keep the "per complex" / "per molecule" bookkeeping from params.txt
+# visible in the expressions, without affecting dimensional analysis.
+PSII = _unit("PSII")
+PSI = _unit("PSI")
+quinone = _unit("quinone")
+PQ = _unit("PQ")
+PQH2 = _unit("PQH2")
+ATP = _unit("ATP")
+NADP = _unit("NADP")
+NADPH = _unit("NADPH")
+PC = _unit("PC")
+PsbS = _unit("PsbS")
+quencher = _unit("quencher", "Q")
+pigment = _unit("pigment")
+excitation = _unit("excitation")
+electron = _unit("electron", "e")
+proton = _unit("proton", "H")
+pH_unit = _unit("pH_unit", "pH")
+
+# --- placeholder for units still to be determined --------------------------
+dnd = _unit("dnd", "DND")
+
 
 # ---------------------------------------------------------------------------
 # Helper / rate functions
@@ -413,144 +449,144 @@ def _safe_ratio(numerator: float, denominator: float) -> float:
 # Parameters & initial conditions
 # ---------------------------------------------------------------------------
 
-PARAMS: dict[str, Parameter] = {
-    "crosssection": Parameter(0.25, unit=1 / (ppfd * second)),
-    "kEETLHP680QAox": Parameter(5e9, unit=_per_s),
-    "kEETLHP680QAred": Parameter(8.5e8, unit=_per_s),
-    "kQ": Parameter(3e9, unit=_per_s),
-    "kEETLHP680revQAox": Parameter(1e10, unit=_per_s),
-    "kEETLHP680revQAred": Parameter(1e10, unit=_per_s),
-    "kquenchP680plus": Parameter(5e8, unit=_per_s),
-    "kNRantenna": Parameter(5e8, unit=_per_s),
-    "kNRP680": Parameter(1e8, unit=_per_s),
-    "PsbSDose": Parameter(0.6, unit=dimensionless),
-    "kF": Parameter(7e7, unit=_per_s),
-    "alphaRC": Parameter(0.4, unit=dimensionless),
-    "alphaQ": Parameter(0.1, unit=dimensionless),
-    "kETP680PheOpenRC": Parameter(3e12, unit=_per_s),
-    "kETP680PheClosedRC": Parameter(1e10, unit=_per_s),
-    "kETPheToQA": Parameter(3e9, unit=_per_s),
-    "kETWaterOxidation": Parameter(3e7, unit=_per_s),
-    "kP680Pherecombination": Parameter(5e8, unit=_per_s),
-    "kP680QArecombination": Parameter(30.0, unit=_per_s),
-    "kP680QArecombinationClosedRC": Parameter(580.0, unit=_per_s),
-    "kETQAtoQB1": Parameter(3500.0, unit=_per_s),
-    "kETQB1toQA": Parameter(350.0, unit=_per_s),
-    "kETQAtoQB2": Parameter(1600.0, unit=_per_s),
-    "kETQB2toQA": Parameter(1600.0, unit=_per_s),
-    "PQH2undock": Parameter(800.0, unit=_per_s),
-    "QReoxidationRate": Parameter(100.0, unit=_per_s),
-    "PQdockingrate": Parameter(500.0, unit=_per_s),
-    "QuinonePoolSize": Parameter(10.0, unit=dimensionless),
-    "pKaC": Parameter(5.8, unit=dimensionless),
-    "nC": Parameter(1.2, unit=dimensionless),
-    "pHStromaStart": Parameter(7.2, unit=dimensionless),
-    "pHLumenStart": Parameter(7.2, unit=dimensionless),
-    "StromaProtonsStart": Parameter(1e-10, unit=_molar),
-    "bufferCapacityStroma": Parameter(0.1, unit=_molar),
-    "bufferCapacityLumen": Parameter(0.03, unit=_molar),
-    "ATPConductivity": Parameter(6e-10, unit=_conductivity),
-    "kATPsActivate": Parameter(0.25, unit=_per_s),
-    "kATPsInactivate": Parameter(0.003, unit=_per_s),
-    "thresholdpmf": Parameter(0.001, unit=volt),
-    "leakpmf": Parameter(0.8, unit=volt),
-    "leakConductivity": Parameter(1e-7, unit=_conductivity),
-    "PCl": Parameter(1.8e-8, unit=_permeability),
-    "PMg": Parameter(3.6e-8, unit=_permeability),
-    "PK": Parameter(1.8e-8, unit=_permeability),
-    "zCl": Parameter(-1.0, unit=dimensionless),
-    "zMg": Parameter(2.0, unit=dimensionless),
-    "zK": Parameter(1.0, unit=dimensionless),
-    "StromaClStart": Parameter(0.01, unit=_molar),
-    "StromaMgStart": Parameter(0.01, unit=_molar),
-    "StromaKStart": Parameter(0.01, unit=_molar),
-    "Rconst": Parameter(8.314, unit=joule / (mol * kelvin)),
-    "Fconst": Parameter(96485.0, unit=coulomb / mol),
-    "Tconst": Parameter(300.0, unit=kelvin),
-    "LumenVolume": Parameter(6.7e-21, unit=liter),
-    "StromaVolume": Parameter(5.36e-20, unit=liter),
-    "lumenVolumePerArea": Parameter(8e-10, unit=liter / _area),
-    "MembraneCapacitance": Parameter(1e-6, unit=coulomb / (volt * _area)),
-    "Na": Parameter(6.022e23, unit=1 / mol),
-    "VDErateVioToAnth": Parameter(0.04, unit=_per_s),
-    "VDErateAnthToZea": Parameter(0.02, unit=_per_s),
-    "ZErate": Parameter(0.0004, unit=_per_s),
-    "TotalXanthophyll": Parameter(1.0, unit=dimensionless),
-    "VDEpKa": Parameter(6.0, unit=dimensionless),
-    "nVDE": Parameter(6.0, unit=dimensionless),
-    "PsbSpKa": Parameter(6.4, unit=dimensionless),
-    "nPsbS": Parameter(3.0, unit=dimensionless),
-    "zfrac": Parameter(0.8, unit=dimensionless),
-    "PsbSConvertRate": Parameter(0.1, unit=_per_s),
-    "PSIcrossSection": Parameter(0.35, unit=1 / (ppfd * second)),
-    "kETPCP700": Parameter(6000.0, unit=_per_s),
-    "kETP700Fdx": Parameter(10.0, unit=dimensionless),
-    "PCperPSI": Parameter(3.0, unit=dimensionless),
-    "ElectronsPerPC": Parameter(1.0, unit=dimensionless),
-    "fracIntactRC": Parameter(1.0, unit=dimensionless),
-    "voltsperlog": Parameter(0.02585065036015961, unit=volt),
-    "LightIntensity": Parameter(0.0, unit=ppfd),
-    "P680neut": Parameter(1.0, unit=dimensionless),
+PARAMS = {
+    "crosssection": Parameter(value=0.25, unit=excitation * u.m**2 / (PSII * micromole)),  # from evolvePSII: dChlEx/dt = LightIntensity * crosssection (params.txt's m^2/PSII is missing the per-umol)
+    "kEETLHP680QAox": Parameter(value=5e9, unit=per_s),
+    "kEETLHP680QAred": Parameter(value=8.5e8, unit=per_s),
+    "kQ": Parameter(value=3e9, unit=per_s),
+    "kEETLHP680revQAox": Parameter(value=1e10, unit=per_s),
+    "kEETLHP680revQAred": Parameter(value=1e10, unit=per_s),
+    "kquenchP680plus": Parameter(value=5e8, unit=per_s),
+    "kNRantenna": Parameter(value=5e8, unit=per_s),
+    "kNRP680": Parameter(value=1e8, unit=per_s),
+    "PsbSDose": Parameter(value=0.6, unit=dimensionless),  # confirmed: getStaticQuencherValues, TotalQ = PsbSDose * (zfrac * ... + (1 - zfrac) * ...)
+    "kF": Parameter(value=7e7, unit=per_s),
+    "alphaRC": Parameter(value=0.4, unit=dimensionless),
+    "alphaQ": Parameter(value=0.1, unit=dimensionless),
+    "kETP680PheOpenRC": Parameter(value=3e12, unit=per_s),
+    "kETP680PheClosedRC": Parameter(value=1e10, unit=per_s),
+    "kETPheToQA": Parameter(value=3e9, unit=per_s),
+    "kETWaterOxidation": Parameter(value=3e7, unit=per_s),
+    "kP680Pherecombination": Parameter(value=5e8, unit=per_s),
+    "kP680QArecombination": Parameter(value=30.0, unit=per_s),
+    "kP680QArecombinationClosedRC": Parameter(value=580.0, unit=per_s),  # confirmed from the rate equations
+    "kETQAtoQB1": Parameter(value=3500.0, unit=per_s),
+    "kETQB1toQA": Parameter(value=350.0, unit=per_s),
+    "kETQAtoQB2": Parameter(value=1600.0, unit=per_s),
+    "kETQB2toQA": Parameter(value=1600.0, unit=per_s),
+    "PQH2undock": Parameter(value=800.0, unit=per_s),
+    "QReoxidationRate": Parameter(value=100.0, unit=PQH2 / u.s),  # PQH2/s
+    "PQdockingrate": Parameter(value=500.0, unit=PQ / u.s),  # PQ/s
+    "QuinonePoolSize": Parameter(value=10.0, unit=quinone / PSII),  # PQ + PQH2 per PSII
+    "pKaC": Parameter(value=5.8, unit=pH_unit),
+    "nC": Parameter(value=1.2, unit=dimensionless),  # Hill coefficient
+    "pHStromaStart": Parameter(value=7.2, unit=pH_unit),
+    "pHLumenStart": Parameter(value=7.2, unit=pH_unit),
+    "StromaProtonsStart": Parameter(value=1e-10, unit=molar),  # confirmed: getStaticThylakoidValues adds it to ion concentrations (molar)
+    "bufferCapacityStroma": Parameter(value=0.1, unit=molar / pH_unit),  # per pH unit; params.txt says mM/pH but comment says 0.1 = 100 mM, so value is in M
+    "bufferCapacityLumen": Parameter(value=0.03, unit=molar / pH_unit),  # per pH unit; params.txt says mM/pH but comment says 0.03 = 30 mM, so value is in M
+    "ATPConductivity": Parameter(value=6e-10, unit=u.mol / (u.volt * u.cm**2 * u.s)),  # mol protons
+    "kATPsActivate": Parameter(value=0.25, unit=per_s),  # confirmed in evolveATPsynthase
+    "kATPsInactivate": Parameter(value=0.003, unit=per_s),  # confirmed in evolveATPsynthase
+    "thresholdpmf": Parameter(value=0.001, unit=u.volt),
+    "leakpmf": Parameter(value=0.8, unit=u.volt),
+    "leakConductivity": Parameter(value=1e-7, unit=u.mol / (u.volt * u.cm**2 * u.s)),  # evolveATPsynthase adds its flux to the ATPConductivity flux, so the units must match
+    "PCl": Parameter(value=1.8e-8, unit=u.cm / u.s),
+    "PMg": Parameter(value=3.6e-8, unit=u.cm / u.s),
+    "PK": Parameter(value=1.8e-8, unit=u.cm / u.s),
+    "zCl": Parameter(value=-1.0, unit=dimensionless),  # ion valence
+    "zMg": Parameter(value=2.0, unit=dimensionless),  # ion valence
+    "zK": Parameter(value=1.0, unit=dimensionless),  # ion valence
+    "StromaClStart": Parameter(value=0.01, unit=molar),  # params.txt says mM but 10e-3 = 10 mM, so value is in M
+    "StromaMgStart": Parameter(value=0.01, unit=molar),  # params.txt says mM but 10e-3 = 10 mM, so value is in M
+    "StromaKStart": Parameter(value=0.01, unit=molar),  # params.txt says mM but 10e-3 = 10 mM, so value is in M
+    "Rconst": Parameter(value=8.314, unit=u.joule / (u.mol * u.kelvin)),  # confirmed: getparamsfromfilename computes voltsperlog = R*T/F
+    "Fconst": Parameter(value=96485.0, unit=u.coulomb / u.mol),  # confirmed: getStaticThylakoidValues, F * lumenVolumePerArea * charge = C/cm^2
+    "Tconst": Parameter(value=300.0, unit=u.kelvin),
+    "LumenVolume": Parameter(value=6.7e-21, unit=u.liter),  # per PSII
+    "StromaVolume": Parameter(value=5.36e-20, unit=u.liter),  # per PSII
+    "lumenVolumePerArea": Parameter(value=8e-10, unit=u.liter / u.cm**2),  # confirmed: fluxToConcentration divides mol/(cm^2 s) fluxes by it to get M/s
+    "MembraneCapacitance": Parameter(value=1e-6, unit=u.farad / u.cm**2),  # confirmed: deltapsi = (C/cm^2) / MembraneCapacitance gives volts
+    "Na": Parameter(value=6.022e23, unit=u.mol**-1),  # Avogadro constant
+    "VDErateVioToAnth": Parameter(value=0.04, unit=per_s),  # evolveqE: acts on fractions of the xanthophyll pool, so 1/s
+    "VDErateAnthToZea": Parameter(value=0.02, unit=per_s),  # evolveqE: acts on fractions of the xanthophyll pool, so 1/s
+    "ZErate": Parameter(value=0.0004, unit=per_s),  # evolveqE: acts on fractions of the xanthophyll pool, so 1/s
+    "TotalXanthophyll": Parameter(value=1.0, unit=dimensionless),  # fraction
+    "VDEpKa": Parameter(value=6.0, unit=pH_unit),
+    "nVDE": Parameter(value=6.0, unit=dimensionless),  # Hill coefficient
+    "PsbSpKa": Parameter(value=6.4, unit=pH_unit),
+    "nPsbS": Parameter(value=3.0, unit=dimensionless),  # Hill coefficient
+    "zfrac": Parameter(value=0.8, unit=dimensionless),  # confirmed: getStaticQuencherValues, TotalQ = PsbSDose * (zfrac * ... + (1 - zfrac) * ...)
+    "PsbSConvertRate": Parameter(value=0.1, unit=per_s),  # evolveqE: dPsbSQ/dt = PsbSConvertRate * ActivePsbS * (1 - PsbSQ), so 1/s
+    "PSIcrossSection": Parameter(value=0.35, unit=excitation * u.m**2 / (PSI * micromole)),  # same role as crosssection, in evolvePSI
+    "kETPCP700": Parameter(value=6000.0, unit=per_s),  # confirmed from the rate equations
+    "kETP700Fdx": Parameter(value=10.0, unit=dimensionless),  # evolvePSI: rate = LightIntensity * PSIcrossSection * kETP700Fdx * ..., so it must be a dimensionless factor
+    "PCperPSI": Parameter(value=3.0, unit=PC / PSI),
+    "ElectronsPerPC": Parameter(value=1.0, unit=electron / PC),
+    "fracIntactRC": Parameter(value=1.0, unit=dimensionless),  # fraction
+    "voltsperlog": Parameter(value=0.02585065036015961, unit=u.volt),  # confirmed: getparamsfromfilename overwrites it with R*T/F ('Volts per Log')
+    "LightIntensity": Parameter(value=0.0, unit=micromole / (u.m**2 * u.s)),  # umol photons m^-2 s^-1, from the crosssection comment in evolvePSII
+    "P680neut": Parameter(value=1.0, unit=dimensionless),  # flag
     # quench-mode trigger flags (quenchmodel=1)
-    "qtrigg1": Parameter(1.0, unit=dimensionless),
-    "qtrigg2": Parameter(0.0, unit=dimensionless),
-    "qtrigg3": Parameter(1.0, unit=dimensionless),
+    "qtrigg1": Parameter(value=1.0, unit=dimensionless),  # flag
+    "qtrigg2": Parameter(value=0.0, unit=dimensionless),  # flag
+    "qtrigg3": Parameter(value=1.0, unit=dimensionless),  # flag
     # Additional pars
-    "ATPConductivityReverse": Parameter(1e-10, unit=_conductivity),
-    "ATPperPSI": Parameter(600.0, unit=dimensionless),
-    "CytRegulateYesNO": Parameter(1.0, unit=dimensionless),
-    "F_PsbS": Parameter(0.6, unit=dimensionless),
-    "NADPperPSI": Parameter(15.0, unit=dimensionless),
-    "PsbSperPSII": Parameter(1.0, unit=dimensionless),
-    "damageyesno": Parameter(0.0, unit=dimensionless),
-    "electronsPerNADPH": Parameter(2.0, unit=dimensionless),
-    "kEETP700": Parameter(14000000000.0, unit=_per_s),
-    "kETFdxMV": Parameter(1000.0, unit=_per_s),
-    "kETFdxPQ": Parameter(0.005, unit=_per_s),
-    "kETFdxThrdx": Parameter(1000.0, unit=_per_s),
-    "kETNADPHPQ": Parameter(100.0, unit=_per_s),
-    "kETThrdxOx": Parameter(100.0, unit=_per_s),
-    "kP680PherecombinationClosedRC": Parameter(500.0, unit=_per_s),
-    "kP680PherecombinationOpenRC": Parameter(200000000.0, unit=_per_s),
-    "kPheQArecombination": Parameter(500.0, unit=_per_s),
-    "kQuenchDamage": Parameter(0.0, unit=_per_s),
-    "repairyesno": Parameter(0.0, unit=dimensionless),
-    "tF": Parameter(1.5e-09, unit=second),
-    "tHop": Parameter(1.7e-11, unit=second),
-    "tauCS": Parameter(5.5e-12, unit=second),
-    "tauqE": Parameter(1e-11, unit=second),
-    "ATPperProton": Parameter(3 / 12, unit=dimensionless),
+    "ATPConductivityReverse": Parameter(value=1e-10, unit=u.mol / (u.volt * u.cm**2 * u.s)),  # mol protons
+    "ATPperPSI": Parameter(value=600.0, unit=ATP / PSI),
+    "CytRegulateYesNO": Parameter(value=1.0, unit=dimensionless),  # flag
+    "F_PsbS": Parameter(value=0.6, unit=dnd),  # not used in any of the provided .m files (not in params_orig either); likely obsolete
+    "NADPperPSI": Parameter(value=15.0, unit=NADP / PSI),
+    "PsbSperPSII": Parameter(value=1.0, unit=PsbS / PSII),
+    "damageyesno": Parameter(value=0.0, unit=dimensionless),  # flag
+    "electronsPerNADPH": Parameter(value=2.0, unit=electron / NADPH),
+    "kEETP700": Parameter(value=14000000000.0, unit=per_s),
+    "kETFdxMV": Parameter(value=1000.0, unit=per_s),  # confirmed from the rate equations
+    "kETFdxPQ": Parameter(value=0.005, unit=per_s / PQ),  # evolveCEF: second-order in Fdxr and PQ (per quinone per PSII)
+    "kETFdxThrdx": Parameter(value=1000.0, unit=per_s),  # confirmed from the rate equations
+    "kETNADPHPQ": Parameter(value=100.0, unit=per_s / (NADPH * PQ)),  # evolveCEF: second-order in NADPH and PQ
+    "kETThrdxOx": Parameter(value=100.0, unit=per_s),  # confirmed from the rate equations
+    "kP680PherecombinationClosedRC": Parameter(value=500.0, unit=per_s),
+    "kP680PherecombinationOpenRC": Parameter(value=200000000.0, unit=per_s),
+    "kPheQArecombination": Parameter(value=500.0, unit=per_s),
+    "kQuenchDamage": Parameter(value=0.0, unit=per_s),
+    "repairyesno": Parameter(value=0.0, unit=dimensionless),  # flag
+    "tF": Parameter(value=1.5e-09, unit=u.s),  # confirmed in getTransferMatrix (rates = 1/t)
+    "tHop": Parameter(value=1.7e-11, unit=u.s),  # confirmed in getTransferMatrix (rates = 1/t)
+    "tauCS": Parameter(value=5.5e-12, unit=u.s),  # confirmed in getTransferMatrix (rates = 1/t); its 'in ps' comment on tCS is wrong
+    "tauqE": Parameter(value=1e-11, unit=u.s),  # confirmed in getTransferMatrix (rates = 1/t)
+    "ATPperProton": Parameter(value=3 / 12, unit=ATP / proton),
 }
 
-VARS: dict[str, Variable] = {
-    "ATP": Variable(2.0, unit=dimensionless),
-    "ActiveATPs": Variable(0.05, unit=dimensionless),
-    "Antheraxanthin": Variable(1e-14, unit=dimensionless),
-    "Fdxox": Variable(1.0, unit=dimensionless),
-    "Fdxr": Variable(1e-14, unit=dimensionless),
-    "LumenCl": Variable(0.01, unit=_molar),
-    "LumenK": Variable(0.01, unit=_molar),
-    "LumenMg": Variable(0.01, unit=_molar),
-    "LumenProtons": Variable(1e-14, unit=_molar),
-    "P680ex": Variable(1e-14, unit=dimensionless),
-    "P680plus": Variable(1e-14, unit=dimensionless),
-    "P700ox": Variable(1e-14, unit=dimensionless),
-    "P700r": Variable(1.0, unit=dimensionless),
-    "PCr": Variable(0.2, unit=dimensionless),
-    "PQ": Variable(8.999, unit=dimensionless),
-    "PQH2": Variable(0.001, unit=dimensionless),
-    "PSIIChlEx": Variable(1e-14, unit=dimensionless),
-    "PheAnion": Variable(1e-14, unit=dimensionless),
-    "PsbSQ": Variable(1e-14, unit=dimensionless),
-    "QAox": Variable(1, unit=dimensionless),
-    "QBneut": Variable(1, unit=dimensionless),
-    "QBred1": Variable(1e-7, unit=dimensionless),
-    "QBred2": Variable(1e-7, unit=dimensionless),
-    "Thrdx": Variable(1e-14, unit=dimensionless),
-    "TotalLEF": Variable(1e-14, unit=dimensionless),
-    "Zeaxanthin": Variable(1e-14, unit=dimensionless),
-}
 
+VARS = {
+    "ATP": Variable(initial_value=2.0, unit=ATP / PSII),  # evolveATPsynthase: dATP = flux * ATPperProton * Na * LumenVolume / lumenVolumePerArea
+    "ActiveATPs": Variable(initial_value=0.05, unit=dimensionless),  # fraction of ATP synthase active
+    "Antheraxanthin": Variable(initial_value=1e-14, unit=dimensionless),  # fraction of TotalXanthophyll
+    "Fdxox": Variable(initial_value=1.0, unit=dimensionless),  # fraction of ferredoxin
+    "Fdxr": Variable(initial_value=1e-14, unit=dimensionless),  # fraction of ferredoxin
+    "LumenCl": Variable(initial_value=0.01, unit=molar),
+    "LumenK": Variable(initial_value=0.01, unit=molar),
+    "LumenMg": Variable(initial_value=0.01, unit=molar),
+    "LumenProtons": Variable(initial_value=1e-14, unit=molar),  # protons added to the lumen; pH via bufferCapacityLumen
+    "P680ex": Variable(initial_value=1e-14, unit=dimensionless),  # fraction of PSII reaction centres
+    "P680plus": Variable(initial_value=1e-14, unit=dimensionless),  # fraction of PSII reaction centres
+    "P700ox": Variable(initial_value=1e-14, unit=dimensionless),  # fraction of PSI
+    "P700r": Variable(initial_value=1.0, unit=dimensionless),  # fraction of PSI
+    "PCr": Variable(initial_value=0.2, unit=PC / PSI),  # PCox = PCperPSI - PCr
+    "PQ": Variable(initial_value=8.999, unit=PQ / PSII),  # PQfrac = PQ / QuinonePoolSize
+    "PQH2": Variable(initial_value=0.001, unit=PQH2 / PSII),
+    "PSIIChlEx": Variable(initial_value=1e-14, unit=excitation / PSII),  # excited antenna chlorophylls per PSII
+    "PheAnion": Variable(initial_value=1e-14, unit=dimensionless),  # fraction of PSII reaction centres
+    "PsbSQ": Variable(initial_value=1e-14, unit=dimensionless),  # fraction of PsbS in the quenching state
+    "QAox": Variable(initial_value=1, unit=dimensionless),  # fraction of PSII reaction centres (QAred = 1 - QAox)
+    "QBneut": Variable(initial_value=1, unit=dimensionless),  # fraction of QB sites (called QBox in evolvePQ)
+    "QBred1": Variable(initial_value=1e-7, unit=dimensionless),  # fraction of QB sites
+    "QBred2": Variable(initial_value=1e-7, unit=dimensionless),  # fraction of QB sites
+    "Thrdx": Variable(initial_value=1e-14, unit=dimensionless),  # fraction of thioredoxin reduced
+    "TotalLEF": Variable(initial_value=1e-14, unit=electron / PSI),  # cumulative electrons delivered to Fdx
+    "Zeaxanthin": Variable(initial_value=1e-14, unit=dimensionless),  # fraction of TotalXanthophyll
+}
 # ---------------------------------------------------------------------------
 # Model builder
 # ---------------------------------------------------------------------------
