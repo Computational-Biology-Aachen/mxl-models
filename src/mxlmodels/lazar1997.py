@@ -11,7 +11,11 @@ r"""Lazar 1997 Fluorescence induction model.
 | Ported by   | ElouenCorvest ( @ElouenCorvest )                                                            |
 """
 
-from mxlpy import Model
+from mxlpy import Model, Parameter, Variable
+from mxlpy.units import dimensionless, second
+
+# States are relative populations of PSII forms (dimensionless), rate constants in 1/s
+_per_s = 1 / second
 
 
 def _v1(
@@ -198,52 +202,52 @@ def get_lazar1997() -> Model:
         Model()
         .add_parameters(
             {
-                "k1": 1666,
-                "k2": 1250,
-                "k3": 500,
-                "k4": 20000,
-                "k5": 1666,
-                "k6": 3500,
-                "k7": 175,
-                "k8": 1750,
-                "k9": 35,
-                "k10": 5000,
-                "k11": 5000,
-                "k12": 150,
-                "k13": 100,
-                "k14": 150,
-                "k15": 100,
-                "k16": 150,
-                "k17": 100,
-                "k18": 150,
-                "k19": 100,
-                "k20": 150,
-                "k21": 100,
-                "k22": 150,
-                "k23": 100,
-                "k24": 1,
-                "k25": 1,
-                "k6n": 3500,
-                "p": 0.55,
+                "k1": Parameter(1666, unit=_per_s),
+                "k2": Parameter(1250, unit=_per_s),
+                "k3": Parameter(500, unit=_per_s),
+                "k4": Parameter(20000, unit=_per_s),
+                "k5": Parameter(1666, unit=_per_s),
+                "k6": Parameter(3500, unit=_per_s),
+                "k7": Parameter(175, unit=_per_s),
+                "k8": Parameter(1750, unit=_per_s),
+                "k9": Parameter(35, unit=_per_s),
+                "k10": Parameter(5000, unit=_per_s),
+                "k11": Parameter(5000, unit=_per_s),
+                "k12": Parameter(150, unit=_per_s),
+                "k13": Parameter(100, unit=_per_s),
+                "k14": Parameter(150, unit=_per_s),
+                "k15": Parameter(100, unit=_per_s),
+                "k16": Parameter(150, unit=_per_s),
+                "k17": Parameter(100, unit=_per_s),
+                "k18": Parameter(150, unit=_per_s),
+                "k19": Parameter(100, unit=_per_s),
+                "k20": Parameter(150, unit=_per_s),
+                "k21": Parameter(100, unit=_per_s),
+                "k22": Parameter(150, unit=_per_s),
+                "k23": Parameter(100, unit=_per_s),
+                "k24": Parameter(1, unit=_per_s),
+                "k25": Parameter(1, unit=_per_s),
+                "k6n": Parameter(3500, unit=_per_s),
+                "p": Parameter(0.55, unit=dimensionless),
             }
         )
         .add_variables(
             {
-                "y1": 0.66,
-                "y2": 0,
-                "y3": 0,
-                "y4": 0,
-                "y5": 0,
-                "y6": 0,
-                "y7": 0,
-                "y8": 0,
-                "y9": 7,
-                "y10": 0,
-                "y11": 0,
-                "y12": 0,
-                "y13": 0.22,
-                "y14": 0,
-                "y15": 0.12,
+                "y1": Variable(0.66, unit=dimensionless),
+                "y2": Variable(0, unit=dimensionless),
+                "y3": Variable(0, unit=dimensionless),
+                "y4": Variable(0, unit=dimensionless),
+                "y5": Variable(0, unit=dimensionless),
+                "y6": Variable(0, unit=dimensionless),
+                "y7": Variable(0, unit=dimensionless),
+                "y8": Variable(0, unit=dimensionless),
+                "y9": Variable(7, unit=dimensionless),
+                "y10": Variable(0, unit=dimensionless),
+                "y11": Variable(0, unit=dimensionless),
+                "y12": Variable(0, unit=dimensionless),
+                "y13": Variable(0.22, unit=dimensionless),
+                "y14": Variable(0, unit=dimensionless),
+                "y15": Variable(0.12, unit=dimensionless),
             }
         )
         .add_reaction(
