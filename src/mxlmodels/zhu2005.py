@@ -22,7 +22,12 @@ mxlpy implementation:
 
 import math
 
-from mxlpy import Model
+from mxlpy import Model, Parameter, Variable
+from mxlpy.units import dimensionless, joule, kelvin, meter, mumol, ppfd, second, sqm
+
+# Concentrations per leaf area in umol m^-2, rate constants in s^-1 (Table 1)
+_umol_m2 = mumol / sqm
+_per_s = 1 / second
 
 EPSILON = 1.0e-30
 
@@ -217,34 +222,34 @@ def _add_nonreducing_center(m: Model, pool_size: float) -> Model:
     """
     m = m.add_parameters(
         {
-            "P680Pheo_total_i": pool_size,
-            "kAB1_i": 0.0,
-            "kAB2_i": 0.0,
-            "kBA1_i": 0.0,
-            "kBA2_i": 0.0,
-            "k3_i": 0.0,
-            "kr3_i": 0.0,
+            "P680Pheo_total_i": Parameter(pool_size, unit=_umol_m2),
+            "kAB1_i": Parameter(0.0, unit=_per_s),
+            "kAB2_i": Parameter(0.0, unit=_per_s),
+            "kBA1_i": Parameter(0.0, unit=_per_s),
+            "kBA2_i": Parameter(0.0, unit=_per_s),
+            "k3_i": Parameter(0.0, unit=_per_s),
+            "kr3_i": Parameter(0.0, unit=_per_s),
         }
     )
     m = m.add_variables(
         {
-            "P680plus_Pheominus_i": 0.0,
-            "P680plus_Pheo_i": 0.0,
-            "P680_Pheominus_i": 0.0,
-            "S0T_i": 0.2 * pool_size,
-            "S1T_i": 0.8 * pool_size,
-            "S2T_i": 0.0,
-            "S3T_i": 0.0,
-            "S0Tp_i": 0.0,
-            "S1Tp_i": 0.0,
-            "S2Tp_i": 0.0,
-            "S3Tp_i": 0.0,
-            "QA_QB_i": pool_size,
-            "QAred_QB_i": 0.0,
-            "QA_QBred_i": 0.0,
-            "QAred_QBred_i": 0.0,
-            "QA_QB2red_i": 0.0,
-            "QAred_QB2red_i": 0.0,
+            "P680plus_Pheominus_i": Variable(0.0, unit=_umol_m2),
+            "P680plus_Pheo_i": Variable(0.0, unit=_umol_m2),
+            "P680_Pheominus_i": Variable(0.0, unit=_umol_m2),
+            "S0T_i": Variable(0.2 * pool_size, unit=_umol_m2),
+            "S1T_i": Variable(0.8 * pool_size, unit=_umol_m2),
+            "S2T_i": Variable(0.0, unit=_umol_m2),
+            "S3T_i": Variable(0.0, unit=_umol_m2),
+            "S0Tp_i": Variable(0.0, unit=_umol_m2),
+            "S1Tp_i": Variable(0.0, unit=_umol_m2),
+            "S2Tp_i": Variable(0.0, unit=_umol_m2),
+            "S3Tp_i": Variable(0.0, unit=_umol_m2),
+            "QA_QB_i": Variable(pool_size, unit=_umol_m2),
+            "QAred_QB_i": Variable(0.0, unit=_umol_m2),
+            "QA_QBred_i": Variable(0.0, unit=_umol_m2),
+            "QAred_QBred_i": Variable(0.0, unit=_umol_m2),
+            "QA_QB2red_i": Variable(0.0, unit=_umol_m2),
+            "QAred_QB2red_i": Variable(0.0, unit=_umol_m2),
         }
     )
     m = m.add_derived(
@@ -285,6 +290,7 @@ def _add_nonreducing_center(m: Model, pool_size: float) -> Model:
         "P680_excited_i",
         fn=_p680_excited,
         args=["Ui", "P680_Pheo_i", "equilibrium_ratio", "n_nonreducing_core_chl"],
+        unit=_umol_m2,
     )
     m = m.add_derived(
         "P680plus_fraction_i",
@@ -463,48 +469,48 @@ def get_zhu_2005() -> Model:
 
     m = m.add_parameters(
         {
-            "Iin": 3000.0,
-            "x": 0.0,
-            "p": 0.5,
-            "c_light": 3.0e8,
-            "h": 6.62e-34,
-            "k_boltzmann": 1.38e-23,
-            "temperature": 298.0,
-            "lambda_chl": 673.0e-9,
-            "lambda_p680": 680.0e-9,
-            "n_psi_psii": 1.0,
-            "n_core_chl": 70.0,
-            "n_nonreducing_peripheral_chl": 220.0,
-            "n_nonreducing_core_chl": 35.0,
-            "n_nonreducing_detached_chl": 35.0,
-            "P680Pheo_total": 1.0,
-            "PQ_total": 6.0,
-            "k2": 2.0e9,
-            "k3": 800.0,
-            "kr3": 80.0,
-            "kAB1": 2500.0,
-            "kAB2": 3300.0,
-            "kBA1": 175.0,
-            "kBA2": 250.0,
-            "kAd": 1.0e8,
-            "kAf": 3.0e7,
-            "kAU": 1.0e10,
-            "kUA": 1.0e10,
-            "kUd_closed": 1.0e8,
-            "kUd_open": 0.0,
-            "kUf": 3.0e7,
-            "k_c": 1.0e9,
-            "kminus1_closed": 9.0e8,
-            "kminus1_open": 3.0e8,
-            "k1_closed": 4.0e9,
-            "k1_open": 2.5e10,
-            "Ke": 1.0e6,
-            "k01": 50.0,
-            "k12": 3.0e4,
-            "k23": 1.0e4,
-            "k30": 3.0e3,
-            "kox": 250.0,
-            "kz": 5.0e6,
+            "Iin": Parameter(3000.0, unit=ppfd),
+            "x": Parameter(0.0, unit=dimensionless),
+            "p": Parameter(0.5, unit=dimensionless),
+            "c_light": Parameter(3.0e8, unit=meter / second),
+            "h": Parameter(6.62e-34, unit=joule * second),
+            "k_boltzmann": Parameter(1.38e-23, unit=joule / kelvin),
+            "temperature": Parameter(298.0, unit=kelvin),
+            "lambda_chl": Parameter(673.0e-9, unit=meter),
+            "lambda_p680": Parameter(680.0e-9, unit=meter),
+            "n_psi_psii": Parameter(1.0, unit=dimensionless),
+            "n_core_chl": Parameter(70.0, unit=dimensionless),
+            "n_nonreducing_peripheral_chl": Parameter(220.0, unit=dimensionless),
+            "n_nonreducing_core_chl": Parameter(35.0, unit=dimensionless),
+            "n_nonreducing_detached_chl": Parameter(35.0, unit=dimensionless),
+            "P680Pheo_total": Parameter(1.0, unit=_umol_m2),
+            "PQ_total": Parameter(6.0, unit=_umol_m2),
+            "k2": Parameter(2.0e9, unit=_per_s),
+            "k3": Parameter(800.0, unit=_per_s),
+            "kr3": Parameter(80.0, unit=_per_s),
+            "kAB1": Parameter(2500.0, unit=_per_s),
+            "kAB2": Parameter(3300.0, unit=_per_s),
+            "kBA1": Parameter(175.0, unit=_per_s),
+            "kBA2": Parameter(250.0, unit=_per_s),
+            "kAd": Parameter(1.0e8, unit=_per_s),
+            "kAf": Parameter(3.0e7, unit=_per_s),
+            "kAU": Parameter(1.0e10, unit=_per_s),
+            "kUA": Parameter(1.0e10, unit=_per_s),
+            "kUd_closed": Parameter(1.0e8, unit=_per_s),
+            "kUd_open": Parameter(0.0, unit=_per_s),
+            "kUf": Parameter(3.0e7, unit=_per_s),
+            "k_c": Parameter(1.0e9, unit=1 / (second * _umol_m2)),
+            "kminus1_closed": Parameter(9.0e8, unit=_per_s),
+            "kminus1_open": Parameter(3.0e8, unit=_per_s),
+            "k1_closed": Parameter(4.0e9, unit=_per_s),
+            "k1_open": Parameter(2.5e10, unit=_per_s),
+            "Ke": Parameter(1.0e6, unit=dimensionless),
+            "k01": Parameter(50.0, unit=_per_s),
+            "k12": Parameter(3.0e4, unit=_per_s),
+            "k23": Parameter(1.0e4, unit=_per_s),
+            "k30": Parameter(3.0e3, unit=_per_s),
+            "kox": Parameter(250.0, unit=_per_s),
+            "kz": Parameter(5.0e6, unit=_per_s),
         }
     )
 
@@ -512,31 +518,31 @@ def get_zhu_2005() -> Model:
 
     m = m.add_variables(
         {
-            "Ap": 0.0,
-            "U": 0.0,
-            "P680plus_Pheominus": 0.0,
-            "P680plus_Pheo": 0.0,
-            "P680_Pheominus": 0.0,
-            "S0T": 0.2 * pool_scale,
-            "S1T": 0.8 * pool_scale,
-            "S2T": 0.0,
-            "S3T": 0.0,
-            "S0Tp": 0.0,
-            "S1Tp": 0.0,
-            "S2Tp": 0.0,
-            "S3Tp": 0.0,
-            "QA_QB": pool_scale,
-            "QAred_QB": 0.0,
-            "QA_QBred": 0.0,
-            "QAred_QBred": 0.0,
-            "QA_QB2red": 0.0,
-            "QAred_QB2red": 0.0,
-            "PQH2": 3.0 * pool_scale,
+            "Ap": Variable(0.0, unit=_umol_m2),
+            "U": Variable(0.0, unit=_umol_m2),
+            "P680plus_Pheominus": Variable(0.0, unit=_umol_m2),
+            "P680plus_Pheo": Variable(0.0, unit=_umol_m2),
+            "P680_Pheominus": Variable(0.0, unit=_umol_m2),
+            "S0T": Variable(0.2 * pool_scale, unit=_umol_m2),
+            "S1T": Variable(0.8 * pool_scale, unit=_umol_m2),
+            "S2T": Variable(0.0, unit=_umol_m2),
+            "S3T": Variable(0.0, unit=_umol_m2),
+            "S0Tp": Variable(0.0, unit=_umol_m2),
+            "S1Tp": Variable(0.0, unit=_umol_m2),
+            "S2Tp": Variable(0.0, unit=_umol_m2),
+            "S3Tp": Variable(0.0, unit=_umol_m2),
+            "QA_QB": Variable(pool_scale, unit=_umol_m2),
+            "QAred_QB": Variable(0.0, unit=_umol_m2),
+            "QA_QBred": Variable(0.0, unit=_umol_m2),
+            "QAred_QBred": Variable(0.0, unit=_umol_m2),
+            "QA_QB2red": Variable(0.0, unit=_umol_m2),
+            "QAred_QB2red": Variable(0.0, unit=_umol_m2),
+            "PQH2": Variable(3.0 * pool_scale, unit=_umol_m2),
             # Antenna pools of the QB-nonreducing population and chlorophylls
             # detached from its reduced-size core antenna.
-            "Aip": 0.0,
-            "Ui": 0.0,
-            "Uifc": 0.0,
+            "Aip": Variable(0.0, unit=_umol_m2),
+            "Ui": Variable(0.0, unit=_umol_m2),
+            "Uifc": Variable(0.0, unit=_umol_m2),
         }
     )
 
@@ -591,10 +597,13 @@ def get_zhu_2005() -> Model:
             "lambda_p680",
         ],
     )
+    # Eq. 8 of the paper is [P*680 Pheo] = [U] / ((1 + kt/k-t) N); the port weights it
+    # with P680_Pheo, i.e. the open fraction, implicitly divided by P680Pheo_total = 1
     m = m.add_derived(
         "P680_excited",
         fn=_p680_excited,
         args=["U", "P680_Pheo", "equilibrium_ratio", "n_core_chl"],
+        unit=_umol_m2,
     )
     m = m.add_derived("k_q", fn=_kq, args=["kUf", "kUd_closed", "PQ_total"])
     m = m.add_derived(
