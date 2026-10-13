@@ -1,4 +1,5 @@
 import pandas as pd
+from mxlpy.units import second
 
 from mxlmodels import get_nguyen2026_tomato
 
@@ -27,3 +28,18 @@ def test_rhs() -> None:
         atol=1e-9,
         rtol=1e-9,
     )
+
+
+def test_units() -> None:
+    model = get_nguyen2026_tomato()
+    check = model.check_units(time_unit=second)
+    assert set(check.per_variable) == set(model.get_raw_variables())
+    # Dimensionally consistent, but _conc_to_mmol inside the KEA3 rates hides the
+    # factor 1000 between mol and mmol
+    known_inconsistent = {"vKEA3_in", "vKEA3_out"}
+    assert {
+        (var, rxn): result
+        for var, per_rxn in check.per_variable.items()
+        for rxn, result in per_rxn.items()
+        if result is not True and rxn not in known_inconsistent
+    } == {}

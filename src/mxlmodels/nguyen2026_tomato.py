@@ -15,88 +15,144 @@ conversion fn. Rewritten for better implementation.
 """
 
 import numpy as np
-from mxlpy import Derived, InitialAssignment, Model
+from mxlpy import Derived, InitialAssignment, Model, Parameter, Variable
+from mxlpy.units import (
+    dimensionless,
+    farad,
+    joule,
+    kelvin,
+    kilo,
+    liter,
+    mmol_mol_chl,
+    mol,
+    mol_chl,
+    second,
+    sqm,
+    volt,
+)
 
 import mxlmodels._names as n
 
+_mmol_mol_chl = mmol_mol_chl
+_molar = mol / liter
+_per_s = 1 / second
+_per_mmol_mol_chl_s = 1 / (mmol_mol_chl * second)
+_kj_mol = joule * kilo / mol
+_kj_mol_v = _kj_mol / volt
+_kj_mol_k = _kj_mol / kelvin
+
 parameters = {
     # PFD
-    n.light: 10.0,
+    n.light: Parameter(10.0, unit=_per_s),
     # Pool sizes
-    "PSIItot": 2.5,  # unchanged [mmol/molChl] total concentration of PSII
-    "PQtot": 20.0,  # unchanged [mmol/molChl]
-    "APtot": 50.0,  # unchanged [mmol/molChl] Bionumbers ~2.55mM (=81mmol/molChl)
-    "PsbStot": 1,  # [relative] LHCs that get phosphorylated and protonated
-    "Xtot": 1.0,  # unchanged [relative] xanthophylls
-    "O2ex": 8.0,  # unchanged external oxygen, kept constant, corresponds to 250 microM, corr. to 20%
-    "Pi": 0.01,  # unchanged
+    "PSIItot": Parameter(
+        2.5, unit=_mmol_mol_chl
+    ),  # unchanged [mmol/molChl] total concentration of PSII
+    "PQtot": Parameter(20.0, unit=_mmol_mol_chl),  # unchanged [mmol/molChl]
+    "APtot": Parameter(
+        50.0, unit=_mmol_mol_chl
+    ),  # unchanged [mmol/molChl] Bionumbers ~2.55mM (=81mmol/molChl)
+    "PsbStot": Parameter(
+        1, unit=dimensionless
+    ),  # [relative] LHCs that get phosphorylated and protonated
+    "Xtot": Parameter(1.0, unit=dimensionless),  # unchanged [relative] xanthophylls
+    "O2ex": Parameter(
+        8.0, unit=_mmol_mol_chl
+    ),  # unchanged external oxygen, kept constant, corresponds to 250 microM, corr. to 20%
+    "Pi": Parameter(0.01, unit=dimensionless),  # unchanged
     # Rate constants and key parameters
     # Cytb6f
-    n.k(
-        "b6f"
-    ): 0.22,  # unchanged a rough estimate of the transfer from PQ to cyt that is equal to ~ 10ms
-    "pKreg": 6.4,  # pKa of pH inihibition of Cytb6f
+    n.k("b6f"): Parameter(
+        0.22, unit=dimensionless
+    ),  # unchanged a rough estimate of the transfer from PQ to cyt that is equal to ~ 10ms
+    "pKreg": Parameter(6.4, unit=dimensionless),  # pKa of pH inihibition of Cytb6f
     # ATPsynthase
-    "kActATPase": 0.01,  # unchanged parameter relating the rate constant of activation of the ATPase in the light
-    "kDeactATPase": 0.002,  # unchanged parameter relating the deactivation of the ATPase at night
-    "kATPsynthase": 20.0,  # unchanged
-    "kATPconsumption": 10.0,  # unchanged
-    "HPR": 14.0 / 3.0,  # unchanged
-    "pKE0": 7.211142552636095,  # fitted value for ATPsynthase pmf regulation
-    "b": 3.1924977471697407,  # fitted value for ATPsynthase pmf regulation
+    "kActATPase": Parameter(
+        0.01, unit=_per_s
+    ),  # unchanged parameter relating the rate constant of activation of the ATPase in the light
+    "kDeactATPase": Parameter(
+        0.002, unit=_per_s
+    ),  # unchanged parameter relating the deactivation of the ATPase at night
+    "kATPsynthase": Parameter(20.0, unit=_per_s),  # unchanged
+    "kATPconsumption": Parameter(10.0, unit=_per_s),  # unchanged
+    "HPR": Parameter(14.0 / 3.0, unit=dimensionless),  # unchanged
+    "pKE0": Parameter(
+        7.211142552636095, unit=dimensionless
+    ),  # fitted value for ATPsynthase pmf regulation
+    "b": Parameter(
+        3.1924977471697407, unit=dimensionless
+    ),  # fitted value for ATPsynthase pmf regulation
     # PQ pool
-    "kPQH2": 250.0,  # unchanged [1/(s*(mmol/molChl))]
-    "kPTOX": 0.01,  # unchanged
+    "kPQH2": Parameter(
+        250.0, unit=_per_mmol_mol_chl_s
+    ),  # unchanged [1/(s*(mmol/molChl))]
+    "kPTOX": Parameter(0.01, unit=_per_mmol_mol_chl_s),  # unchanged
     # PSII
-    "kH_Qslope": 5e9,
-    "kH0": 5e8,  # Andre assumption
-    "kF": 6.25e8,  # unchanged fluorescence 16ns
-    "kP": 6939318750.0,  # Fitted
+    "kH_Qslope": Parameter(5e9, unit=_per_s),
+    "kH0": Parameter(5e8, unit=_per_s),  # Andre assumption
+    "kF": Parameter(6.25e8, unit=_per_s),  # unchanged fluorescence 16ns
+    "kP": Parameter(6939318750.0, unit=_per_s),  # Fitted
     # Proton
-    n.ph_stroma: 7.8,  # unchanged [1/s] leakage rate
-    "kleak": 1000.0,  # unchanged
-    "bH": 100,  # unchanged proton buffer: ratio total / free protons
+    n.ph_stroma: Parameter(7.8, unit=dimensionless),  # unchanged [1/s] leakage rate
+    "kleak": Parameter(1000.0, unit=_mmol_mol_chl / (_molar * second)),  # unchanged
+    "bH": Parameter(
+        100, unit=dimensionless
+    ),  # unchanged proton buffer: ratio total / free protons
     # Parameter associated with xanthophyll cycle
-    "kDeepoxV": 0.00096,  # Fitted
-    "kEpoxZ": 0.0013824,  # Fitted
-    "KphSatZ": 5.8,  # Taken from Zaks model
+    "kDeepoxV": Parameter(0.00096, unit=_per_s),  # Fitted
+    "kEpoxZ": Parameter(0.0013824, unit=_per_s),  # Fitted
+    "KphSatZ": Parameter(5.8, unit=dimensionless),  # Taken from Zaks model
     # [-] half-saturation pH value for activity de-epoxidase, highest activity at ~pH 5.8
-    "KZsat": 0.65,  # [-], half-saturation constant (relative conc. of Z) for quenching of Z
-    "nHX": 5.0,  # unchanged, the cooperativity, hill-coefficient for activity of de-epoxidase
-    "nHZ": 3.0,
+    "KZsat": Parameter(
+        0.65, unit=dimensionless
+    ),  # [-], half-saturation constant (relative conc. of Z) for quenching of Z
+    "nHX": Parameter(
+        5.0, unit=dimensionless
+    ),  # unchanged, the cooperativity, hill-coefficient for activity of de-epoxidase
+    "nHZ": Parameter(3.0, unit=dimensionless),
     # Parameter associated with PsbS protonation
-    "nHL": 3,
-    "kDeprot": 0.0336,  # Fitted
-    "kProt": 0.07392,  # Fitted
-    "KphSatLHC": 5.8,  # Taken from Zaks model
+    "nHL": Parameter(3, unit=dimensionless),
+    "kDeprot": Parameter(0.0336, unit=_per_s),  # Fitted
+    "kProt": Parameter(0.07392, unit=_per_s),  # Fitted
+    "KphSatLHC": Parameter(5.8, unit=dimensionless),  # Taken from Zaks model
     # Fitted quencher contribution factors
-    "gamma0": 0.1,  # slow quenching of Vx present despite lack of protonation
-    "gamma1": 1,  # CHANGED - fast quenching present due to the protonation
-    "gamma2": 8,  # slow quenching of Zx present despite lack of protonation
-    "gamma3": 2,  # fastest possible quenching
+    "gamma0": Parameter(
+        0.1, unit=dimensionless
+    ),  # slow quenching of Vx present despite lack of protonation
+    "gamma1": Parameter(
+        1, unit=dimensionless
+    ),  # CHANGED - fast quenching present due to the protonation
+    "gamma2": Parameter(
+        8, unit=dimensionless
+    ),  # slow quenching of Zx present despite lack of protonation
+    "gamma3": Parameter(2, unit=dimensionless),  # fastest possible quenching
     # KEA3 parameters
-    "pK_KEA3": 6.75,  # Fitted
-    "k_KEA3": 5,  # modified to adjust with the new stoi
-    "K_lumen_conc_initial": 0.1,  # M From Meng Li model
-    "K_stroma_conc_initial": 0.1,  # M From Meng Li model
-    "ATP_thres_KEA3": 20.5,  # Fitted
-    "c": 0.1,
+    "pK_KEA3": Parameter(6.75, unit=dimensionless),  # Fitted
+    "k_KEA3": Parameter(
+        5, unit=1 / (_molar * second)
+    ),  # modified to adjust with the new stoi
+    "K_lumen_conc_initial": Parameter(0.1, unit=_molar),  # M From Meng Li model
+    "K_stroma_conc_initial": Parameter(0.1, unit=_molar),  # M From Meng Li model
+    "ATP_thres_KEA3": Parameter(20.5, unit=_mmol_mol_chl),  # Fitted
+    "c": Parameter(0.1, unit=dimensionless),
     # Physical constants
-    "F": 96.485,  # unchanged Faraday constant
-    "R": 8.3e-3,  # unchanged universal gas constant
-    "T": 298.0,  # unchanged Temperature in K - for now assumed to be constant at 25 C
+    "F": Parameter(96.485, unit=_kj_mol_v),  # unchanged Faraday constant
+    "R": Parameter(8.3e-3, unit=_kj_mol_k),  # unchanged universal gas constant
+    "T": Parameter(
+        298.0, unit=kelvin
+    ),  # unchanged Temperature in K - for now assumed to be constant at 25 C
     # Standard potentials and DeltaG0_ATP
-    "E0QAQAm": -0.140,  # unchanged
-    "E0PQPQH2": 0.354,  # unchanged
-    "E0PCPCm": 0.380,  # unchanged
-    "DeltaG0_ATP": 30.6,  # unchanged [kJ/mol / RT]
+    "E0QAQAm": Parameter(-0.140, unit=volt),  # unchanged
+    "E0PQPQH2": Parameter(0.354, unit=volt),  # unchanged
+    "E0PCPCm": Parameter(0.380, unit=volt),  # unchanged
+    "DeltaG0_ATP": Parameter(30.6, unit=_kj_mol),  # unchanged [kJ/mol / RT]
     # Other constant
-    "e": 2.71828,  # constant
-    "lumen_volume_per_area_membrane": 0.0014,
-    "stroma_volume_per_area_membrane": 0.0112,
-    "molChl_per_area_membrane": 350e-6,
-    "thylakoid_membrane_capacitance": 0.6e-2,  # F/m^2
-    "pHlumen_init": 7.2,  # Assumed initial pH condition
+    "e": Parameter(2.71828, unit=dimensionless),  # constant
+    "lumen_volume_per_area_membrane": Parameter(0.0014, unit=liter / sqm),
+    "stroma_volume_per_area_membrane": Parameter(0.0112, unit=liter / sqm),
+    "molChl_per_area_membrane": Parameter(350e-6, unit=mol_chl / sqm),
+    "thylakoid_membrane_capacitance": Parameter(0.6e-2, unit=farad / sqm),  # F/m^2
+    "pHlumen_init": Parameter(7.2, unit=dimensionless),  # Assumed initial pH condition
 }
 
 
@@ -712,40 +768,52 @@ def get_nguyen2026_tomato() -> Model:
 
     m.add_variables(
         {
-            n.b0(): 2.5,
-            n.b1(): 0,
-            n.b2(): 0,
-            "PQH2": 0.0,
-            "ATP": 25.0,
-            n.h_lumen: InitialAssignment(
-                fn=_calculate_p_hinv,
-                args=[
-                    "pHlumen_init",
-                    "lumen_volume_per_area_membrane",
-                    "molChl_per_area_membrane",
-                ],
+            n.b0(): Variable(2.5, unit=_mmol_mol_chl),
+            n.b1(): Variable(0, unit=_mmol_mol_chl),
+            n.b2(): Variable(0, unit=_mmol_mol_chl),
+            "PQH2": Variable(0.0, unit=_mmol_mol_chl),
+            "ATP": Variable(25.0, unit=_mmol_mol_chl),
+            n.h_lumen: Variable(
+                InitialAssignment(
+                    fn=_calculate_p_hinv,
+                    args=[
+                        "pHlumen_init",
+                        "lumen_volume_per_area_membrane",
+                        "molChl_per_area_membrane",
+                    ],
+                ),
+                unit=_mmol_mol_chl,
             ),
-            n.delta_psi: InitialAssignment(
-                fn=_initial_delta_psi, args=[n.delta_ph, "R", "T", "F"]
+            n.delta_psi: Variable(
+                InitialAssignment(
+                    fn=_initial_delta_psi, args=[n.delta_ph, "R", "T", "F"]
+                ),
+                unit=volt,
             ),
-            "Vx": 1.0,
-            "PsbS": 1.0,
-            "ATPactivity": 0.1,
-            n.k_lumen: InitialAssignment(
-                fn=_conc_to_mmol,
-                args=[
-                    "K_lumen_conc_initial",
-                    "lumen_volume_per_area_membrane",
-                    "molChl_per_area_membrane",
-                ],
+            "Vx": Variable(1.0, unit=dimensionless),
+            "PsbS": Variable(1.0, unit=dimensionless),
+            "ATPactivity": Variable(0.1, unit=dimensionless),
+            n.k_lumen: Variable(
+                InitialAssignment(
+                    fn=_conc_to_mmol,
+                    args=[
+                        "K_lumen_conc_initial",
+                        "lumen_volume_per_area_membrane",
+                        "molChl_per_area_membrane",
+                    ],
+                ),
+                unit=_mmol_mol_chl,
             ),
-            n.k_stroma: InitialAssignment(
-                fn=_conc_to_mmol,
-                args=[
-                    "K_stroma_conc_initial",
-                    "stroma_volume_per_area_membrane",
-                    "molChl_per_area_membrane",
-                ],
+            n.k_stroma: Variable(
+                InitialAssignment(
+                    fn=_conc_to_mmol,
+                    args=[
+                        "K_stroma_conc_initial",
+                        "stroma_volume_per_area_membrane",
+                        "molChl_per_area_membrane",
+                    ],
+                ),
+                unit=_mmol_mol_chl,
             ),
         }
     )
@@ -768,6 +836,8 @@ def get_nguyen2026_tomato() -> Model:
         ],
     )
 
+    # Unit conversions (mmol (mol Chl)^-1 <-> M, pH -> concentration) hide factors of
+    # 1000 or 10^-pH in their functions, so their units are set explicitly
     m.add_derived(
         "H_lumen_conc",
         _mmol_to_conc,
@@ -776,6 +846,7 @@ def get_nguyen2026_tomato() -> Model:
             "lumen_volume_per_area_membrane",
             "molChl_per_area_membrane",
         ],
+        unit=_molar,
     )
 
     m.add_derived(
@@ -786,6 +857,7 @@ def get_nguyen2026_tomato() -> Model:
             "stroma_volume_per_area_membrane",
             "molChl_per_area_membrane",
         ],
+        unit=_mmol_mol_chl,
     )
 
     m.add_derived(
@@ -796,6 +868,7 @@ def get_nguyen2026_tomato() -> Model:
             "stroma_volume_per_area_membrane",
             "molChl_per_area_membrane",
         ],
+        unit=_molar,
     )
 
     m.add_derived(
@@ -823,6 +896,7 @@ def get_nguyen2026_tomato() -> Model:
             "molChl_per_area_membrane",
             "F",
         ],
+        unit=volt / _mmol_mol_chl,
     )
 
     m.add_derived(
@@ -1133,6 +1207,7 @@ def get_nguyen2026_tomato() -> Model:
             "stroma_volume_per_area_membrane",
             "molChl_per_area_membrane",
         ],
+        unit=_molar,
     )
 
     m.add_derived(
@@ -1143,6 +1218,7 @@ def get_nguyen2026_tomato() -> Model:
             "lumen_volume_per_area_membrane",
             "molChl_per_area_membrane",
         ],
+        unit=_molar,
     )
 
     m.add_derived(
