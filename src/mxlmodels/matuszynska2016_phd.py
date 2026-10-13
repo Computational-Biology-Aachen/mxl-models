@@ -21,6 +21,27 @@ import math
 import numpy as np
 from mxlpy import Derived, Model
 from mxlpy.surrogates import qss
+from mxlpy.units import (
+    dimensionless,
+    joule,
+    kelvin,
+    kilo,
+    liter,
+    mmol,
+    mmol_mol_chl,
+    mol,
+    second,
+    volt,
+)
+
+_mmol_l = mmol / liter
+_mmol_mol_chl = mmol_mol_chl
+_per_s = 1 / second
+_per_mmol_mol_chl_s = 1 / (mmol_mol_chl * second)
+_per_mmol2_mol_chl2_s = 1 / (mmol_mol_chl**2 * second)
+_kj_mol = joule * kilo / mol
+_kj_mol_v = _kj_mol / volt
+_kj_mol_k = _kj_mol / kelvin
 
 
 def _moiety_1(
@@ -226,7 +247,11 @@ def _b6f(
     keq_b6f: float,
     k_cytb6f: float,
 ) -> float:
-    r"""Cytochrome b6f rate: reversible mass action clamped to -kCytb6f to avoid runaway reverse flux."""
+    r"""Cytochrome b6f rate: reversible mass action clamped to -kCytb6f to avoid runaway reverse flux.
+
+    The clamp is dimensionally inconsistent with the rate, as kcat_b6f has the unit
+    of a third-order rate constant.
+    """
     return max(
         k_cytb6f * (pq_red * pc_ox**2 - pq_ox * pc_red**2 / keq_b6f),
         -k_cytb6f,
@@ -255,10 +280,10 @@ def _protonation_hill(
     h: float,
     nh: float,
     k_fwd: float,
-    k_ph_sat: float,
+    k_h_sat: float,
 ) -> float:
     r"""Hill-type protonation rate scaled by lumenal proton concentration."""
-    return k_fwd * (h**nh / (h**nh + _protons_stroma_2016(k_ph_sat) ** nh)) * vx  # type: ignore
+    return k_fwd * (h**nh / (h**nh + k_h_sat**nh)) * vx  # type: ignore
 
 
 def _rate_cyclic_electron_flow(
@@ -275,10 +300,10 @@ def _rate_protonation_hill(
     h: float,
     k_fwd: float,
     n_h: float,
-    kph_sat: float,
+    kh_sat: float,
 ) -> float:
     r"""Hill-type deepoxidase rate activated by lumenal proton concentration."""
-    return k_fwd * (h**n_h / (h**n_h + _protons_stroma_2016(kph_sat) ** n_h)) * vx  # type: ignore
+    return k_fwd * (h**n_h / (h**n_h + kh_sat**n_h)) * vx  # type: ignore
 
 
 def _rate_fnr2016(
@@ -329,11 +354,11 @@ def _rate_ps1(
 
 def _rate_leak(
     protons_lumen: float,
-    ph_stroma: float,
+    protons_stroma: float,
     k_leak: float,
 ) -> float:
     r"""Passive proton leak across the thylakoid membrane, proportional to the proton gradient."""
-    return k_leak * (protons_lumen - _protons_stroma_2016(ph_stroma))
+    return k_leak * (protons_lumen - protons_stroma)
 
 
 def _neg_one_div_by(
@@ -477,80 +502,98 @@ def get_matuszynska2016_phd() -> Model:
     Heinrich-Heine-Universität, 2016.
     """
     m: Model = Model()
-    m.add_variable("ATP", initial_value=1.6999999999999997)
-    m.add_variable("Plastoquinone (oxidised)", initial_value=4.706348349506148)
-    m.add_variable("Plastocyanine (oxidised)", initial_value=3.9414515288091567)
-    m.add_variable("Ferredoxine (oxidised)", initial_value=3.7761613271207324)
-    m.add_variable("protons_lumen", initial_value=7.737821100836988)
-    m.add_variable("Light-harvesting complex", initial_value=0.5105293511676007)
-    m.add_variable("PsbS (de-protonated)", initial_value=0.5000000001374878)
-    m.add_variable("Violaxanthin", initial_value=0.09090909090907397)
-    m.add_parameter("pH", value=7.9)
-    m.add_parameter("PPFD", value=100.0)
-    m.add_parameter("NADPH", value=0.6)
-    m.add_parameter("O2 (dissolved)_lumen", value=8.0)
-    m.add_parameter("bH", value=100.0)
-    m.add_parameter("F", value=96.485)
-    m.add_parameter("E^0_PC", value=0.38)
-    m.add_parameter("E^0_P700", value=0.48)
-    m.add_parameter("E^0_FA", value=-0.55)
-    m.add_parameter("E^0_Fd", value=-0.43)
-    m.add_parameter("E^0_NADP", value=-0.113)
-    m.add_parameter("NADP*", value=0.8)
-    m.add_parameter("R", value=0.0083)
-    m.add_parameter("T", value=298.0)
-    m.add_parameter("A*P", value=2.55)
-    m.add_parameter("Carotenoids_tot", value=1.0)
-    m.add_parameter("Fd*", value=5.0)
-    m.add_parameter("PC_tot", value=4.0)
-    m.add_parameter("PSBS_tot", value=1.0)
-    m.add_parameter("LHC_tot", value=1.0)
-    m.add_parameter("gamma0", value=0.1)
-    m.add_parameter("gamma1", value=0.25)
-    m.add_parameter("gamma2", value=0.6)
-    m.add_parameter("gamma3", value=0.15)
-    m.add_parameter("kZSat", value=0.12)
-    m.add_parameter("E^0_QA", value=-0.14)
-    m.add_parameter("E^0_PQ", value=0.354)
-    m.add_parameter("PQ_tot", value=17.5)
-    m.add_parameter("staticAntII", value=0.1)
-    m.add_parameter("staticAntI", value=0.37)
-    m.add_parameter("kf_atp_synthase", value=20.0)
-    m.add_parameter("HPR", value=4.666666666666667)
-    m.add_parameter("Pi_mol", value=0.01)
-    m.add_parameter("DeltaG0_ATP", value=30.6)
-    m.add_parameter("kcat_b6f", value=2.5)
-    m.add_parameter("kh_lhc_protonation", value=3.0)
-    m.add_parameter("kf_lhc_protonation", value=0.0096)
-    m.add_parameter("ksat_lhc_protonation", value=5.8)
-    m.add_parameter("kf_lhc_deprotonation", value=0.0096)
-    m.add_parameter("kf_cyclic_electron_flow", value=1.0)
-    m.add_parameter("kf_violaxanthin_deepoxidase", value=0.0024)
-    m.add_parameter("kh_violaxanthin_deepoxidase", value=5.0)
-    m.add_parameter("ksat_violaxanthin_deepoxidase", value=5.8)
-    m.add_parameter("kf_zeaxanthin_epoxidase", value=0.00024)
-    m.add_parameter("E0_fnr", value=3.0)
-    m.add_parameter("kcat_fnr", value=500.0)
-    m.add_parameter("km_fnr_Ferredoxine (reduced)", value=1.56)
-    m.add_parameter("km_fnr_NADP", value=0.22)
-    m.add_parameter("kf_ndh", value=0.002)
-    m.add_parameter("PSII_total", value=2.5)
-    m.add_parameter("PSI_total", value=2.5)
-    m.add_parameter("kH0", value=500000000.0)
-    m.add_parameter("kPQred", value=250.0)
-    m.add_parameter("kPCox", value=2500.0)
-    m.add_parameter("kFdred", value=250000.0)
-    m.add_parameter("k2", value=5000000000.0)
-    m.add_parameter("kH", value=5000000000.0)
-    m.add_parameter("kF", value=625000000.0)
-    m.add_parameter("convf", value=0.032)
-    m.add_parameter("kf_proton_leak", value=10.0)
-    m.add_parameter("kPTOX", value=0.01)
-    m.add_parameter("kStt7", value=0.0035)
-    m.add_parameter("km_lhc_state_transition_12", value=0.2)
-    m.add_parameter("n_ST", value=2.0)
-    m.add_parameter("kPph1", value=0.0013)
-    m.add_parameter("kf_ex_atp", value=10.0)
+    # ATP, A*P, NADPH and NADP* carry the stromal mM values of matuszynska2019, but
+    # without convf the rate equations treat them as mmol (mol Chl)^-1
+    m.add_variable("ATP", initial_value=1.6999999999999997, unit=_mmol_mol_chl)
+    m.add_variable(
+        "Plastoquinone (oxidised)", initial_value=4.706348349506148, unit=_mmol_mol_chl
+    )
+    m.add_variable(
+        "Plastocyanine (oxidised)", initial_value=3.9414515288091567, unit=_mmol_mol_chl
+    )
+    m.add_variable(
+        "Ferredoxine (oxidised)", initial_value=3.7761613271207324, unit=_mmol_mol_chl
+    )
+    m.add_variable("protons_lumen", initial_value=7.737821100836988, unit=_mmol_mol_chl)
+    m.add_variable(
+        "Light-harvesting complex", initial_value=0.5105293511676007, unit=dimensionless
+    )
+    m.add_variable(
+        "PsbS (de-protonated)", initial_value=0.5000000001374878, unit=dimensionless
+    )
+    m.add_variable(
+        "Violaxanthin", initial_value=0.09090909090907397, unit=dimensionless
+    )
+    m.add_parameter("pH", value=7.9, unit=dimensionless)
+    # Used as excitation rate per reaction centre; the conversion factor from
+    # umol m^-2 s^-1 is unknown (Matuszynska 2019)
+    m.add_parameter("PPFD", value=100.0, unit=_per_s)
+    m.add_parameter("NADPH", value=0.6, unit=_mmol_mol_chl)
+    m.add_parameter("O2 (dissolved)_lumen", value=8.0, unit=_mmol_mol_chl)
+    m.add_parameter("bH", value=100.0, unit=dimensionless)
+    m.add_parameter("F", value=96.485, unit=_kj_mol_v)
+    m.add_parameter("E^0_PC", value=0.38, unit=volt)
+    m.add_parameter("E^0_P700", value=0.48, unit=volt)
+    m.add_parameter("E^0_FA", value=-0.55, unit=volt)
+    m.add_parameter("E^0_Fd", value=-0.43, unit=volt)
+    m.add_parameter("E^0_NADP", value=-0.113, unit=volt)
+    m.add_parameter("NADP*", value=0.8, unit=_mmol_mol_chl)
+    m.add_parameter("R", value=0.0083, unit=_kj_mol_k)
+    m.add_parameter("T", value=298.0, unit=kelvin)
+    m.add_parameter("A*P", value=2.55, unit=_mmol_mol_chl)
+    m.add_parameter("Carotenoids_tot", value=1.0, unit=dimensionless)
+    m.add_parameter("Fd*", value=5.0, unit=_mmol_mol_chl)
+    m.add_parameter("PC_tot", value=4.0, unit=_mmol_mol_chl)
+    m.add_parameter("PSBS_tot", value=1.0, unit=dimensionless)
+    m.add_parameter("LHC_tot", value=1.0, unit=dimensionless)
+    m.add_parameter("gamma0", value=0.1, unit=dimensionless)
+    m.add_parameter("gamma1", value=0.25, unit=dimensionless)
+    m.add_parameter("gamma2", value=0.6, unit=dimensionless)
+    m.add_parameter("gamma3", value=0.15, unit=dimensionless)
+    m.add_parameter("kZSat", value=0.12, unit=dimensionless)
+    m.add_parameter("E^0_QA", value=-0.14, unit=volt)
+    m.add_parameter("E^0_PQ", value=0.354, unit=volt)
+    m.add_parameter("PQ_tot", value=17.5, unit=_mmol_mol_chl)
+    m.add_parameter("staticAntII", value=0.1, unit=dimensionless)
+    m.add_parameter("staticAntI", value=0.37, unit=dimensionless)
+    m.add_parameter("kf_atp_synthase", value=20.0, unit=_per_s)
+    m.add_parameter("HPR", value=4.666666666666667, unit=dimensionless)
+    # Activity relative to the 1 M standard state, so keq_atp_synthase is dimensionless
+    m.add_parameter("Pi_mol", value=0.01, unit=dimensionless)
+    m.add_parameter("DeltaG0_ATP", value=30.6, unit=_kj_mol)
+    m.add_parameter("kcat_b6f", value=2.5, unit=_per_mmol2_mol_chl2_s)
+    m.add_parameter("kh_lhc_protonation", value=3.0, unit=dimensionless)
+    m.add_parameter("kf_lhc_protonation", value=0.0096, unit=_per_s)
+    m.add_parameter("ksat_lhc_protonation", value=5.8, unit=dimensionless)
+    m.add_parameter("kf_lhc_deprotonation", value=0.0096, unit=_per_s)
+    m.add_parameter("kf_cyclic_electron_flow", value=1.0, unit=_per_mmol2_mol_chl2_s)
+    m.add_parameter("kf_violaxanthin_deepoxidase", value=0.0024, unit=_per_s)
+    m.add_parameter("kh_violaxanthin_deepoxidase", value=5.0, unit=dimensionless)
+    m.add_parameter("ksat_violaxanthin_deepoxidase", value=5.8, unit=dimensionless)
+    m.add_parameter("kf_zeaxanthin_epoxidase", value=0.00024, unit=_per_s)
+    m.add_parameter("E0_fnr", value=3.0, unit=_mmol_mol_chl)
+    m.add_parameter("kcat_fnr", value=500.0, unit=_per_s)
+    m.add_parameter("km_fnr_Ferredoxine (reduced)", value=1.56, unit=_mmol_mol_chl)
+    m.add_parameter("km_fnr_NADP", value=0.22, unit=_mmol_mol_chl)
+    m.add_parameter("kf_ndh", value=0.002, unit=_per_s)
+    m.add_parameter("PSII_total", value=2.5, unit=_mmol_mol_chl)
+    m.add_parameter("PSI_total", value=2.5, unit=_mmol_mol_chl)
+    m.add_parameter("kH0", value=500000000.0, unit=_per_s)
+    m.add_parameter("kPQred", value=250.0, unit=_per_mmol_mol_chl_s)
+    m.add_parameter("kPCox", value=2500.0, unit=_per_mmol_mol_chl_s)
+    m.add_parameter("kFdred", value=250000.0, unit=_per_mmol_mol_chl_s)
+    m.add_parameter("k2", value=5000000000.0, unit=_per_s)
+    m.add_parameter("kH", value=5000000000.0, unit=_per_s)
+    m.add_parameter("kF", value=625000000.0, unit=_per_s)
+    # Unused here; 1 mmol (mol Chl)^-1 corresponds to 3.2e-5 M in the stroma
+    m.add_parameter("convf", value=0.032, unit=_mmol_l / _mmol_mol_chl)
+    m.add_parameter("kf_proton_leak", value=10.0, unit=_per_s)
+    m.add_parameter("kPTOX", value=0.01, unit=_per_mmol_mol_chl_s)
+    m.add_parameter("kStt7", value=0.0035, unit=_per_s)
+    m.add_parameter("km_lhc_state_transition_12", value=0.2, unit=dimensionless)
+    m.add_parameter("n_ST", value=2.0, unit=dimensionless)
+    m.add_parameter("kPph1", value=0.0013, unit=_per_s)
+    m.add_parameter("kf_ex_atp", value=10.0, unit=_per_s)
     m.add_derived(
         "NADP",
         fn=_moiety_1,
@@ -575,6 +618,25 @@ def get_matuszynska2016_phd() -> Model:
         "pH_lumen",
         fn=_ph_lumen,
         args=["protons_lumen"],
+    )
+    # pH -> concentration conversions hide the unit in a constant, so set it explicitly
+    m.add_derived(
+        "protons_stroma_chl",
+        fn=_protons_stroma_2016,
+        args=["pH"],
+        unit=_mmol_mol_chl,
+    )
+    m.add_derived(
+        "ksat_lhc_protonation_protons",
+        fn=_protons_stroma_2016,
+        args=["ksat_lhc_protonation"],
+        unit=_mmol_mol_chl,
+    )
+    m.add_derived(
+        "ksat_violaxanthin_deepoxidase_protons",
+        fn=_protons_stroma_2016,
+        args=["ksat_violaxanthin_deepoxidase"],
+        unit=_mmol_mol_chl,
     )
     m.add_derived(
         "Zeaxanthin",
@@ -712,7 +774,7 @@ def get_matuszynska2016_phd() -> Model:
             "protons_lumen",
             "kh_lhc_protonation",
             "kf_lhc_protonation",
-            "ksat_lhc_protonation",
+            "ksat_lhc_protonation_protons",
         ],
         stoichiometry={"PsbS (de-protonated)": -1},
     )
@@ -740,7 +802,7 @@ def get_matuszynska2016_phd() -> Model:
             "protons_lumen",
             "kf_violaxanthin_deepoxidase",
             "kh_violaxanthin_deepoxidase",
-            "ksat_violaxanthin_deepoxidase",
+            "ksat_violaxanthin_deepoxidase_protons",
         ],
         stoichiometry={"Violaxanthin": -1},
     )
@@ -789,7 +851,7 @@ def get_matuszynska2016_phd() -> Model:
     m.add_reaction(
         "proton_leak",
         fn=_rate_leak,
-        args=["protons_lumen", "pH", "kf_proton_leak"],
+        args=["protons_lumen", "protons_stroma_chl", "kf_proton_leak"],
         stoichiometry={"protons_lumen": Derived(fn=_neg_one_div_by, args=["bH"])},
     )
     m.add_reaction(
@@ -842,6 +904,7 @@ def get_matuszynska2016_phd() -> Model:
                 "kH0",
             ],
             outputs=["B0", "B1", "B2", "B3"],
+            units=dict.fromkeys(["B0", "B1", "B2", "B3"], _mmol_mol_chl),
         ),
     )
     m.add_readout(
