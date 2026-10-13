@@ -40,7 +40,7 @@ classifiers = [
   "Topic :: Software Development",
 ]
 dependencies = [
-    "mxlpy>=0.38.0",
+    "mxlpy>=0.61.0",
     "nbdime>=4.0.4",
 ]
 description = "MxlModels is a Python package of reference mechanistic models."
@@ -170,6 +170,7 @@ trailing_comma_inline_array  = true
 
 [tool.uv]
 exclude-newer = "3 days"
+exclude-newer-package = { mxlpy = false }
 package       = true
 
 [tool.uv.sources]

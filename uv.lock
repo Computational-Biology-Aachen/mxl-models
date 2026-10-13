@@ -14,6 +14,9 @@ resolution-markers = [
 exclude-newer = "0001-01-01T00:00:00Z" # This has no effect and is included for backwards compatibility when using relative exclude-newer values.
 exclude-newer-span = "P3D"
 
+[options.exclude-newer-package]
+mxlpy = false
+
 [[package]]
 name = "annotated-doc"
 version = "0.0.5"
@@ -1789,7 +1792,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "mxlpy", specifier = ">=0.38.0" },
+    { name = "mxlpy", specifier = ">=0.61.0" },
     { name = "nbdime", specifier = ">=4.0.4" },
 ]
 
@@ -1814,7 +1817,7 @@ dev = [
 
 [[package]]
 name = "mxlpy"
-version = "0.60.0"
+version = "0.61.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "dill" },
@@ -1844,9 +1847,9 @@ dependencies = [
     { name = "typing-extensions" },
     { name = "wadler-lindig" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/cf/74/8e58298f196c78f9476910b015a90e40ae12018ddde5b9746b2aca2698f2/mxlpy-0.60.0.tar.gz", hash = "sha256:9567c06242903441df1f91f71c2693516c2dccbad14b101997bf81a60219e395", size = 5468062, upload-time = "2026-10-09T07:38:47.963Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/29/54/53c220240a0e9a2af470c0c6edc93f9e138327da069bc9a9b298c38d35db/mxlpy-0.61.0.tar.gz", hash = "sha256:d6ebd7503e09edb82488d7c834be5773a0898337d800fefb4f56409d067df41a", size = 5488321, upload-time = "2026-10-13T05:54:44.889Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/06/2a/8224e57ecf3f1cb2c68cb4dd26641237e9cbee5325d2a49361d9c1b1cda5/mxlpy-0.60.0-py3-none-any.whl", hash = "sha256:23dda9f1b4e9687397774d7bc004718467a1eec92f3c15c120fe651d4af9cbec", size = 313668, upload-time = "2026-10-09T07:38:45.652Z" },
+    { url = "https://files.pythonhosted.org/packages/32/48/89792d3d120d2dcfcd2451a1e810798cb855311a3ca7fd36d97ad4b87771/mxlpy-0.61.0-py3-none-any.whl", hash = "sha256:4b029068e6bcc216fe0fb7b898f5ab0e3ffab4129823129bc420b61b927c1b32", size = 315022, upload-time = "2026-10-13T05:54:42.892Z" },
 ]
 
 [[package]]
