@@ -13,6 +13,9 @@ Autocatalytic chemical oscillator with limit cycle dynamics.
 """
 
 from mxlpy import Model
+from mxlpy.units import dimensionless
+
+# Non-dimensionalised model: all quantities, including time, are dimensionless
 
 
 def _production(
@@ -49,10 +52,10 @@ def get_prigogine1968_brusselator() -> Model:
     r"""Build the Brusselator model: two-variable autocatalytic oscillator exhibiting limit cycle behavior."""
     return (
         Model()
-        .add_variable("X", initial_value=1.5)
-        .add_variable("Y", initial_value=3.0)
-        .add_parameter("A", value=1.0)
-        .add_parameter("B", value=3.0)
+        .add_variable("X", initial_value=1.5, unit=dimensionless)
+        .add_variable("Y", initial_value=3.0, unit=dimensionless)
+        .add_parameter("A", value=1.0, unit=dimensionless)
+        .add_parameter("B", value=3.0, unit=dimensionless)
         .add_reaction(
             "production",
             fn=_production,
