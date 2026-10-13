@@ -27,7 +27,16 @@ xanthophyll cycle (violaxanthin \<-> zeaxanthin).
 """
 
 import numpy as np
-from mxlpy import Derived, Model, Variable
+from mxlpy import Derived, Model, Parameter, Variable
+from mxlpy.units import dimensionless, joule, kilo, liter, mol, second, volt
+
+# Pools are relative to one reaction centre (dimensionless), K+ and protons are molar
+_molar = mol / liter
+_per_s = 1 / second
+_per_molar2_s = 1 / (_molar**2 * second)
+_per_volt_s = 1 / (volt * second)
+_per_volt_molar_s = 1 / (volt * _molar * second)
+_kj_mol = joule * kilo / mol
 
 
 def _neg_div(x: float, y: float) -> float:
@@ -194,9 +203,14 @@ def _v_kea3(
     return k_kea3 * (h_lumen * k_stroma - h_st * k_lu)
 
 
-def _v_vkc(k_lu: float, dpsi: float, k_stroma: float, p_k: float) -> float:  # checked
-    K_deltaG = -0.06 * np.log10(k_stroma / k_lu) + dpsi
-    return p_k * K_deltaG * (k_lu + k_stroma) / 2
+def _k_delta_g(k_lu: float, dpsi: float, k_stroma: float) -> float:
+    return -0.06 * np.log10(k_stroma / k_lu) + dpsi
+
+
+def _v_vkc(
+    k_lu: float, k_delta_g: float, k_stroma: float, p_k: float
+) -> float:  # checked
+    return p_k * k_delta_g * (k_lu + k_stroma) / 2
 
 
 def _v_epox(z: float, k_ez: float) -> float:  # checked
@@ -242,64 +256,64 @@ def get_davis2017() -> Model:
 
     m.add_parameters(
         {
-            "PPFD": 0,  # checked
-            "k_recomb": 0.33,  # checked
-            "phi_triplet": 0.45,  # checked
-            "phi_1O2": 1,  # checked
-            "sigma0_II": 1,  # checked
-            "c_b6f": 1,  # checked
-            "pKa_reg": 6.5,  # checked
-            "Em_PC_pH7": 0.37,  # checked
-            "Em_PQH2_pH7": 0.11,  # checked
-            "Vmax_b6f": 500,  # checked
-            "pKa_PsbS": 6.4,  # checked
-            "NPQ_max": 5,  # checked
-            "pH_stroma": 7.8,  # checked
-            "PSI_antenna_size": 1,  # checked
-            "k_QA": 1000,  # checked
-            "Keq_QA": 200,  # checked
-            "k_PCtoP700": 500,  # checked
-            "k_FdtoNADP": 1000,  # checked or 5000
-            "K_st": 0.04,  # checked
-            "k_KEA3": 0,  # checked
-            "P_K": 6000,  # checked
-            "lumen_protons_per_turnover": 1.4e-05,  # checked
-            "n": 14 / 3,  # checked
-            "DeltaGATP": 42,  # checked
-            "Vmax_ATPsynth": 1000,  # checked
-            "b_H": 0.03,  # checked
-            "volt_per_charge": 0.033,  # checked
-            "k_EZ": 0.03,  # checked
-            "nh_VDE": 4,  # checked
-            "pKa_VDE": 5.8,  # checked
-            "Vmax_VDE": 1,  # checked
-            "QA_total": 1,  # checked
-            "PQ_tot": 6,  # checked
-            "P700_total": 1,  # checked
-            "PC_tot": 2,  # checked
-            "Fd_tot": 1,  # checked
-            "NADP_tot": 1,  # checked
-            "Xanthophyll_tot": 1,  # checked
-            "k_CBB": 3000,  # checked
+            "PPFD": Parameter(0, unit=_per_s),  # checked
+            "k_recomb": Parameter(0.33, unit=_per_s),  # checked
+            "phi_triplet": Parameter(0.45, unit=dimensionless),  # checked
+            "phi_1O2": Parameter(1, unit=dimensionless),  # checked
+            "sigma0_II": Parameter(1, unit=dimensionless),  # checked
+            "c_b6f": Parameter(1, unit=dimensionless),  # checked
+            "pKa_reg": Parameter(6.5, unit=dimensionless),  # checked
+            "Em_PC_pH7": Parameter(0.37, unit=volt),  # checked
+            "Em_PQH2_pH7": Parameter(0.11, unit=volt),  # checked
+            "Vmax_b6f": Parameter(500, unit=_per_s),  # checked
+            "pKa_PsbS": Parameter(6.4, unit=dimensionless),  # checked
+            "NPQ_max": Parameter(5, unit=dimensionless),  # checked
+            "pH_stroma": Parameter(7.8, unit=dimensionless),  # checked
+            "PSI_antenna_size": Parameter(1, unit=dimensionless),  # checked
+            "k_QA": Parameter(1000, unit=_per_s),  # checked
+            "Keq_QA": Parameter(200, unit=dimensionless),  # checked
+            "k_PCtoP700": Parameter(500, unit=_per_s),  # checked
+            "k_FdtoNADP": Parameter(1000, unit=_per_s),  # checked or 5000
+            "K_st": Parameter(0.04, unit=_molar),  # checked
+            "k_KEA3": Parameter(0, unit=_per_molar2_s),  # checked
+            "P_K": Parameter(6000, unit=_per_volt_molar_s),  # checked
+            "lumen_protons_per_turnover": Parameter(1.4e-05, unit=_molar),  # checked
+            "n": Parameter(14 / 3, unit=dimensionless),  # checked
+            "DeltaGATP": Parameter(42, unit=_kj_mol),  # checked
+            "Vmax_ATPsynth": Parameter(1000, unit=_per_volt_s),  # checked
+            "b_H": Parameter(0.03, unit=_molar),  # checked
+            "volt_per_charge": Parameter(0.033, unit=volt),  # checked
+            "k_EZ": Parameter(0.03, unit=_per_s),  # checked
+            "nh_VDE": Parameter(4, unit=dimensionless),  # checked
+            "pKa_VDE": Parameter(5.8, unit=dimensionless),  # checked
+            "Vmax_VDE": Parameter(1, unit=_per_s),  # checked
+            "QA_total": Parameter(1, unit=dimensionless),  # checked
+            "PQ_tot": Parameter(6, unit=dimensionless),  # checked
+            "P700_total": Parameter(1, unit=dimensionless),  # checked
+            "PC_tot": Parameter(2, unit=dimensionless),  # checked
+            "Fd_tot": Parameter(1, unit=dimensionless),  # checked
+            "NADP_tot": Parameter(1, unit=dimensionless),  # checked
+            "Xanthophyll_tot": Parameter(1, unit=dimensionless),  # checked
+            "k_CBB": Parameter(3000, unit=_per_s),  # checked
         }
     )
 
     m.add_variables(
         {
-            "QA_red": Variable(0),  # checked
-            "PQH_2": Variable(0),  # checked
-            "pH_lumen": Variable(7),  # checked
-            "Dpsi": Variable(0.1),  # checked
-            "K_lu": Variable(0.04),  # checked
-            "PC_ox": Variable(0),  # checked
-            "Zx": Variable(0),  # checked
+            "QA_red": Variable(0, unit=dimensionless),  # checked
+            "PQH_2": Variable(0, unit=dimensionless),  # checked
+            "pH_lumen": Variable(7, unit=dimensionless),  # checked
+            "Dpsi": Variable(0.1, unit=volt),  # checked
+            "K_lu": Variable(0.04, unit=_molar),  # checked
+            "PC_ox": Variable(0, unit=dimensionless),  # checked
+            "Zx": Variable(0, unit=dimensionless),  # checked
             # "PsbS": Variable(0), # checked
-            "singO2": Variable(0),  # checked
-            "P700_ox": Variable(0),  # checked
-            "Fd_red": Variable(0),  # checked
-            "NADPH_st": Variable(0),  # checked
-            "LEF": Variable(0),  # checked
-            "ATP_made": Variable(0),  # checked
+            "singO2": Variable(0, unit=dimensionless),  # checked
+            "P700_ox": Variable(0, unit=dimensionless),  # checked
+            "Fd_red": Variable(0, unit=dimensionless),  # checked
+            "NADPH_st": Variable(0, unit=dimensionless),  # checked
+            "LEF": Variable(0, unit=dimensionless),  # checked
+            "ATP_made": Variable(0, unit=dimensionless),  # checked
         }
     )
 
@@ -345,10 +359,13 @@ def get_davis2017() -> Model:
         args=["Zx", "Xanthophyll_tot"],
     )
 
+    # Several functions hide 0.06 V per pH unit (or similar) in a constant, so their
+    # units are set explicitly
     m.add_derived(
         name="DeltaGATP_V",
         fn=_delta_gatp_to_volt,
         args=["DeltaGATP"],
+        unit=volt,
     )
 
     m.add_derived(
@@ -373,18 +390,21 @@ def get_davis2017() -> Model:
         name="H_lumen",
         fn=_calc_h,
         args=["pH_lumen"],
+        unit=_molar,
     )
 
     m.add_derived(
         name="H_stroma",
         fn=_calc_h,
         args=["pH_stroma"],
+        unit=_molar,
     )
 
     m.add_derived(
         name="pmf",
         fn=_calc_pmf,
         args=["Dpsi", "pH_lumen", "pH_stroma"],
+        unit=volt,
     )
 
     m.add_derived(
@@ -397,6 +417,7 @@ def get_davis2017() -> Model:
         name="delta_pH_inVolts",
         fn=_delta_p_h_in_volts,
         args=["delta_pH"],
+        unit=volt,
     )
 
     m.add_derived(
@@ -405,6 +426,12 @@ def get_davis2017() -> Model:
         args=["pmf", "DeltaGATP_V", "n"],
     )
 
+    m.add_derived(
+        name="K_deltaG",
+        fn=_k_delta_g,
+        args=["K_lu", "Dpsi", "K_st"],
+        unit=volt,
+    )
     m.add_derived(
         name="k_b6f",
         fn=_k_b6f,
@@ -559,7 +586,7 @@ def get_davis2017() -> Model:
     m.add_reaction(
         name="v_VKC",
         fn=_v_vkc,
-        args=["K_lu", "Dpsi", "K_st", "P_K"],
+        args=["K_lu", "K_deltaG", "K_st", "P_K"],
         stoichiometry={
             "K_lu": Derived(fn=_neg, args=["lumen_protons_per_turnover"], unit=None),
             "Dpsi": Derived(fn=_neg, args=["volt_per_charge"], unit=None),
