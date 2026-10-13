@@ -11,6 +11,10 @@ r"""Three-strain public-goods game: cooperators, cheaters, and private-goods pro
 """
 
 from mxlpy import Model
+from mxlpy.units import dimensionless, second
+
+# Populations are dimensionless abundances
+_per_s = 1 / second
 
 
 def _d_pdt(
@@ -56,46 +60,16 @@ def get_tripartite_dynamics() -> Model:
     r"""Build the three-strain public-goods game model (Public / Cheater / Private)."""
     return (
         Model()
-        .add_variable(
-            "Public",
-            initial_value=1.0,
-        )
-        .add_variable(
-            "Cheater",
-            initial_value=1.0,
-        )
-        .add_variable(
-            "Private",
-            initial_value=1.0,
-        )
-        .add_parameter(
-            "r_p",
-            value=0.4,
-        )
-        .add_parameter(
-            "eta",
-            value=0.0001,
-        )
-        .add_parameter(
-            "nu",
-            value=1.0e-5,
-        )
-        .add_parameter(
-            "r_m",
-            value=0.2,
-        )
-        .add_parameter(
-            "gamma",
-            value=0.0001,
-        )
-        .add_parameter(
-            "alpha",
-            value=0.0002,
-        )
-        .add_parameter(
-            "beta",
-            value=0.0001,
-        )
+        .add_variable("Public", initial_value=1.0, unit=dimensionless)
+        .add_variable("Cheater", initial_value=1.0, unit=dimensionless)
+        .add_variable("Private", initial_value=1.0, unit=dimensionless)
+        .add_parameter("r_p", value=0.4, unit=_per_s)
+        .add_parameter("eta", value=0.0001, unit=_per_s)
+        .add_parameter("nu", value=1.0e-5, unit=_per_s)
+        .add_parameter("r_m", value=0.2, unit=_per_s)
+        .add_parameter("gamma", value=0.0001, unit=_per_s)
+        .add_parameter("alpha", value=0.0002, unit=_per_s)
+        .add_parameter("beta", value=0.0001, unit=_per_s)
         .add_reaction(
             "dPdt",
             fn=_d_pdt,
