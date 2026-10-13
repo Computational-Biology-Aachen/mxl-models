@@ -15,6 +15,10 @@ Predation uses derived stoichiometry.
 
 from mxlpy import Model, fns
 from mxlpy.types import Derived
+from mxlpy.units import dimensionless, second
+
+# Populations are dimensionless abundances
+_per_s = 1 / second
 
 
 def _prey_growth(
@@ -45,30 +49,12 @@ def get_lotka_volterra_v2() -> Model:
     r"""Build the Lotka-Volterra predator-prey model (v2) with derived stoichiometry."""
     return (
         Model()
-        .add_variable(
-            "Prey",
-            initial_value=10.0,
-        )
-        .add_variable(
-            "Predator",
-            initial_value=10.0,
-        )
-        .add_parameter(
-            "Alpha",
-            value=0.1,
-        )
-        .add_parameter(
-            "Beta",
-            value=0.02,
-        )
-        .add_parameter(
-            "Gamma",
-            value=0.4,
-        )
-        .add_parameter(
-            "Delta",
-            value=0.02,
-        )
+        .add_variable("Prey", initial_value=10.0, unit=dimensionless)
+        .add_variable("Predator", initial_value=10.0, unit=dimensionless)
+        .add_parameter("Alpha", value=0.1, unit=_per_s)
+        .add_parameter("Beta", value=0.02, unit=_per_s)
+        .add_parameter("Gamma", value=0.4, unit=_per_s)
+        .add_parameter("Delta", value=0.02, unit=_per_s)
         .add_reaction(
             "prey_growth",
             fn=_prey_growth,
