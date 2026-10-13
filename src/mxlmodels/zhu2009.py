@@ -25,8 +25,12 @@ essential autocatalytic structure of carbon fixation, where RuBP is both
 consumed by RuBisCO and regenerated downstream.
 """
 
-from mxlpy import Model
+from mxlpy import Model, Parameter, Variable
 from mxlpy.fns import michaelis_menten_1s
+from mxlpy.units import liter, mmol, mumol, second, sqm
+
+_mm = mmol / liter
+_mm_s = _mm / second
 
 __all__ = ["get_zhu_2009"]
 
@@ -51,34 +55,38 @@ def get_zhu_2009() -> Model:
     m.add_parameters(
         {
             # Vmax:
-            "V1_max": 3.78,  # [mM/S] Zhu et al 2009
-            "V2_max": 11.75,  # [mM/S] Zhu et al 2009
-            "V3_max": 5.04,  # [mM/S] Zhu et al 2009
-            "V4_max": 3.05,  # [mM/S] estimate by Zhu et al.
-            "V5_max": 3.0,  # [mM/S] Zhu et al 2009
-            "V6_max": 0.1,  # [mM/S] estimate by Zhu et al.
-            "V13_max": 8.0,
+            "V1_max": Parameter(3.78, unit=_mm_s),  # [mM/S] Zhu et al 2009
+            "V2_max": Parameter(11.75, unit=_mm_s),  # [mM/S] Zhu et al 2009
+            "V3_max": Parameter(5.04, unit=_mm_s),  # [mM/S] Zhu et al 2009
+            "V4_max": Parameter(3.05, unit=_mm_s),  # [mM/S] estimate by Zhu et al.
+            "V5_max": Parameter(3.0, unit=_mm_s),  # [mM/S] Zhu et al 2009
+            "V6_max": Parameter(0.1, unit=_mm_s),  # [mM/S] estimate by Zhu et al.
+            "V13_max": Parameter(8.0, unit=_mm_s),
             # Km:
-            "K_m1": 1.0,  # [mM] Zhu et al 2009
-            "K_m21": 0.24,  # [mM] Zhu et al 2009
-            "K_m22": 0.39,  # [mM] Zhu et al 2009
-            "K_m3": 0.5,  # [mM] Zhu et al 2009
-            "K_m4": 0.84,  # [mM] Zhu et al 2009
-            "K_m51": 0.75,  # [mM] Zhu et al 2009
-            "K_m52": 0.275,  # [mM] not specified in the paper but fitted by us to match the figure
-            "K_m6": 5,  # [mM] Zhu et al 2009
-            "K_m131": 0.15,  # [mM] Zhu et al 2009
-            "K_m132": 0.059,  # [mM] Zhu et al 2009
-            "ATP": 0.2,  # [mM]Not in Zhu et al 2009 but in the reference [9] in the paper
+            "K_m1": Parameter(1.0, unit=_mm),  # [mM] Zhu et al 2009
+            "K_m21": Parameter(0.24, unit=_mm),  # [mM] Zhu et al 2009
+            "K_m22": Parameter(0.39, unit=_mm),  # [mM] Zhu et al 2009
+            "K_m3": Parameter(0.5, unit=_mm),  # [mM] Zhu et al 2009
+            "K_m4": Parameter(0.84, unit=_mm),  # [mM] Zhu et al 2009
+            "K_m51": Parameter(0.75, unit=_mm),  # [mM] Zhu et al 2009
+            "K_m52": Parameter(
+                0.275, unit=_mm
+            ),  # [mM] not specified in the paper but fitted by us to match the figure
+            "K_m6": Parameter(5, unit=_mm),  # [mM] Zhu et al 2009
+            "K_m131": Parameter(0.15, unit=_mm),  # [mM] Zhu et al 2009
+            "K_m132": Parameter(0.059, unit=_mm),  # [mM] Zhu et al 2009
+            "ATP": Parameter(
+                0.2, unit=_mm
+            ),  # [mM]Not in Zhu et al 2009 but in the reference [9] in the paper
         }
     )
     m.add_variables(
         {
-            "RuBP": 2,  # Zhu et al 2009
-            "PGA": 2.4,  # Zhu et al 2009
-            "DPGA": 1,  # Zhu et al 2009
-            "Ru5P": 1,  # Zhu et al 2009
-            "GAP": 1,  # Zhu et al 2009
+            "RuBP": Variable(2, unit=_mm),  # Zhu et al 2009
+            "PGA": Variable(2.4, unit=_mm),  # Zhu et al 2009
+            "DPGA": Variable(1, unit=_mm),  # Zhu et al 2009
+            "Ru5P": Variable(1, unit=_mm),  # Zhu et al 2009
+            "GAP": Variable(1, unit=_mm),  # Zhu et al 2009
         }
     )
     m.add_reaction(
@@ -131,5 +139,6 @@ def get_zhu_2009() -> Model:
         stoichiometry={"Ru5P": -1, "RuBP": 1},
         args=["Ru5P", "ATP", "V13_max", "K_m131", "K_m132"],
     )
-    m.add_derived("A", fn=_calculate_a, args=["v1"])
+    # 1 mmol l^-1 s^-1 on stroma volume basis corresponds to 33.3 umol m^-2 s^-1 on leaf area basis
+    m.add_derived("A", fn=_calculate_a, args=["v1"], unit=mumol / sqm / second)
     return m
