@@ -17,6 +17,11 @@ Units:
 """
 
 from mxlpy import Model
+from mxlpy.units import liter, mmol, second
+
+_mmol_l = mmol / liter
+_mmol_l_s = _mmol_l / second
+_per_s = 1 / second
 
 
 def _mass_action_1s(
@@ -50,7 +55,13 @@ def _ping_pong_bi_bi(
     km_s1: float,
     km_s2: float,
 ) -> float:
-    r"""Ping-pong Bi-Bi kinetics for two-substrate, two-product reactions."""
+    r"""Ping-pong Bi-Bi kinetics for two-substrate, two-product reactions.
+
+    FIXME: with km_s1 and km_s2 as Michaelis constants in mM the denominator is
+    dimensionally inconsistent. The standard ping-pong Bi-Bi form is vmax * s1 * s2
+    / (km_s2 * s1 + km_s1 * s2 + s1 * s2); the original paper only cites Nakamura
+    and Tolbert (1983) for the mechanism.
+    """
     return vmax * s1 * s2 / (1 / (km_s1 * km_s2) + s1 / km_s1 + s2 / km_s2 + s1 * s2)
 
 
@@ -62,32 +73,37 @@ def get_yokota1985() -> Model:
     and biological chemistry 49.11 (1985): 3309-3310.
     """
     m: Model = Model()
-    m.add_variable("glycolate", initial_value=0.09)
-    m.add_variable("glyoxylate", initial_value=0.7964601770483386)
-    m.add_variable("glycine", initial_value=8.999999999424611)
-    m.add_variable("serine", initial_value=2.5385608670239126)
-    m.add_variable("hydroxypyruvate", initial_value=0.009782608695111009)
-    m.add_variable("H2O2", initial_value=0.010880542843616855)
-    m.add_parameter("kf_phosphoglycolate_phosphatase", value=60.0)
-    m.add_parameter("E0_glycolate_oxidase", value=1.0)
-    m.add_parameter("kcat_glycolate_oxidase", value=100)
-    m.add_parameter("km_glycolate_oxidase_s", value=0.06)
-    m.add_parameter("E0_glycine_transaminase", value=1.0)
-    m.add_parameter("kcat_glycine_transaminase", value=143.0)
-    m.add_parameter("km_glycine_transaminase_s", value=3.0)
-    m.add_parameter("E0_glycine_decarboxylase", value=0.5)
-    m.add_parameter("kcat_glycine_decarboxylase", value=100.0)
-    m.add_parameter("km_glycine_decarboxylase_s", value=6.0)
-    m.add_parameter("E0_serine_glyoxylate_transaminase", value=1.0)
-    m.add_parameter("kcat_serine_glyoxylate_transaminase", value=159.0)
-    m.add_parameter("km_serine_glyoxylate_transaminase_glyoxylate", value=0.15)
-    m.add_parameter("km_serine_glyoxylate_transaminase_serine", value=2.72)
-    m.add_parameter("E0_glycerate_dehydrogenase", value=1.0)
-    m.add_parameter("kcat_glycerate_dehydrogenase", value=398.0)
-    m.add_parameter("km_glycerate_dehydrogenase_s", value=0.12)
-    m.add_parameter("E0_catalase", value=1.0)
-    m.add_parameter("kcat_catalase", value=760500.0)
-    m.add_parameter("km_catalase_s", value=137.9)
+    m.add_variable("glycolate", initial_value=0.09, unit=_mmol_l)
+    m.add_variable("glyoxylate", initial_value=0.7964601770483386, unit=_mmol_l)
+    m.add_variable("glycine", initial_value=8.999999999424611, unit=_mmol_l)
+    m.add_variable("serine", initial_value=2.5385608670239126, unit=_mmol_l)
+    m.add_variable("hydroxypyruvate", initial_value=0.009782608695111009, unit=_mmol_l)
+    m.add_variable("H2O2", initial_value=0.010880542843616855, unit=_mmol_l)
+    # constant influx of glycolate into the pathway
+    m.add_parameter("kf_phosphoglycolate_phosphatase", value=60.0, unit=_mmol_l_s)
+    m.add_parameter("E0_glycolate_oxidase", value=1.0, unit=_mmol_l)
+    m.add_parameter("kcat_glycolate_oxidase", value=100, unit=_per_s)
+    m.add_parameter("km_glycolate_oxidase_s", value=0.06, unit=_mmol_l)
+    m.add_parameter("E0_glycine_transaminase", value=1.0, unit=_mmol_l)
+    m.add_parameter("kcat_glycine_transaminase", value=143.0, unit=_per_s)
+    m.add_parameter("km_glycine_transaminase_s", value=3.0, unit=_mmol_l)
+    m.add_parameter("E0_glycine_decarboxylase", value=0.5, unit=_mmol_l)
+    m.add_parameter("kcat_glycine_decarboxylase", value=100.0, unit=_per_s)
+    m.add_parameter("km_glycine_decarboxylase_s", value=6.0, unit=_mmol_l)
+    m.add_parameter("E0_serine_glyoxylate_transaminase", value=1.0, unit=_mmol_l)
+    m.add_parameter("kcat_serine_glyoxylate_transaminase", value=159.0, unit=_per_s)
+    m.add_parameter(
+        "km_serine_glyoxylate_transaminase_glyoxylate", value=0.15, unit=_mmol_l
+    )
+    m.add_parameter(
+        "km_serine_glyoxylate_transaminase_serine", value=2.72, unit=_mmol_l
+    )
+    m.add_parameter("E0_glycerate_dehydrogenase", value=1.0, unit=_mmol_l)
+    m.add_parameter("kcat_glycerate_dehydrogenase", value=398.0, unit=_per_s)
+    m.add_parameter("km_glycerate_dehydrogenase_s", value=0.12, unit=_mmol_l)
+    m.add_parameter("E0_catalase", value=1.0, unit=_mmol_l)
+    m.add_parameter("kcat_catalase", value=760500.0, unit=_per_s)
+    m.add_parameter("km_catalase_s", value=137.9, unit=_mmol_l)
     m.add_derived(
         "vmax_glycolate_oxidase",
         fn=_mass_action_1s,
