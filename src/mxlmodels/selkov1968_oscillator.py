@@ -13,6 +13,9 @@ Autocatalytic ADP activation of PFK drives sustained oscillations.
 """
 
 from mxlpy import Model
+from mxlpy.units import dimensionless
+
+# Non-dimensionalised model: all quantities, including time, are dimensionless
 
 
 def _pfk(
@@ -42,10 +45,10 @@ def get_selkov1968_glycolysis_oscillator() -> Model:
     r"""Build the Sel'kov oscillator: two-variable dimensionless model of glycolytic oscillations via autocatalytic PFK activation."""
     return (
         Model()
-        .add_variable("X", initial_value=0.5)
-        .add_variable("Y", initial_value=0.5)
-        .add_parameter("a", value=0.05)
-        .add_parameter("b", value=0.5)
+        .add_variable("X", initial_value=0.5, unit=dimensionless)
+        .add_variable("Y", initial_value=0.5, unit=dimensionless)
+        .add_parameter("a", value=0.05, unit=dimensionless)
+        .add_parameter("b", value=0.5, unit=dimensionless)
         .add_reaction(
             "pfk",
             fn=_pfk,
