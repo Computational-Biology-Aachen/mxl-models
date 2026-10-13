@@ -1,4 +1,5 @@
 import pandas as pd
+from mxlpy.units import second
 
 from mxlmodels import get_fuente_2024
 
@@ -20,3 +21,17 @@ def test_rhs() -> None:
         atol=1e-9,
         rtol=1e-9,
     )
+
+
+def test_units() -> None:
+    model = get_fuente_2024()
+    check = model.check_units(time_unit=second)
+    assert set(check.per_variable) == set(model.get_raw_variables())
+    # RCII_open drops the light term of the paper's definition, see FIXME in _rcii_open
+    known_inconsistent = {"v_PSII_PQ"}
+    assert {
+        (var, rxn): result
+        for var, per_rxn in check.per_variable.items()
+        for rxn, result in per_rxn.items()
+        if result is not True and rxn not in known_inconsistent
+    } == {}

@@ -40,8 +40,14 @@ from collections.abc import Iterable
 from functools import partial
 
 import numpy as np
-from mxlpy import Derived, InitialAssignment, Model
+from mxlpy import Derived, InitialAssignment, Model, Parameter, Variable
+from mxlpy.units import dimensionless, liter, mumol, second
 from scipy.optimize import least_squares
+
+# Pools are per RCII (dimensionless), H+ and ATP in uM. PPFD acts as an excitation
+# rate: the effective antenna size sigma_II = 1 s^-1/(umol photons m^-2 s^-1) is folded in
+_um = mumol / liter
+_per_s = 1 / second
 
 
 def _mass_action_1s(
@@ -94,6 +100,13 @@ def _rcii_open(
     k1m: float,
     pq_red: float,
 ) -> float:
+    # FIXME: the paper (Eq. 4-5) defines RCII_open = 1 - RCII_closed
+    #   = k1p * pq_ox / (sigma_psii * light + k1m * pq_red + k1p * pq_ox)
+    # This port drops the light term, which makes the expression dimensionally
+    # inconsistent (sigma_psii is dimensionless, k1m * pq_red is a rate) and
+    # changes the v_PSII_PQ flux. Check against the authors' Wolfram notebook,
+    # then fix it, update the expected right hand side in test_rhs and remove
+    # v_PSII_PQ from the known inconsistencies in test_units.
     return k1p * pq_ox / ((sigma_psii + k1m * pq_red) + k1p * pq_ox)
 
 
@@ -476,47 +489,49 @@ def get_fuente_2024(*, at_reference: bool = False) -> Model:
 
     m.add_parameters(
         {
-            "stoic_PSII": 1,
-            "stoic_PSI": 1,
-            "PQ_tot": 7,
-            "H_stroma": 0.015848931924611134,
-            "AP_tot": 1000,
-            "V_lumen": 2.62e-21,
-            "V_stroma": 2.09e-20,
-            "sigma_PSI_0": 1,
-            "k1p": 25000,
-            "k1m": 2500,
-            "k2p": 100,
-            "k2m": 10,
-            "k3": 0.05,
-            "k4": 0.004,
-            "k5": 100,
-            "k6": 10,
-            "k7": 500,
-            "k_X": 1,
-            "L_PSI": 10000,
-            "bH": 0.01,
-            "NPQ_max": 0.6,
-            "cEqP": 4.3e-08,
-            "keq_NPQ": 1,
-            "n_NPQ": 5.3,
-            "N_A": 6.02214076e17,
-            "PPFD": 50,
-            "PPFD_add": 0,
-            "f": 1,
-            "PSI_total": 1,
-            "Fluo_0": 0.25,
-            "Q_total": 1,
+            "stoic_PSII": Parameter(1, unit=dimensionless),
+            "stoic_PSI": Parameter(1, unit=dimensionless),
+            "PQ_tot": Parameter(7, unit=dimensionless),
+            "H_stroma": Parameter(0.015848931924611134, unit=_um),
+            "AP_tot": Parameter(1000, unit=_um),
+            "V_lumen": Parameter(2.62e-21, unit=liter),
+            "V_stroma": Parameter(2.09e-20, unit=liter),
+            "sigma_PSI_0": Parameter(1, unit=dimensionless),
+            "k1p": Parameter(25000, unit=_per_s),
+            "k1m": Parameter(2500, unit=_per_s),
+            "k2p": Parameter(100, unit=_per_s),
+            "k2m": Parameter(10, unit=_per_s),
+            "k3": Parameter(0.05, unit=_per_s),
+            "k4": Parameter(0.004, unit=_per_s),
+            "k5": Parameter(100, unit=_per_s),
+            "k6": Parameter(10, unit=_per_s),
+            "k7": Parameter(500, unit=_per_s),
+            "k_X": Parameter(1, unit=_per_s),
+            "L_PSI": Parameter(10000, unit=_per_s),
+            "bH": Parameter(0.01, unit=dimensionless),
+            "NPQ_max": Parameter(0.6, unit=dimensionless),
+            "cEqP": Parameter(4.3e-08, unit=dimensionless),
+            "keq_NPQ": Parameter(1, unit=_um),
+            "n_NPQ": Parameter(5.3, unit=dimensionless),
+            "N_A": Parameter(6.02214076e17, unit=1 / mumol),
+            "PPFD": Parameter(50, unit=_per_s),
+            "PPFD_add": Parameter(0, unit=_per_s),
+            "f": Parameter(1, unit=_per_s),
+            "PSI_total": Parameter(1, unit=dimensionless),
+            "Fluo_0": Parameter(0.25, unit=dimensionless),
+            "Q_total": Parameter(1, unit=dimensionless),
         }
     )
     if at_reference:
         m.add_variables(
             {
-                "Q_active": np.float64(1.6044277821745498e-23),
-                "PQ": np.float64(3.537090541057567),
-                "PSI_ox": np.float64(0.197310072778891),
-                "H_lumen": np.float64(0.4120700665522831),
-                "ATP_st": np.float64(144.95412072145785),
+                "Q_active": Variable(
+                    np.float64(1.6044277821745498e-23), unit=dimensionless
+                ),
+                "PQ": Variable(np.float64(3.537090541057567), unit=dimensionless),
+                "PSI_ox": Variable(np.float64(0.197310072778891), unit=dimensionless),
+                "H_lumen": Variable(np.float64(0.4120700665522831), unit=_um),
+                "ATP_st": Variable(np.float64(144.95412072145785), unit=_um),
             }
         )
     else:
@@ -551,25 +566,40 @@ def get_fuente_2024(*, at_reference: bool = False) -> Model:
         ]
         m.add_variables(
             {
-                "Q_active": InitialAssignment(
-                    fn=partial(_initial_combined, extract_str="qactive"),
-                    args=args,
+                "Q_active": Variable(
+                    InitialAssignment(
+                        fn=partial(_initial_combined, extract_str="qactive"),
+                        args=args,
+                    ),
+                    unit=dimensionless,
                 ),
-                "PQ": InitialAssignment(
-                    fn=partial(_initial_combined, extract_str="pqox"),
-                    args=args,
+                "PQ": Variable(
+                    InitialAssignment(
+                        fn=partial(_initial_combined, extract_str="pqox"),
+                        args=args,
+                    ),
+                    unit=dimensionless,
                 ),
-                "PSI_ox": InitialAssignment(
-                    fn=partial(_initial_combined, extract_str="psiox"),
-                    args=args,
+                "PSI_ox": Variable(
+                    InitialAssignment(
+                        fn=partial(_initial_combined, extract_str="psiox"),
+                        args=args,
+                    ),
+                    unit=dimensionless,
                 ),
-                "H_lumen": InitialAssignment(
-                    fn=partial(_initial_combined, extract_str="hlumen"),
-                    args=args,
+                "H_lumen": Variable(
+                    InitialAssignment(
+                        fn=partial(_initial_combined, extract_str="hlumen"),
+                        args=args,
+                    ),
+                    unit=_um,
                 ),
-                "ATP_st": InitialAssignment(
-                    fn=partial(_initial_combined, extract_str="atp"),
-                    args=args,
+                "ATP_st": Variable(
+                    InitialAssignment(
+                        fn=partial(_initial_combined, extract_str="atp"),
+                        args=args,
+                    ),
+                    unit=_um,
                 ),
             }
         )
