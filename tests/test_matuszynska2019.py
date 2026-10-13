@@ -43,7 +43,9 @@ def test_rhs() -> None:
 
 
 def test_units() -> None:
-    check = get_matuszynska2019().check_units(time_unit=second)
+    model = get_matuszynska2019()
+    check = model.check_units(time_unit=second)
+    assert set(check.per_variable) == set(model.get_raw_variables())
     # The b6f clamp max(rate, -kcat_b6f) is dimensionally inconsistent in the original model
     known_inconsistent = {"b6f"}
     assert {

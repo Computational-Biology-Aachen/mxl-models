@@ -23,7 +23,9 @@ def test_rhs() -> None:
 
 
 def test_units() -> None:
-    check = get_dynamic_enterobactin().check_units(time_unit=hour)
+    model = get_dynamic_enterobactin()
+    check = model.check_units(time_unit=hour)
+    assert set(check.per_variable) == set(model.get_raw_variables())
     assert {
         (var, rxn): result
         for var, per_rxn in check.per_variable.items()

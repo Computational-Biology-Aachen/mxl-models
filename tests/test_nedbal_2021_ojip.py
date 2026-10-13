@@ -4,9 +4,11 @@ from mxlmodels import get_nedbal_2021_ojip
 
 
 def test_units() -> None:
-    check = get_nedbal_2021_ojip(
+    model = get_nedbal_2021_ojip(
         fluorescence_0=0.2, j=0.3, i=0.2, p=0.3, tau_j=0.001, tau_i=0.03, tau_p=0.3
-    ).check_units(time_unit=second)
+    )
+    check = model.check_units(time_unit=second)
+    assert set(check.per_variable) == set(model.get_raw_variables())
     assert {
         (var, rxn): result
         for var, per_rxn in check.per_variable.items()

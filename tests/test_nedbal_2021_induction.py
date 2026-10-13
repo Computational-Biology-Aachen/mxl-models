@@ -4,9 +4,11 @@ from mxlmodels import get_nedbal_2021_induction
 
 
 def test_units() -> None:
-    check = get_nedbal_2021_induction(
+    model = get_nedbal_2021_induction(
         baseline=0.145, rise=0.047, tau_rise=0.02, decline=0.017, tau_decline=180.0
-    ).check_units(time_unit=second)
+    )
+    check = model.check_units(time_unit=second)
+    assert set(check.per_variable) == set(model.get_raw_variables())
     assert {
         (var, rxn): result
         for var, per_rxn in check.per_variable.items()

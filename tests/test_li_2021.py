@@ -32,7 +32,9 @@ def test_rhs() -> None:
 
 
 def test_units() -> None:
-    check = get_li_2021().check_units(time_unit=second)
+    model = get_li_2021()
+    check = model.check_units(time_unit=second)
+    assert set(check.per_variable) == set(model.get_raw_variables())
     assert {
         (var, rxn): result
         for var, per_rxn in check.per_variable.items()

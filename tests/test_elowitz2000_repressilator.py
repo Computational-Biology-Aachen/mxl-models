@@ -25,7 +25,9 @@ def test_rhs() -> None:
 
 
 def test_units() -> None:
-    check = get_elowitz2000_repressilator().check_units(time_unit=dimensionless)
+    model = get_elowitz2000_repressilator()
+    check = model.check_units(time_unit=dimensionless)
+    assert set(check.per_variable) == set(model.get_raw_variables())
     assert {
         (var, rxn): result
         for var, per_rxn in check.per_variable.items()
