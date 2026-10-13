@@ -14,6 +14,10 @@ Explicit prey growth and predation reactions.
 """
 
 from mxlpy import Model
+from mxlpy.units import dimensionless, second
+
+# Populations are dimensionless abundances
+_per_s = 1 / second
 
 
 def _v0(
@@ -54,30 +58,12 @@ def get_lotka_volterra_v1() -> Model:
     r"""Build the Lotka-Volterra predator-prey model (v1)."""
     return (
         Model()
-        .add_variable(
-            "Prey",
-            initial_value=10.0,
-        )
-        .add_variable(
-            "Predator",
-            initial_value=10.0,
-        )
-        .add_parameter(
-            "Alpha",
-            value=0.1,
-        )
-        .add_parameter(
-            "Beta",
-            value=0.02,
-        )
-        .add_parameter(
-            "Gamma",
-            value=0.4,
-        )
-        .add_parameter(
-            "Delta",
-            value=0.02,
-        )
+        .add_variable("Prey", initial_value=10.0, unit=dimensionless)
+        .add_variable("Predator", initial_value=10.0, unit=dimensionless)
+        .add_parameter("Alpha", value=0.1, unit=_per_s)
+        .add_parameter("Beta", value=0.02, unit=_per_s)
+        .add_parameter("Gamma", value=0.4, unit=_per_s)
+        .add_parameter("Delta", value=0.02, unit=_per_s)
         .add_reaction(
             "prey_growth",
             fn=_v0,
