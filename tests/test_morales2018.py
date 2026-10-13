@@ -1,4 +1,5 @@
 import pandas as pd
+from mxlpy.units import second
 
 from mxlmodels import get_morales2018
 
@@ -31,3 +32,17 @@ def test_rhs() -> None:
         atol=1e-9,
         rtol=1e-9,
     )
+
+
+def test_units() -> None:
+    model = get_morales2018()
+    check = model.check_units(time_unit=second)
+    assert set(check.per_variable) == set(model.get_raw_variables())
+    # the chamber balances inline the gas constant and the air pressure
+    known_inconsistent = {"dCa_dt", "dH2OS_dt"}
+    assert {
+        (var, rxn): result
+        for var, per_rxn in check.per_variable.items()
+        for rxn, result in per_rxn.items()
+        if result is not True and rxn not in known_inconsistent
+    } == {}
