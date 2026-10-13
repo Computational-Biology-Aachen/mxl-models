@@ -1,5 +1,7 @@
 r"""Morales et al. 2018 dynamic leaf CO2 assimilation model.
 
+https://doi.org/10.1111/pce.13119
+
 mxlpy implementation skeleton:
 
 - 16 state variables
