@@ -106,7 +106,12 @@ state; *E. coli* dominance fills it, *C. glutamicum* dominance depletes it.
   community outcome sensitivity to inoculation ratio.
 """
 
-from mxlpy import Derived, Model
+from mxlpy import Derived, Model, Parameter, Variable
+from mxlpy.units import dimensionless, gram, hour, liter
+
+# Time is in hours
+_g_l = gram / liter
+_per_h = 1 / hour
 
 
 def mul(x: float, y: float) -> float:
@@ -139,20 +144,27 @@ def get_dynamic_enterobactin() -> Model:
     See module docstring for full biological context, ODEs, and assumptions.
     """
     m = Model()
-    m.add_variables({"x1": 0.55, "x2": 0.55, "s1": 10, "p1": 0.02})
+    m.add_variables(
+        {
+            "x1": Variable(0.55, unit=_g_l),
+            "x2": Variable(0.55, unit=_g_l),
+            "s1": Variable(10, unit=_g_l),
+            "p1": Variable(0.02, unit=_g_l),
+        }
+    )
     m.add_parameters(
         {
-            "Y_X1_S": 0.45,  # gCDW/gSubstrate
-            "Y_X2_S": 0.5,  # gCDW/gSubstrate
-            "mu_max1": 0.22,  # 1/h
-            "mu_max2": 0.45,  # 1/h
-            "K_s1": 0.0005,  # g/L
-            "K_s2": 0.005,  # g/L
-            "q_p1_max": 0.015,  # gProduct/[gCDW*h]
-            "q_up_X1_max": 0.005,  # gProduct/[gCDW*h]
-            "q_up_X2_max": 0.01,  # gProduct/[gCDW*h]
-            "K_s_X1-P": 0.00001,  # g/L
-            "K_s_X2-P": 0.001,  # g/L
+            "Y_X1_S": Parameter(0.45, unit=dimensionless),  # gCDW/gSubstrate
+            "Y_X2_S": Parameter(0.5, unit=dimensionless),  # gCDW/gSubstrate
+            "mu_max1": Parameter(0.22, unit=_per_h),
+            "mu_max2": Parameter(0.45, unit=_per_h),
+            "K_s1": Parameter(0.0005, unit=_g_l),
+            "K_s2": Parameter(0.005, unit=_g_l),
+            "q_p1_max": Parameter(0.015, unit=_per_h),  # gProduct/[gCDW*h]
+            "q_up_X1_max": Parameter(0.005, unit=_per_h),  # gProduct/[gCDW*h]
+            "q_up_X2_max": Parameter(0.01, unit=_per_h),  # gProduct/[gCDW*h]
+            "K_s_X1-P": Parameter(0.00001, unit=_g_l),
+            "K_s_X2-P": Parameter(0.001, unit=_g_l),
         }
     )
     m.add_reaction(
