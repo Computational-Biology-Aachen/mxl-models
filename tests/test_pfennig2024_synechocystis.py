@@ -1,4 +1,5 @@
 import pandas as pd
+from mxlpy.units import second
 
 import mxlmodels
 from mxlmodels import get_pfennig2024_synechocystis
@@ -45,3 +46,29 @@ def test_rhs() -> None:
         atol=1e-9,
         rtol=1e-9,
     )
+
+
+def test_units() -> None:
+    model = get_pfennig2024_synechocystis(
+        light_spectrum=data.light_spectrum,
+        light_spectrum_measure=data.light_spectrum_measure,
+        ocp_absorption=data.ocp_absorption_per_wavelength,
+        abs_coef=data.pigment_abs_coef_per_wavelength,
+        molar_masses=data.molar_masses,
+        ps_comp=data.ps_comp,
+        pigment_content=data.pigment_content,
+    )
+    check = model.check_units(time_unit=second)
+    assert set(check.per_variable) == set(model.get_raw_variables())
+    # OCP activation works on light spectra (data) and _v_fnr cannot be parsed, see FIXME
+    unchecked = {"OCPactivation", "vFNR"}
+    # the Henry / pK formula of the CO2 uptake hides unit-carrying constants
+    known_inconsistent = {"vCCM"}
+    assert {
+        (var, rxn): result
+        for var, per_rxn in check.per_variable.items()
+        for rxn, result in per_rxn.items()
+        if result is not True
+        and rxn not in known_inconsistent
+        and not (result is None and rxn in unchecked)
+    } == {}

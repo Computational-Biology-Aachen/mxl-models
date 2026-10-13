@@ -31,102 +31,266 @@ from typing import Literal, cast
 
 import numpy as np
 import pandas as pd
-from mxlpy import Derived, Model, fns
+from mxlpy import Derived, Model, Parameter, Variable, fns
 from mxlpy.surrogates import qss
+from mxlpy.units import (
+    coulomb,
+    dimensionless,
+    joule,
+    kelvin,
+    kilo,
+    liter,
+    mmol,
+    mmol_mol_chl,
+    mol,
+    pascal,
+    ppfd,
+    second,
+    volt,
+)
 from scipy.integrate import simpson
 
-parameters: dict[str, float] = {
-    "PSIItot": 0.830,  # [mmol mol(Chl)^-1] total concentration of photosystem II complexes (Zavrel2023)
-    "PSItot": 3.270,  # [mmol mol(Chl)^-1] total concentration of photosystem I complexes (Zavrel2023)
-    "PQ_tot": 13.000,  # [mmol mol(Chl)^-1] total PHOTOACTIVE PQ concentration (Khorobrykh2020)
-    "PC_tot": 1.571,  # [mmol mol(Chl)^-1] total concentration of plastocyanin (PC_ox + PC_red) (Zavrel2019)
-    "Fd_tot": 3.597,  # [mmol mol(Chl)^-1] total concentration of ferredoxin (Fd_ox + Fd_red) (Moal2012)
-    "NADP_tot": 26.805,  # [mmol mol(Chl)^-1] total concentration of NADP species (NADP + NADPH) (Kauny2014)
-    "NAD_tot": 11.169,  # [mmol mol(Chl)^-1] total concentration of NAD species (NAD + NADH) (Tanaka2021)
-    "AP_tot": 430.143,  # [mmol mol(Chl)^-1] total concentration of adenosine species (ADP + ATP) (Doello2018)
-    "O2ext": 55.402,  # [mmol mol(Chl)^-1] concentration of oxygen in the surrounding medium (Kihara2014)
-    "CO2ext": 3.103,  # [mmol mol(Chl)^-1] saturated concentration of CO2 in 25 °C water with ~10 ‰ Cl^- ions (Li1971)
-    "F": 96.485,  # [C mmol^-1] Faraday's constant (Richardson2019)
-    "R": 8.300e-03,  # [J K^-1 mmol^-1] ideal gas constant (Richardson2019)
-    "T": 298.150,  # [K] temperature (set)
-    "bHi": 100.000,  # [unitless] buffering constant of the thylakoid lumen (estimated)
-    "bHo": 1.111e03,  # [unitless] buffering constant of the cytoplasm, assumed to be 1/f_V_lumen times larger (estimated)
-    "cf_lumen": 4.613e-05,  # [mol(Chl) ml^-1] conversion factor for [mmol mol(Chl)^-1] -> [mol l^-1] for the thylakoid lumen (derived)
-    "cf_cytoplasm": 4.562e-06,  # [mol(Chl) ml^-1] conversion factor for [mmol mol(Chl)^-1] -> [mol l^-1] for the cytoplasm (derived)
-    "E0_QA": -0.140,  # [V] standard electrode potential of the reduction of PS2 plastoquinone A (Lewis2022)
-    "E0_PQ": 0.533,  # [V] standard electrode potential of the reduction of free plastoquinone (Lewis2022)
-    "E0_PC": 0.350,  # [V] standard electrode potential of the reduction of free plastocyanin (Lewis2022)
-    "E0_P700": 0.410,  # [V] standard electrode potential of the reduction of the oxidised PS1 reaction center (Lewis2022)
-    "E0_FA": -0.580,  # [V] standard electrode potential of the reduction of PS1 iron-sulfur cluster A (Lewis2022)
-    "E0_Fd": -0.410,  # [V] standard electrode potential of the reduction of free ferredoxin (Lewis2022)
-    "E0_NADP": -0.113,  # [V] standard electrode potential of the reduction of NADP to NADPH (Falkowski2007)
-    "E0_succinate/fumarate": 0.443,  # [V] standard electrode potential of the reduction of fumarate to succinate (Falkowski2007)
-    "kH0": 5.000e08,  # [s^-1] rate constant of (unregulated) excitation quenching by heat (Ebenhoh2014)
-    "kHst": 1.000e09,  # [s^-1] rate constant of state transition regulated excitation quenching by heat (guess)
-    "kF": 6.250e08,  # [s^-1] rate constant of excitation quenching by fluorescence (Ebenhoh2014)
-    "k2": 2.500e09,  # [s^-1] rate constant of excitation quenching by photochemistry (Ebenhoh2014,Bernat2009)
-    "kPQred": 250.000,  # [mol(Chl) mmol^-1 s^-1] rate constant of PQ reduction via PS2 (Matuszynska2019)
-    "kFlvactivation": 0.500,  # [s^-1] rate constant of Flv activation by reduced Fd (manually fitted)
-    "kFlvdeactivation": 0.100,  # [s^-1] rate constant of Flv deactivation by oxidised Fd (manually fitted)
-    "kCBBdeactivation": 2.500e-03,  # [s^-1] rate constant of CBB deactivation by oxidised Fd (manually fitted)
-    "kPCox": 2.500e03,  # [mol(Chl) mmol^-1 s^-1] rate constant of PC oxidation via PS1 (Matuszynska2019)
-    "kFdred": 2.500e05,  # [mol(Chl) mmol^-1 s^-1] rate constant of Fd reduction via PS1 (Matuszynska2019)
-    "k_ox1": 0.211,  # [mol(Chl)^2 mmol^-2 s^-1] rate constant of oxygen reduction via bd-type (Cyd) terminal oxidases (Ermakova2016)
-    "k_NDH": 3.136,  # [mol(Chl) mmol^-1 s^-1] rate constant of PQ reduction by NDH-2 (Cooley2001)
-    "k_SDH": 0.430,  # [mol(Chl) mmol^-1 s^-1] rate constant of PQ reduction by SDH (Cooley2001)
-    "k_FN_fwd": 3.730,  # [mol(Chl) mmol^-1 s^-1] rate constant of NADP reduction by FNR (Kauny2014)
-    "k_FN_rev": 53.364,  # [mol(Chl)^3 mmol^-3 s^-1] rate constant of reverse flux through FNR in darkness (Kauny2014)
-    "k_NQ": 100.000,  # [mol(Chl) mmol^-1 s^-1] rate constant of PQ reduction by NDH (Theune2021)
-    "kRespiration": 3.506e-06,  # [mol(Chl)^3 mmol^-3 s^-1] rate constant of 3PGA oxidation and fumarate reduction by glycolysis and the TCA cycle (Ermakova2016)
-    "kO2out": 4.025e03,  # [s^-1] rate constant of oxygen diffusion out of the cell (Kihara2014)
-    "kCCM": 4.025e03,  # [s^-1] rate constant of CO2 diffusion into the cell, assumed to be identical to kO2out (guess)
-    "PBS_free": 9.000e-02,  # [unitless] fraction of unbound PBS (Zavrel2023)
-    "PBS_PS1": 0.390,  # [unitless] fraction of PBS bound to PSI (Zavrel2023)
-    "PBS_PS2": 0.510,  # [unitless] fraction of PBS bound to PSII (Zavrel2023)"
-    "Pi_mol": 1.000e-02,  # [mmol mol(Chl)^-1] molar conccentration of phosphate (Matuszynska2019)
-    "DeltaG0_ATP": 30.600,  # [kJ mol^-1] energy of ATP formation (Matuszynska2019)
-    "HPR": 4.667,  # [unitless] number of protons (14) passing through the ATP synthase per ATP (3) synthesized (Pogoryelov2007)
-    "vOxy_max": 16.059,  # [mmol mol(Chl)^-1 s^-1] approximate Rubisco oxygenation rate (Savir2010)
-    "KMATP": 24.088,  # [mmol mol(Chl)^-1] order of magnitude of the michaelis constant for ATP consumption in the CBB cycle (Wadano1998,Tsukamoto2013)
-    "KMNADPH": 18.066,  # [mmol mol(Chl)^-1] approxiate michaelis constant for NADPH consumption in the CBB cycle (Koksharova1998)
-    "KMCO2": 72.264,  # [mmol mol(Chl)^-1] order of magnitude of the michaelis constant for CO2 consumption by cyanobacterial Rubisco (Savir2010)
-    "KIO2": 240.880,  # [mmol mol(Chl)^-1] order of magnitude of the michaelis inhibition constant of O2 for CO2 consumption by cyanobacterial Rubisco, assumed equal to KMO2 (Savir2010)
-    "KMO2": 240.880,  # [mmol mol(Chl)^-1] order of magnitude of the michaelis constant for O2 consumption by cyanobacterial Rubisco (Savir2010)
-    "KICO2": 72.264,  # [mmol l^-1] order of magnitude of the michaelis inhibition constant of CO2 for O2 consumption by cyanobacterial Rubisco, assumed equal to KMCO2 (Savir2010)
-    "vCBB_max": 51.301,  # [mmol mol(Chl)^-1 s^-1] approximate maximal rate of the Calvin Benson Bassham cycle (Zavrel2017)
-    "kPR": 1.523e-06,  # [mol(Chl)^4 mmol^-4 s^-1] rate constant of (2-phospho)glycolate recycling into 3PGA (Huege2011)
-    "cChl": 4.151e-03,  # [mol l^-1] total molar concentration of chlorophyll (derived)
-    "CO2ext_pp": 5.000e-02,  # [atm] CO2 partial pressure in 5% CO2 enriched air used for bubbeling (set)
-    "S": 35.000,  # [unitless] salinity within a cell (MojicaPrieto2002)
-    "k_O2": 12.926,  # [mol(Chl)^2 mmol^-2 s^-1] rate constant of Fd oxidation by Flv 1/3 (Ermakova2016)
-    "KHillFdred_CBB": 1.000e-04,  # [mmol^nHillFdred_CBB mol(Chl)^-nHillFdred_CBB] Apparent dissociation constant of reduced ferredoxin for CBB activation (Schuurmans2014)
-    "nHillFdred_CBB": 4.000,  # [unitless] Hill coefficient of CBB activation by reduced ferredoxin (guess)
-    "fCin": 1032.3825198828176,
-    "k_F1": 1.0144691550897802,
-    "k_Q": 1789.6877149900638,
-    "k_pass": 0.0103757688087645,
-    "k_aa": 1.0726342220286855,
-    "fluo_influence_ps2": 1.0871604554468057,
-    "fluo_influence_ps1": 1.0580747331180056,
-    "fluo_influence_pbs": 1.2652931291892002,
-    "lcf": 0.4852970468572075,
-    "KMPGA": 0.108119035344566,
-    "kATPsynth": 10.508685365751944,
-    "kATPconsumption": 0.3007216562727887,
-    "kNADHconsumption": 10.774127129643528,
-    "kUnquench": 0.1084895168082126,
-    "KMUnquench": 0.2057753667172297,
-    "kQuench": 0.0021298894016293,
-    "KHillFdred": 39.138885950985646,
-    "nHillFdred": 3.803733201004677,
-    "kCBBactivation": 0.0368469911771887,
-    "KMFdred": 0.2867372651572032,
-    "kOCPactivation": 9.119349718302952e-05,
-    "kOCPdeactivation": 0.0013779872861697,
-    "OCPmax": 0.2894610142573665,
-    "vNQ_max": 47.52413111835536,
-    "KMNQ_Qox": 1.225188500783819,
-    "KMNQ_Fdred": 1.3324893590389415,
+_c = mmol_mol_chl
+_c_s = _c / second
+_per_s = 1 / second
+_per_c_s = 1 / (_c * second)
+_per_c2_s = 1 / (_c**2 * second)
+_per_c3_s = 1 / (_c**3 * second)
+_molar = mol / liter
+_mmol_l = mmol / liter
+_kj_mol = joule * kilo / mol
+_atm = pascal  # pressure; CO2ext_pp is given in atm
+
+parameters: dict[str, Parameter] = {
+    "PSIItot": Parameter(
+        0.830, unit=_c
+    ),  # [mmol mol(Chl)^-1] total concentration of photosystem II complexes (Zavrel2023)
+    "PSItot": Parameter(
+        3.270, unit=_c
+    ),  # [mmol mol(Chl)^-1] total concentration of photosystem I complexes (Zavrel2023)
+    "PQ_tot": Parameter(
+        13.000, unit=_c
+    ),  # [mmol mol(Chl)^-1] total PHOTOACTIVE PQ concentration (Khorobrykh2020)
+    "PC_tot": Parameter(
+        1.571, unit=_c
+    ),  # [mmol mol(Chl)^-1] total concentration of plastocyanin (PC_ox + PC_red) (Zavrel2019)
+    "Fd_tot": Parameter(
+        3.597, unit=_c
+    ),  # [mmol mol(Chl)^-1] total concentration of ferredoxin (Fd_ox + Fd_red) (Moal2012)
+    "NADP_tot": Parameter(
+        26.805, unit=_c
+    ),  # [mmol mol(Chl)^-1] total concentration of NADP species (NADP + NADPH) (Kauny2014)
+    "NAD_tot": Parameter(
+        11.169, unit=_c
+    ),  # [mmol mol(Chl)^-1] total concentration of NAD species (NAD + NADH) (Tanaka2021)
+    "AP_tot": Parameter(
+        430.143, unit=_c
+    ),  # [mmol mol(Chl)^-1] total concentration of adenosine species (ADP + ATP) (Doello2018)
+    "O2ext": Parameter(
+        55.402, unit=_c
+    ),  # [mmol mol(Chl)^-1] concentration of oxygen in the surrounding medium (Kihara2014)
+    "CO2ext": Parameter(
+        3.103, unit=_c
+    ),  # [mmol mol(Chl)^-1] saturated concentration of CO2 in 25 °C water with ~10 ‰ Cl^- ions (Li1971)
+    "F": Parameter(
+        96.485, unit=coulomb / mmol
+    ),  # [C mmol^-1] Faraday's constant (Richardson2019)
+    "R": Parameter(
+        8.300e-03, unit=joule / (kelvin * mmol)
+    ),  # [J K^-1 mmol^-1] ideal gas constant (Richardson2019)
+    "T": Parameter(298.150, unit=kelvin),  # [K] temperature (set)
+    "bHi": Parameter(
+        100.000, unit=dimensionless
+    ),  # [unitless] buffering constant of the thylakoid lumen (estimated)
+    "bHo": Parameter(
+        1.111e03, unit=dimensionless
+    ),  # [unitless] buffering constant of the cytoplasm, assumed to be 1/f_V_lumen times larger (estimated)
+    "cf_lumen": Parameter(
+        4.613e-05, unit=_molar / _c
+    ),  # [mol(Chl) ml^-1] conversion factor for [mmol mol(Chl)^-1] -> [mol l^-1] for the thylakoid lumen (derived)
+    "cf_cytoplasm": Parameter(
+        4.562e-06, unit=_molar / _c
+    ),  # [mol(Chl) ml^-1] conversion factor for [mmol mol(Chl)^-1] -> [mol l^-1] for the cytoplasm (derived)
+    "E0_QA": Parameter(
+        -0.140, unit=volt
+    ),  # [V] standard electrode potential of the reduction of PS2 plastoquinone A (Lewis2022)
+    "E0_PQ": Parameter(
+        0.533, unit=volt
+    ),  # [V] standard electrode potential of the reduction of free plastoquinone (Lewis2022)
+    "E0_PC": Parameter(
+        0.350, unit=volt
+    ),  # [V] standard electrode potential of the reduction of free plastocyanin (Lewis2022)
+    "E0_P700": Parameter(
+        0.410, unit=volt
+    ),  # [V] standard electrode potential of the reduction of the oxidised PS1 reaction center (Lewis2022)
+    "E0_FA": Parameter(
+        -0.580, unit=volt
+    ),  # [V] standard electrode potential of the reduction of PS1 iron-sulfur cluster A (Lewis2022)
+    "E0_Fd": Parameter(
+        -0.410, unit=volt
+    ),  # [V] standard electrode potential of the reduction of free ferredoxin (Lewis2022)
+    "E0_NADP": Parameter(
+        -0.113, unit=volt
+    ),  # [V] standard electrode potential of the reduction of NADP to NADPH (Falkowski2007)
+    "E0_succinate/fumarate": Parameter(
+        0.443, unit=volt
+    ),  # [V] standard electrode potential of the reduction of fumarate to succinate (Falkowski2007)
+    "kH0": Parameter(
+        5.000e08, unit=_per_s
+    ),  # [s^-1] rate constant of (unregulated) excitation quenching by heat (Ebenhoh2014)
+    "kHst": Parameter(
+        1.000e09, unit=_per_s
+    ),  # [s^-1] rate constant of state transition regulated excitation quenching by heat (guess)
+    "kF": Parameter(
+        6.250e08, unit=_per_s
+    ),  # [s^-1] rate constant of excitation quenching by fluorescence (Ebenhoh2014)
+    "k2": Parameter(
+        2.500e09, unit=_per_s
+    ),  # [s^-1] rate constant of excitation quenching by photochemistry (Ebenhoh2014,Bernat2009)
+    "kPQred": Parameter(
+        250.000, unit=_per_c_s
+    ),  # [mol(Chl) mmol^-1 s^-1] rate constant of PQ reduction via PS2 (Matuszynska2019)
+    "kFlvactivation": Parameter(
+        0.500, unit=_per_s
+    ),  # [s^-1] rate constant of Flv activation by reduced Fd (manually fitted)
+    "kFlvdeactivation": Parameter(
+        0.100, unit=_per_s
+    ),  # [s^-1] rate constant of Flv deactivation by oxidised Fd (manually fitted)
+    "kCBBdeactivation": Parameter(
+        2.500e-03, unit=_per_s
+    ),  # [s^-1] rate constant of CBB deactivation by oxidised Fd (manually fitted)
+    "kPCox": Parameter(
+        2.500e03, unit=_per_c_s
+    ),  # [mol(Chl) mmol^-1 s^-1] rate constant of PC oxidation via PS1 (Matuszynska2019)
+    "kFdred": Parameter(
+        2.500e05, unit=_per_c_s
+    ),  # [mol(Chl) mmol^-1 s^-1] rate constant of Fd reduction via PS1 (Matuszynska2019)
+    "k_ox1": Parameter(
+        0.211, unit=_per_c2_s
+    ),  # [mol(Chl)^2 mmol^-2 s^-1] rate constant of oxygen reduction via bd-type (Cyd) terminal oxidases (Ermakova2016)
+    # documented as [mol(Chl) mmol^-1 s^-1], but vNDH is third order (Ho * NADH * PQ_ox)
+    "k_NDH": Parameter(
+        3.136, unit=_per_c2_s
+    ),  # [mol(Chl) mmol^-1 s^-1] rate constant of PQ reduction by NDH-2 (Cooley2001)
+    "k_SDH": Parameter(
+        0.430, unit=_per_c_s
+    ),  # [mol(Chl) mmol^-1 s^-1] rate constant of PQ reduction by SDH (Cooley2001)
+    "k_FN_fwd": Parameter(
+        3.730, unit=_per_c_s
+    ),  # [mol(Chl) mmol^-1 s^-1] rate constant of NADP reduction by FNR (Kauny2014)
+    "k_FN_rev": Parameter(
+        53.364, unit=_per_c3_s
+    ),  # [mol(Chl)^3 mmol^-3 s^-1] rate constant of reverse flux through FNR in darkness (Kauny2014)
+    "k_NQ": Parameter(
+        100.000, unit=_per_c_s
+    ),  # [mol(Chl) mmol^-1 s^-1] rate constant of PQ reduction by NDH (Theune2021)
+    "kRespiration": Parameter(
+        3.506e-06, unit=_per_c3_s
+    ),  # [mol(Chl)^3 mmol^-3 s^-1] rate constant of 3PGA oxidation and fumarate reduction by glycolysis and the TCA cycle (Ermakova2016)
+    "kO2out": Parameter(
+        4.025e03, unit=_per_s
+    ),  # [s^-1] rate constant of oxygen diffusion out of the cell (Kihara2014)
+    "kCCM": Parameter(
+        4.025e03, unit=_per_s
+    ),  # [s^-1] rate constant of CO2 diffusion into the cell, assumed to be identical to kO2out (guess)
+    "PBS_free": Parameter(
+        9.000e-02, unit=dimensionless
+    ),  # [unitless] fraction of unbound PBS (Zavrel2023)
+    "PBS_PS1": Parameter(
+        0.390, unit=dimensionless
+    ),  # [unitless] fraction of PBS bound to PSI (Zavrel2023)
+    "PBS_PS2": Parameter(
+        0.510, unit=dimensionless
+    ),  # [unitless] fraction of PBS bound to PSII (Zavrel2023)"
+    # documented as [mmol mol(Chl)^-1], but used as a dimensionless activity in the ATP synthase Keq
+    "Pi_mol": Parameter(
+        1.000e-02, unit=dimensionless
+    ),  # [mmol mol(Chl)^-1] molar conccentration of phosphate (Matuszynska2019)
+    "DeltaG0_ATP": Parameter(
+        30.600, unit=_kj_mol
+    ),  # [kJ mol^-1] energy of ATP formation (Matuszynska2019)
+    "HPR": Parameter(
+        4.667, unit=dimensionless
+    ),  # [unitless] number of protons (14) passing through the ATP synthase per ATP (3) synthesized (Pogoryelov2007)
+    "vOxy_max": Parameter(
+        16.059, unit=_c_s
+    ),  # [mmol mol(Chl)^-1 s^-1] approximate Rubisco oxygenation rate (Savir2010)
+    "KMATP": Parameter(
+        24.088, unit=_c
+    ),  # [mmol mol(Chl)^-1] order of magnitude of the michaelis constant for ATP consumption in the CBB cycle (Wadano1998,Tsukamoto2013)
+    "KMNADPH": Parameter(
+        18.066, unit=_c
+    ),  # [mmol mol(Chl)^-1] approxiate michaelis constant for NADPH consumption in the CBB cycle (Koksharova1998)
+    "KMCO2": Parameter(
+        72.264, unit=_c
+    ),  # [mmol mol(Chl)^-1] order of magnitude of the michaelis constant for CO2 consumption by cyanobacterial Rubisco (Savir2010)
+    "KIO2": Parameter(
+        240.880, unit=_c
+    ),  # [mmol mol(Chl)^-1] order of magnitude of the michaelis inhibition constant of O2 for CO2 consumption by cyanobacterial Rubisco, assumed equal to KMO2 (Savir2010)
+    "KMO2": Parameter(
+        240.880, unit=_c
+    ),  # [mmol mol(Chl)^-1] order of magnitude of the michaelis constant for O2 consumption by cyanobacterial Rubisco (Savir2010)
+    # documented as [mmol l^-1], but used together with CO2 in mmol mol(Chl)^-1
+    "KICO2": Parameter(
+        72.264, unit=_c
+    ),  # [mmol l^-1] order of magnitude of the michaelis inhibition constant of CO2 for O2 consumption by cyanobacterial Rubisco, assumed equal to KMCO2 (Savir2010)
+    "vCBB_max": Parameter(
+        51.301, unit=_c_s
+    ),  # [mmol mol(Chl)^-1 s^-1] approximate maximal rate of the Calvin Benson Bassham cycle (Zavrel2017)
+    # documented as [mol(Chl)^4 mmol^-4 s^-1], but vPRsalv is fourth order (PG * ATP * NADPH * NAD)
+    "kPR": Parameter(
+        1.523e-06, unit=_per_c3_s
+    ),  # [mol(Chl)^4 mmol^-4 s^-1] rate constant of (2-phospho)glycolate recycling into 3PGA (Huege2011)
+    "cChl": Parameter(
+        4.151e-03, unit=_molar
+    ),  # [mol l^-1] total molar concentration of chlorophyll (derived)
+    "CO2ext_pp": Parameter(
+        5.000e-02, unit=_atm
+    ),  # [atm] CO2 partial pressure in 5% CO2 enriched air used for bubbeling (set)
+    "S": Parameter(
+        35.000, unit=dimensionless
+    ),  # [unitless] salinity within a cell (MojicaPrieto2002)
+    # documented as [mol(Chl)^2 mmol^-2 s^-1], but vFlv is k_O2 * Ho * O2 times a
+    # dimensionless Hill term of Fd_red
+    "k_O2": Parameter(
+        12.926, unit=_per_c_s
+    ),  # [mol(Chl)^2 mmol^-2 s^-1] rate constant of Fd oxidation by Flv 1/3 (Ermakova2016)
+    # (mmol mol(Chl)^-1)^nHillFdred_CBB; with a symbolic Hill exponent only dimensionless balances
+    "KHillFdred_CBB": Parameter(
+        1.000e-04, unit=dimensionless
+    ),  # [mmol^nHillFdred_CBB mol(Chl)^-nHillFdred_CBB] Apparent dissociation constant of reduced ferredoxin for CBB activation (Schuurmans2014)
+    "nHillFdred_CBB": Parameter(
+        4.000, unit=dimensionless
+    ),  # [unitless] Hill coefficient of CBB activation by reduced ferredoxin (guess)
+    # empirical factor of the CO2 uptake (vCCM), whose Henry/pK formula hides units
+    "fCin": Parameter(1032.3825198828176, unit=dimensionless),
+    "k_F1": Parameter(1.0144691550897802, unit=_per_s),
+    "k_Q": Parameter(1789.6877149900638, unit=_per_c2_s),
+    "k_pass": Parameter(0.0103757688087645, unit=_c / (_molar * second)),
+    "k_aa": Parameter(1.0726342220286855, unit=_per_c2_s),
+    "fluo_influence_ps2": Parameter(1.0871604554468057, unit=dimensionless),
+    "fluo_influence_ps1": Parameter(1.0580747331180056, unit=dimensionless),
+    "fluo_influence_pbs": Parameter(1.2652931291892002, unit=dimensionless),
+    # light conversion factor from absorbed light to an excitation rate
+    "lcf": Parameter(0.4852970468572075, unit=1 / (ppfd * second)),
+    "KMPGA": Parameter(0.108119035344566, unit=_c),
+    "kATPsynth": Parameter(10.508685365751944, unit=_per_s),
+    "kATPconsumption": Parameter(0.3007216562727887, unit=_per_s),
+    "kNADHconsumption": Parameter(10.774127129643528, unit=_per_c_s),
+    "kUnquench": Parameter(0.1084895168082126, unit=_per_s),
+    "KMUnquench": Parameter(0.2057753667172297, unit=_c),
+    "kQuench": Parameter(0.0021298894016293, unit=_per_c_s),
+    # (mmol mol(Chl)^-1)^nHillFdred; with a symbolic Hill exponent only dimensionless balances
+    "KHillFdred": Parameter(39.138885950985646, unit=dimensionless),
+    "nHillFdred": Parameter(3.803733201004677, unit=dimensionless),
+    "kCBBactivation": Parameter(0.0368469911771887, unit=_per_s),
+    "KMFdred": Parameter(0.2867372651572032, unit=_c),
+    "kOCPactivation": Parameter(9.119349718302952e-05, unit=dimensionless),
+    "kOCPdeactivation": Parameter(0.0013779872861697, unit=_per_s),
+    "OCPmax": Parameter(0.2894610142573665, unit=dimensionless),
+    "vNQ_max": Parameter(47.52413111835536, unit=_c_s),
+    "KMNQ_Qox": Parameter(1.225188500783819, unit=_c),
+    "KMNQ_Fdred": Parameter(1.3324893590389415, unit=_c),
 }
 
 
@@ -968,6 +1132,8 @@ def _v_fnr(
     P = fd_ox * nadph
 
     # If delta G is positive calculate the reverse rate
+    # FIXME: np.exp(-d_g_fnr > 0) exponentiates a boolean (always e^0 here), likely a
+    # typo, e.g. for np.exp(-d_g_fnr). It also keeps this rate from being unit checked.
     if d_g_fnr > 0:
         Keq = np.exp(-d_g0_fnr / rt)
         return k_fn_rev / Keq * P * (np.exp(-d_g_fnr > 0) - 1)
@@ -1562,6 +1728,9 @@ def add_electron_transport_chain(
                 "absorption_ps2",
                 "absorption_pbs",
             ],
+            units=dict.fromkeys(
+                ["absorption_ps1", "absorption_ps2", "absorption_pbs"], ppfd
+            ),
         ),
     )
     m.add_surrogate(
@@ -1582,6 +1751,9 @@ def add_electron_transport_chain(
                 "ml_absorption_ps2",
                 "ml_absorption_pbs",
             ],
+            units=dict.fromkeys(
+                ["ml_absorption_ps1", "ml_absorption_ps2", "ml_absorption_pbs"], ppfd
+            ),
         ),
     )
 
@@ -1605,6 +1777,7 @@ def add_electron_transport_chain(
                 "absorption_pbs",
             ],
             outputs=["light_ps1", "light_ps2"],
+            units=dict.fromkeys(["light_ps1", "light_ps2"], _per_s),
         ),
     )
     m.add_surrogate(
@@ -1623,6 +1796,7 @@ def add_electron_transport_chain(
                 "absorption_pbs",
             ],
             outputs=["light_ps1_ML", "light_ps2_ML"],
+            units=dict.fromkeys(["light_ps1_ML", "light_ps2_ML"], _per_s),
         ),
     )
     m.add_surrogate(
@@ -1636,6 +1810,7 @@ def add_electron_transport_chain(
                 "light_ps2_ML",
             ],
             outputs=["light_ps1_tot", "light_ps2_tot"],
+            units=dict.fromkeys(["light_ps1_tot", "light_ps2_tot"], _per_s),
         ),
     )
 
@@ -1730,6 +1905,7 @@ def add_electron_transport_chain(
                 "B2",
                 "B3",
             ],
+            units=dict.fromkeys(["B0", "B1", "B2", "B3"], _c),
         ),
     )
 
@@ -1756,6 +1932,7 @@ def add_electron_transport_chain(
                 "B2_tot",
                 "B3_tot",
             ],
+            units=dict.fromkeys(["B0_tot", "B1_tot", "B2_tot", "B3_tot"], _c),
         ),
     )
 
@@ -1777,6 +1954,7 @@ def add_electron_transport_chain(
                 "kFdred",
             ],
             outputs=["Y0", "Y1", "Y2"],
+            units=dict.fromkeys(["Y0", "Y1", "Y2"], _c),
         ),
     )
 
@@ -1798,6 +1976,7 @@ def add_electron_transport_chain(
                 "kFdred",
             ],
             outputs=["Y0_tot", "Y1_tot", "Y2_tot"],
+            units=dict.fromkeys(["Y0_tot", "Y1_tot", "Y2_tot"], _c),
         ),
     )
 
@@ -2145,23 +2324,57 @@ def get_pfennig2024_synechocystis(
     m = Model()
     m.add_variables(
         {
-            "PSII": 0.415,  # [mmol mol(Chl)^-1] initial concentration of unquenched PSII (guessed from ca. 50% reduced plastoquinone) (guess)
-            "O2": 55.402,  # [mmol mol(Chl)^-1] concentration of oxygen in the cell (Kihara2014)
-            "PC_ox": 0.157,  # [mmol mol(Chl)^-1] initial concentration of oxidised plastocyanin (aerobic) (Schreiber2017)
-            "Fd_ox": 3.237,  # [mmol mol(Chl)^-1] initial concentration of oxidised ferredoxin (aerobic) (Schreiber2017)
-            "NADPH": 20.104,  # [mmol mol(Chl)^-1] initial concentration of NADPH (Cooley2001)
-            "NADH": 3.574,  # [mmol mol(Chl)^-1] initial concentration of NADH (Tanaka2021)
-            "ATP": 172.057,  # [mmol mol(Chl)^-1] initial concentration of ATP (Doello2018)
-            "PG": 0.894,  # [mmol mol(Chl)^-1] initial concentration of (2-phospho) glycolate (Huege2011)
-            "succinate": 2.000,  # [mmol mol(Chl)^-1] initial concentration of succinate (guess)
-            "fumarate": 2.000,  # [mmol mol(Chl)^-1] initial concentration of fumarate (guess)
-            "3PGA": 2.000e03,  # [mmol mol(Chl)^-1] initial concentration of 3-phospho glycerate (including all other sugars) (guess)
-            "CBBa": 0.000e00,  # [unitless] fraction of Fd-activated, lumped enzymes of the CBB (guess)
-            "Hi": 0.217,  # [mmol mol(Chl)^-1] initial concentration of lumenal protons in 10^4 uE cm^-1 s^-1 light (Belkin1987)
-            "Ho": 6.932e-03,  # [mmol mol(Chl)^-1] initial concentration of cytoplasmic protons in 10^4 uE cm^-1 s^-1 light (Belkin1987)
-            "PQ_ox": 7.202,  # [mmol mol(Chl)^-1] concentration of oxidised, PHOTOACTIVE plastoquinone in 40 umol m^-2 s^-1 irradiation (Khorobrykh2020)
-            "CO2": 3.103,  # [mmol mol(Chl)^-1] concentration of CO2 in the cell without activity of the CCM (estimated)
-            "OCP": 0.000e00,  # [unitless] initial activity of OCP (guess)
+            "PSII": Variable(
+                0.415, unit=_c
+            ),  # [mmol mol(Chl)^-1] initial concentration of unquenched PSII (guessed from ca. 50% reduced plastoquinone) (guess)
+            "O2": Variable(
+                55.402, unit=_c
+            ),  # [mmol mol(Chl)^-1] concentration of oxygen in the cell (Kihara2014)
+            "PC_ox": Variable(
+                0.157, unit=_c
+            ),  # [mmol mol(Chl)^-1] initial concentration of oxidised plastocyanin (aerobic) (Schreiber2017)
+            "Fd_ox": Variable(
+                3.237, unit=_c
+            ),  # [mmol mol(Chl)^-1] initial concentration of oxidised ferredoxin (aerobic) (Schreiber2017)
+            "NADPH": Variable(
+                20.104, unit=_c
+            ),  # [mmol mol(Chl)^-1] initial concentration of NADPH (Cooley2001)
+            "NADH": Variable(
+                3.574, unit=_c
+            ),  # [mmol mol(Chl)^-1] initial concentration of NADH (Tanaka2021)
+            "ATP": Variable(
+                172.057, unit=_c
+            ),  # [mmol mol(Chl)^-1] initial concentration of ATP (Doello2018)
+            "PG": Variable(
+                0.894, unit=_c
+            ),  # [mmol mol(Chl)^-1] initial concentration of (2-phospho) glycolate (Huege2011)
+            "succinate": Variable(
+                2.000, unit=_c
+            ),  # [mmol mol(Chl)^-1] initial concentration of succinate (guess)
+            "fumarate": Variable(
+                2.000, unit=_c
+            ),  # [mmol mol(Chl)^-1] initial concentration of fumarate (guess)
+            "3PGA": Variable(
+                2.000e03, unit=_c
+            ),  # [mmol mol(Chl)^-1] initial concentration of 3-phospho glycerate (including all other sugars) (guess)
+            "CBBa": Variable(
+                0.000e00, unit=dimensionless
+            ),  # [unitless] fraction of Fd-activated, lumped enzymes of the CBB (guess)
+            "Hi": Variable(
+                0.217, unit=_c
+            ),  # [mmol mol(Chl)^-1] initial concentration of lumenal protons in 10^4 uE cm^-1 s^-1 light (Belkin1987)
+            "Ho": Variable(
+                6.932e-03, unit=_c
+            ),  # [mmol mol(Chl)^-1] initial concentration of cytoplasmic protons in 10^4 uE cm^-1 s^-1 light (Belkin1987)
+            "PQ_ox": Variable(
+                7.202, unit=_c
+            ),  # [mmol mol(Chl)^-1] concentration of oxidised, PHOTOACTIVE plastoquinone in 40 umol m^-2 s^-1 irradiation (Khorobrykh2020)
+            "CO2": Variable(
+                3.103, unit=_c
+            ),  # [mmol mol(Chl)^-1] concentration of CO2 in the cell without activity of the CCM (estimated)
+            "OCP": Variable(
+                0.000e00, unit=dimensionless
+            ),  # [unitless] initial activity of OCP (guess)
         }
     )
     m.add_parameters(parameters)
