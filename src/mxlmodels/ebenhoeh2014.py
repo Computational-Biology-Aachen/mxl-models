@@ -24,6 +24,24 @@ import math
 import numpy as np
 from mxlpy import Derived, Model
 from mxlpy.surrogates import qss
+from mxlpy.units import (
+    dimensionless,
+    joule,
+    kelvin,
+    kilo,
+    mmol_mol_chl,
+    mol,
+    second,
+    volt,
+)
+
+_mmol_mol_chl = mmol_mol_chl
+_per_s = 1 / second
+_per_mmol_mol_chl_s = 1 / (mmol_mol_chl * second)
+_per_mmol2_mol_chl2_s = 1 / (mmol_mol_chl**2 * second)
+_kj_mol = joule * kilo / mol
+_kj_mol_v = _kj_mol / volt
+_kj_mol_k = _kj_mol / kelvin
 
 
 def _moiety_1(
@@ -241,7 +259,11 @@ def _b6f(
     keq_b6f: float,
     k_cytb6f: float,
 ) -> float:
-    r"""Cytochrome b6f rate: reversible mass action clamped to -kCytb6f to avoid runaway reverse flux."""
+    r"""Cytochrome b6f rate: reversible mass action clamped to -kCytb6f to avoid runaway reverse flux.
+
+    The clamp is dimensionally inconsistent with the rate, as kcat_b6f has the unit
+    of a third-order rate constant.
+    """
     return max(
         k_cytb6f * (pq_red * pc_ox**2 - pq_ox * pc_red**2 / keq_b6f),
         -k_cytb6f,
@@ -294,11 +316,11 @@ def _rate_ps1(a: float, ps2cs: float, ppfd: float) -> float:
 
 def _rate_leak(
     protons_lumen: float,
-    ph_stroma: float,
+    protons_stroma: float,
     k_leak: float,
 ) -> float:
     r"""Passive proton leak across the thylakoid membrane, proportional to the proton gradient."""
-    return k_leak * (protons_lumen - _protons_stroma(ph_stroma))
+    return k_leak * (protons_lumen - protons_stroma)
 
 
 def _rate_state_transition_ps1_ps2(
@@ -437,76 +459,81 @@ def get_ebenhoeh2014() -> Model:
     """
     m: Model = Model()
     # Dynamic variables (initial values from the original main.ipynb)
-    m.add_variable("Plastoquinone (oxidised)", initial_value=17.5)
-    m.add_variable("Plastocyanine (oxidised)", initial_value=0.0202)
-    m.add_variable("Ferredoxine (oxidised)", initial_value=5.0)
-    m.add_variable("ATP", initial_value=0.0)
-    m.add_variable("NADPH", initial_value=0.0)
-    m.add_variable("protons_lumen", initial_value=4000.0 * 10 ** (-7.2))
-    m.add_variable("Light-harvesting complex", initial_value=0.9)
+    m.add_variable("Plastoquinone (oxidised)", initial_value=17.5, unit=_mmol_mol_chl)
+    m.add_variable("Plastocyanine (oxidised)", initial_value=0.0202, unit=_mmol_mol_chl)
+    m.add_variable("Ferredoxine (oxidised)", initial_value=5.0, unit=_mmol_mol_chl)
+    m.add_variable("ATP", initial_value=0.0, unit=_mmol_mol_chl)
+    m.add_variable("NADPH", initial_value=0.0, unit=_mmol_mol_chl)
+    m.add_variable(
+        "protons_lumen", initial_value=4000.0 * 10 ** (-7.2), unit=_mmol_mol_chl
+    )
+    m.add_variable("Light-harvesting complex", initial_value=0.9, unit=dimensionless)
     # Stroma pH (constant) and light
-    m = m.add_parameter("pH", value=7.8)
-    m = m.add_parameter("PPFD", value=100.0)
+    m = m.add_parameter("pH", value=7.8, unit=dimensionless)
+    # Used as excitation rate per reaction centre; the conversion factor from
+    # umol m^-2 s^-1 is unknown (Matuszynska 2019)
+    m = m.add_parameter("PPFD", value=100.0, unit=_per_s)
     # Total pool sizes
-    m.add_parameter("PSII_total", value=2.5)
-    m.add_parameter("PSI_total", value=2.5)
-    m.add_parameter("PQ_tot", value=17.5)
-    m.add_parameter("PC_tot", value=4.0)
-    m.add_parameter("Fd*", value=5.0)
-    m.add_parameter("NADP*", value=25.0)
-    m.add_parameter("A*P", value=60.0)
-    m.add_parameter("LHC_tot", value=1.0)
+    m.add_parameter("PSII_total", value=2.5, unit=_mmol_mol_chl)
+    m.add_parameter("PSI_total", value=2.5, unit=_mmol_mol_chl)
+    m.add_parameter("PQ_tot", value=17.5, unit=_mmol_mol_chl)
+    m.add_parameter("PC_tot", value=4.0, unit=_mmol_mol_chl)
+    m.add_parameter("Fd*", value=5.0, unit=_mmol_mol_chl)
+    m.add_parameter("NADP*", value=25.0, unit=_mmol_mol_chl)
+    m.add_parameter("A*P", value=60.0, unit=_mmol_mol_chl)
+    m.add_parameter("LHC_tot", value=1.0, unit=dimensionless)
     # Physical constants
-    m.add_parameter("F", value=96.485)
-    m.add_parameter("R", value=0.0083)
-    m.add_parameter("T", value=298.0)
-    m.add_parameter("bH", value=100.0)
+    m.add_parameter("F", value=96.485, unit=_kj_mol_v)
+    m.add_parameter("R", value=0.0083, unit=_kj_mol_k)
+    m.add_parameter("T", value=298.0, unit=kelvin)
+    m.add_parameter("bH", value=100.0, unit=dimensionless)
     # Standard redox potentials (V, at pH 0)
-    m.add_parameter("E^0_QA", value=-0.14)
-    m.add_parameter("E^0_PQ", value=0.354)
-    m.add_parameter("E^0_PC", value=0.38)
-    m.add_parameter("E^0_P700", value=0.48)
-    m.add_parameter("E^0_FA", value=-0.55)
-    m.add_parameter("E^0_Fd", value=-0.43)
-    m.add_parameter("E^0_NADP", value=-0.113)
+    m.add_parameter("E^0_QA", value=-0.14, unit=volt)
+    m.add_parameter("E^0_PQ", value=0.354, unit=volt)
+    m.add_parameter("E^0_PC", value=0.38, unit=volt)
+    m.add_parameter("E^0_P700", value=0.48, unit=volt)
+    m.add_parameter("E^0_FA", value=-0.55, unit=volt)
+    m.add_parameter("E^0_Fd", value=-0.43, unit=volt)
+    m.add_parameter("E^0_NADP", value=-0.113, unit=volt)
     # PSII rate constants
-    m.add_parameter("kH0", value=500000000.0)
-    m.add_parameter("kH", value=0.0)
-    m.add_parameter("kF", value=62500000.0)
-    m.add_parameter("k2", value=1200000000.0)
-    m.add_parameter("Q", value=0.0)
+    m.add_parameter("kH0", value=500000000.0, unit=_per_s)
+    m.add_parameter("kH", value=0.0, unit=_per_s)
+    m.add_parameter("kF", value=62500000.0, unit=_per_s)
+    m.add_parameter("k2", value=1200000000.0, unit=_per_s)
+    m.add_parameter("Q", value=0.0, unit=dimensionless)
     # Cross-section partitioning
-    m.add_parameter("staticAntI", value=0.2)
-    m.add_parameter("staticAntII", value=0.0)
+    m.add_parameter("staticAntI", value=0.2, unit=dimensionless)
+    m.add_parameter("staticAntII", value=0.0, unit=dimensionless)
     # ATP synthase / consumption
-    m.add_parameter("kf_atp_synthase", value=20.0)
-    m.add_parameter("kf_atp_consumption", value=10.0)
-    m.add_parameter("Pi_mol", value=0.01)
-    m.add_parameter("DeltaG0_ATP", value=30.6)
-    m.add_parameter("HPR", value=14.0 / 3.0)
-    m.add_parameter("kf_nadph_consumption", value=15.0)
+    m.add_parameter("kf_atp_synthase", value=20.0, unit=_per_s)
+    m.add_parameter("kf_atp_consumption", value=10.0, unit=_per_s)
+    # Activity relative to the 1 M standard state, so keq_atp_synthase is dimensionless
+    m.add_parameter("Pi_mol", value=0.01, unit=dimensionless)
+    m.add_parameter("DeltaG0_ATP", value=30.6, unit=_kj_mol)
+    m.add_parameter("HPR", value=14.0 / 3.0, unit=dimensionless)
+    m.add_parameter("kf_nadph_consumption", value=15.0, unit=_per_s)
     # Proton leak / membrane
     m = m.add_parameter(
-        "kf_proton_leak", value=0.01
+        "kf_proton_leak", value=0.01, unit=_per_s
     )  # this value is not specified in the paper
     # Electron transfer rate constants
-    m.add_parameter("kPQred", value=250.0)
-    m.add_parameter("kcat_b6f", value=2.5)
-    m.add_parameter("kPTOX", value=0.01)
-    m.add_parameter("kPCox", value=2500.0)
-    m.add_parameter("kFdred", value=250000.0)
-    m.add_parameter("kcat_fnr", value=500.0)
-    m.add_parameter("E0_fnr", value=3.0)
-    m.add_parameter("km_fnr_Ferredoxine (reduced)", value=1.56)
-    m.add_parameter("km_fnr_NADP", value=0.22)
-    m.add_parameter("kf_cyclic_electron_flow", value=1.0)
-    m.add_parameter("O2 (dissolved)_lumen", value=8.0)
-    m.add_parameter("kf_ndh", value=0.004)
+    m.add_parameter("kPQred", value=250.0, unit=_per_mmol_mol_chl_s)
+    m.add_parameter("kcat_b6f", value=2.5, unit=_per_mmol2_mol_chl2_s)
+    m.add_parameter("kPTOX", value=0.01, unit=_per_mmol_mol_chl_s)
+    m.add_parameter("kPCox", value=2500.0, unit=_per_mmol_mol_chl_s)
+    m.add_parameter("kFdred", value=250000.0, unit=_per_mmol_mol_chl_s)
+    m.add_parameter("kcat_fnr", value=500.0, unit=_per_s)
+    m.add_parameter("E0_fnr", value=3.0, unit=_mmol_mol_chl)
+    m.add_parameter("km_fnr_Ferredoxine (reduced)", value=1.56, unit=_mmol_mol_chl)
+    m.add_parameter("km_fnr_NADP", value=0.22, unit=_mmol_mol_chl)
+    m.add_parameter("kf_cyclic_electron_flow", value=1.0, unit=_per_mmol2_mol_chl2_s)
+    m.add_parameter("O2 (dissolved)_lumen", value=8.0, unit=_mmol_mol_chl)
+    m.add_parameter("kf_ndh", value=0.004, unit=_per_s)
     # State transitions
-    m.add_parameter("kStt7", value=0.0035)
-    m.add_parameter("kPph1", value=0.0013)
-    m.add_parameter("km_lhc_state_transition_12", value=0.2)
-    m.add_parameter("n_ST", value=2.0)
+    m.add_parameter("kStt7", value=0.0035, unit=_per_s)
+    m.add_parameter("kPph1", value=0.0013, unit=_per_s)
+    m.add_parameter("km_lhc_state_transition_12", value=0.2, unit=dimensionless)
+    m.add_parameter("n_ST", value=2.0, unit=dimensionless)
     # Derived quantities
     m.add_derived(
         "RT",
@@ -522,6 +549,13 @@ def get_ebenhoeh2014() -> Model:
         "pH_lumen",
         fn=_ph_lumen,
         args=["protons_lumen"],
+    )
+    # pH -> concentration conversion hides the unit in a constant, so set it explicitly
+    m.add_derived(
+        "protons_stroma_chl",
+        fn=_protons_stroma,
+        args=["pH"],
+        unit=_mmol_mol_chl,
     )
     m.add_derived(
         "Plastoquinone (reduced)",
@@ -692,7 +726,7 @@ def get_ebenhoeh2014() -> Model:
     m.add_reaction(
         "proton_leak",
         fn=_rate_leak,
-        args=["protons_lumen", "pH", "kf_proton_leak"],
+        args=["protons_lumen", "protons_stroma_chl", "kf_proton_leak"],
         stoichiometry={"protons_lumen": Derived(fn=_neg_one_div_by, args=["bH"])},
     )
     m.add_reaction(
@@ -754,6 +788,7 @@ def get_ebenhoeh2014() -> Model:
                 "kH0",
             ],
             outputs=["B0", "B1", "B2", "B3"],
+            units=dict.fromkeys(["B0", "B1", "B2", "B3"], _mmol_mol_chl),
         ),
     )
     m.add_readout(
