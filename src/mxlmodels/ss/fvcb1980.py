@@ -1,17 +1,17 @@
-"""Farquhar, von Caemmerer & Berry (1980) C3 photosynthesis model.
+r"""Farquhar, von Caemmerer & Berry (1980) C3 photosynthesis model.
 
 Steady-state leaf CO2 assimilation as the minimum of Rubisco-limited and
-electron-transport-limited rates. `model_version="2025"` switches to the
-modern min-W formulation with triose-phosphate utilisation limitation.
+electron-transport-limited rates. `model_version="2025"` switches to the modern
+min-W formulation with triose-phosphate utilisation limitation.
 
-|             |                                                                                       |
-| ----------- | ------------------------------------------------------------------------------------- |
-| doi         | 10.1007/BF00386231                                                                    |
-| main author | Graham D. Farquhar                                                                    |
-| paper title | A biochemical model of photosynthetic CO2 assimilation in leaves of C3 species        |
-| published   | June 1980                                                                             |
-| journal     | Planta                                                                                |
-| organism    | C3 leaf                                                                               |
+|             |                                                                                |
+| ----------- | ------------------------------------------------------------------------------ |
+| doi         | 10.1007/BF00386231                                                             |
+| main author | Graham D. Farquhar                                                             |
+| paper title | A biochemical model of photosynthetic CO2 assimilation in leaves of C3 species |
+| published   | June 1980                                                                      |
+| journal     | Planta                                                                         |
+| organism    | C3 leaf                                                                        |
 """
 
 import math
@@ -21,7 +21,7 @@ T_REF = 298.0  # reference temperature (K) of the 298 K parameter values
 
 
 def min_solve(a: float, b: float, c: float) -> float:
-    """Minimum of quadratic solutions of a * x**2 + b * x + c"""
+    r"""Minimum of quadratic solutions of a * x\*\*2 + b * x + c"""
     discriminant = max(0.0, (b**2) - (4 * a * c))
     root1 = (-b + math.sqrt(discriminant)) / (2 * a)
     root2 = (-b - math.sqrt(discriminant)) / (2 * a)
@@ -29,14 +29,14 @@ def min_solve(a: float, b: float, c: float) -> float:
 
 
 def arrhenius(param_298: float, Ea: float, T: float) -> float:
-    """Scale a parameter given at T_REF to temperature T (Arrhenius)."""
+    r"""Scale a parameter given at T_REF to temperature T (Arrhenius)."""
     return param_298 * math.exp(Ea * (T - T_REF) / (T_REF * 8.314 * T))
 
 
 def jmax_tempscaling(
     jmax_298: float, Ea_jmax: float, S: float, H: float, T: float
 ) -> float:
-    """Scale Jmax from T_REF to temperature T with high-temperature deactivation."""
+    r"""Scale Jmax from T_REF to temperature T with high-temperature deactivation."""
     R = 8.314
     den_298 = 1 + math.exp((S * T_REF - H) / (R * T_REF))
     den_T = 1 + math.exp((S * T - H) / (R * T))
@@ -63,7 +63,22 @@ def get_fvcb(
     model_version: Literal["1980", "2025"] = "1980",
     use_2025_default: bool = False,
 ) -> dict[str, float]:
-    """Net assimilation and its limiting rates at intercellular pCO2 `pco2`."""
+    r"""Net assimilation and its limiting rates at intercellular pCO2 `pco2`.
+
+    Units:
+
+    - pco2: intercellular CO2 partial pressure, ubar
+    - po2: O2 partial pressure, mbar
+    - T: leaf temperature, K
+    - I: absorbed photon flux density, umol (quanta) m^-2 s^-1
+    - vc_max, j_max, tp, r_light: rates at 298 K, umol m^-2 s^-1
+    - km_co2: ubar, km_o2: mbar (at 298 K)
+    - kc: Rubisco carboxylation turnover at 298 K, s^-1
+    - alpha_old, f: dimensionless
+    - z: umol m^-2 s^-1 (assumed, as it is added to j_max)
+    - activation energies of the temperature scaling: J mol^-1
+    - returned rates: umol m^-2 s^-1, gammastar: ubar
+    """
     if use_2025_default:
         # Override parameters with 2025 defaults
         vc_max = 100.0

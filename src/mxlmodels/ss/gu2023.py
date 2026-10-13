@@ -1,4 +1,4 @@
-"""Gu et al. (2023) steady-state redox model of linear electron transport.
+r"""Gu et al. (2023) steady-state redox model of linear electron transport.
 
 Links chlorophyll-fluorescence-derived PSII openness (q) to the PSII electron
 transport rate and the redox state of the plastoquinone pool and cytochrome
@@ -70,7 +70,18 @@ def get_gu2023(
     T0: float = 298.15,
     E_T: float = 0.0,
 ) -> dict[str, float]:
-    """PSII electron transport rate and PQ/Cyt b6f redox fractions."""
+    r"""PSII electron transport rate and PQ/Cyt b6f redox fractions.
+
+    Units:
+
+    - q: fraction of open PSII reaction centres, dimensionless
+    - U: umol m^-2 s^-1 (assumed, J_PSII is proportional to it)
+    - R1, R2, q_r, a_q, c_s, alpha: dimensionless
+    - b_s: (umol m^-2 s^-1)^-1
+    - PAR: umol m^-2 s^-1
+    - T, T0, E_T: K
+    - returned J_PSII: umol m^-2 s^-1, redox fractions and factors dimensionless
+    """
     ft = _derived_ft(E_T, T, T0)
     fq = _derived_fq(q, a_q)
     fs = _derived_fs(alpha, PAR, b_s, c_s)

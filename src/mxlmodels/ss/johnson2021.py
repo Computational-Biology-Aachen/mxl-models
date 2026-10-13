@@ -1,9 +1,9 @@
-"""Johnson 2021 model.
+r"""Johnson 2021 model.
 
 |             |                                                                                                                        |
 | ----------- | ---------------------------------------------------------------------------------------------------------------------- |
 | doi         | 10.1007/s11120-021-00840-4                                                                                             |
-| main author | J. E. Johnson                                                                                                       |
+| main author | J. E. Johnson                                                                                                          |
 | paper title | A generalised dynamic model of leaf-level C3 photosynthesis combining light and dark reactions with stomatal behaviour |
 | published   | January 2019                                                                                                           |
 | journal     | Photosynthesis Research                                                                                                |
@@ -58,7 +58,7 @@ def solve_xcs(
     kq: float,
     phi1P_max: float,
 ) -> Array:
-    """Solve for the PSII absorption cross-section (`alpha_opt="dynamic"`)."""
+    r"""Solve for the PSII absorption cross-section (`alpha_opt="dynamic"`)."""
     Q = np.array(Q, dtype=float)
 
     num_sqrt = (Kd + Kf + Ku2) * (
@@ -168,10 +168,21 @@ def get_johnson2021(
     nc: float = 1.00,
     case_id: int = 0,
 ) -> dict[str, Array | float]:
-    """Steady-state fluxes, yields and PAM indices over the PAR values.
+    r"""Steady-state fluxes, yields and PAM indices over the PAR values.
 
     `case_id` selects the regulation scenario: `CASE_B6F_ONLY`, `CASE_NPQ_ONLY`,
     `CASE_REGULATORY_CEF`, or anything else for NPQ and Cyt b6f together.
+
+    Units:
+
+    - PAR: umol m^-2 s^-1
+    - Temp: degrees Celsius
+    - CO2: umol mol^-1, O2: mmol mol^-1
+    - Abs, beta, theta1, eps1, eps2: dimensionless
+    - CB6F, RUB: mol m^-2
+    - Rds: relative to the Rubisco capacity, dimensionless (assumed)
+    - Ku2: s^-1
+    - nl, nc: ATP per electron in linear / cyclic electron flow, dimensionless
     """
     # Ensure arrays
     PAR = np.atleast_1d(np.array(PAR, dtype=float))
@@ -181,7 +192,7 @@ def get_johnson2021(
 
     # Broadcast to common shape
     Q = PAR / 1e6
-    Tc = Temp_arr / 1e6
+    Tc = Temp_arr / 1e6  # noqa: F841
     C = CO2_arr / 1e6
     O = O2_arr / 1e3
 
