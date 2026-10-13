@@ -15,6 +15,9 @@ Ssynthetic genetic oscillator with three cyclically repressing genes.
 """
 
 from mxlpy import Model
+from mxlpy.units import dimensionless
+
+# Non-dimensionalised model: all quantities, including time, are dimensionless
 
 
 def _transcription_laci(
@@ -74,16 +77,16 @@ def get_elowitz2000_repressilator() -> Model:
     r"""Build the Repressilator model: synthetic three-gene ring oscillator where each repressor cyclically inhibits the next."""
     return (
         Model()
-        .add_variable("MlacI", initial_value=0.0)
-        .add_variable("MtetR", initial_value=0.0)
-        .add_variable("McI", initial_value=0.0)
-        .add_variable("PlacI", initial_value=2.0)
-        .add_variable("PtetR", initial_value=1.0)
-        .add_variable("PcI", initial_value=3.0)
-        .add_parameter("Alpha", value=216.0)
-        .add_parameter("Alpha0", value=0.216)
-        .add_parameter("Beta", value=5.0)
-        .add_parameter("N", value=2.0)
+        .add_variable("MlacI", initial_value=0.0, unit=dimensionless)
+        .add_variable("MtetR", initial_value=0.0, unit=dimensionless)
+        .add_variable("McI", initial_value=0.0, unit=dimensionless)
+        .add_variable("PlacI", initial_value=2.0, unit=dimensionless)
+        .add_variable("PtetR", initial_value=1.0, unit=dimensionless)
+        .add_variable("PcI", initial_value=3.0, unit=dimensionless)
+        .add_parameter("Alpha", value=216.0, unit=dimensionless)
+        .add_parameter("Alpha0", value=0.216, unit=dimensionless)
+        .add_parameter("Beta", value=5.0, unit=dimensionless)
+        .add_parameter("N", value=2.0, unit=dimensionless)
         .add_reaction(
             "transcription_laci",
             fn=_transcription_laci,
