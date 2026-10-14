@@ -1792,7 +1792,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "mxlpy", specifier = ">=0.61.0" },
+    { name = "mxlpy", specifier = ">=0.62.0" },
     { name = "nbdime", specifier = ">=4.0.4" },
 ]
 
@@ -1817,7 +1817,7 @@ dev = [
 
 [[package]]
 name = "mxlpy"
-version = "0.61.0"
+version = "0.62.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "dill" },
@@ -1847,9 +1847,9 @@ dependencies = [
     { name = "typing-extensions" },
     { name = "wadler-lindig" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/29/54/53c220240a0e9a2af470c0c6edc93f9e138327da069bc9a9b298c38d35db/mxlpy-0.61.0.tar.gz", hash = "sha256:d6ebd7503e09edb82488d7c834be5773a0898337d800fefb4f56409d067df41a", size = 5488321, upload-time = "2026-10-13T05:54:44.889Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/9f/f5/af8e0f9a7e27832be5fca993c977a1674448bb55298c4b01e0c5fdc87271/mxlpy-0.62.0.tar.gz", hash = "sha256:5123ad03667f07b40effa6832f84f558e52027bd3b6e5157aec40fada2ef5352", size = 5504670, upload-time = "2026-10-14T08:12:12.27Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/32/48/89792d3d120d2dcfcd2451a1e810798cb855311a3ca7fd36d97ad4b87771/mxlpy-0.61.0-py3-none-any.whl", hash = "sha256:4b029068e6bcc216fe0fb7b898f5ab0e3ffab4129823129bc420b61b927c1b32", size = 315022, upload-time = "2026-10-13T05:54:42.892Z" },
+    { url = "https://files.pythonhosted.org/packages/17/e9/b7d5817d5fa6c0b8413488b4a87e21c75a7bdd4df7570c64ea8c06943fa6/mxlpy-0.62.0-py3-none-any.whl", hash = "sha256:75fb479f29c63ecd7426a1068cd792bb70c2b35f89d3b4df25ecbcc0e9a1544c", size = 329740, upload-time = "2026-10-14T08:12:10.661Z" },
 ]
 
 [[package]]
