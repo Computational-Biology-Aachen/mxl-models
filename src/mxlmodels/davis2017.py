@@ -28,10 +28,16 @@ xanthophyll cycle (violaxanthin \<-> zeaxanthin).
 
 import numpy as np
 from mxlpy import Derived, Model, Parameter, Variable
-from mxlpy.units import dimensionless, liter, mol, per_second, ppfd, volt, joule, kilo, second
-from sympy.physics import units as u
-from sympy.physics.units import Dimension
-
+from mxlpy.units import (
+    dimensionless,
+    joule,
+    kilo,
+    liter,
+    mol,
+    per_second,
+    second,
+    volt,
+)
 
 # Pools are relative to one reaction centre (dimensionless), K+ and protons are molar
 _molar = mol / liter
@@ -276,7 +282,7 @@ def get_davis2017() -> Model:
                 0, unit=_molar**-2 * per_second
             ),  # v_KEA is M/s, so 1/(M s)
             "P_K": Parameter(
-                6000, unit=per_second / (volt* _molar)
+                6000, unit=per_second / (volt * _molar)
             ),  # SI: ions s^-1 V^-1 PSII^-1; dK/dt is M/s, so 1/(V s)
             "lumen_protons_per_turnover": Parameter(
                 1.4e-05, unit=_molar
