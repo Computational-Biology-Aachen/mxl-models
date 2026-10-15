@@ -28,12 +28,18 @@ xanthophyll cycle (violaxanthin \<-> zeaxanthin).
 
 import numpy as np
 from mxlpy import Derived, Model, Parameter, Variable
-from mxlpy.units import dimensionless, liter, mol, per_second, ppfd, volt
+from mxlpy.units import dimensionless, liter, mol, per_second, ppfd, volt, joule, kilo, second
 from sympy.physics import units as u
+from sympy.physics.units import Dimension
+
 
 # Pools are relative to one reaction centre (dimensionless), K+ and protons are molar
 _molar = mol / liter
-_kj_mol = u.kilo * u.joule / u.mol
+_per_molar = 1 / _molar
+_per_molar2_s = 1 / (_molar**2 * second)
+_per_volt_s = 1 / (volt * second)
+_per_volt_molar_s = 1 / (volt * _molar * second)
+_kj_mol = joule * kilo / mol
 
 
 def _neg_div(x: float, y: float) -> float:
@@ -241,7 +247,7 @@ def get_davis2017() -> Model:
 
     m.add_parameters(
         {
-            "PPFD": Parameter(0, unit=ppfd),  # not in SI
+            "PPFD": Parameter(0, unit=per_second),  # not in SI
             "k_recomb": Parameter(0.33, unit=per_second),  # SI
             "phi_triplet": Parameter(0.45, unit=dimensionless),  # SI: fraction
             "phi_1O2": Parameter(1, unit=dimensionless),  # SI: fraction
@@ -267,10 +273,10 @@ def get_davis2017() -> Model:
             "k_FdtoNADP": Parameter(1000, unit=per_second),  # not in SI
             "K_st": Parameter(0.04, unit=_molar),  # SI: M
             "k_KEA3": Parameter(
-                0, unit=_molar**-1 * per_second
+                0, unit=_molar**-2 * per_second
             ),  # v_KEA is M/s, so 1/(M s)
             "P_K": Parameter(
-                6000, unit=per_second / volt
+                6000, unit=per_second / (volt* _molar)
             ),  # SI: ions s^-1 V^-1 PSII^-1; dK/dt is M/s, so 1/(V s)
             "lumen_protons_per_turnover": Parameter(
                 1.4e-05, unit=_molar
