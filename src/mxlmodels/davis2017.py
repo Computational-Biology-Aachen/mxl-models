@@ -28,63 +28,12 @@ xanthophyll cycle (violaxanthin \<-> zeaxanthin).
 
 import numpy as np
 from mxlpy import Derived, Model, Parameter, Variable
-from mxlpy.units import dimensionless, joule, kilo, liter, mol, second, volt, per_second, ppfd
-import sympy
+from mxlpy.units import dimensionless, liter, mol, per_second, ppfd, volt
 from sympy.physics import units as u
-from sympy.physics.units import Dimension, Quantity
-from sympy.physics.units.definitions.dimension_definitions import (
-    amount_of_substance,
-    length,
-)
-from sympy.physics.units.systems.si import SI
-
-
-def _unit(
-    name: str,
-    abbrev: str | None = None,
-    dimension: Dimension | sympy.Expr = Dimension(1),
-    scale: sympy.Expr = sympy.S.One,
-) -> Quantity:
-    """Create a custom sympy unit and register it with the SI unit system."""
-    q = Quantity(name, abbrev=abbrev or name)
-    SI.set_quantity_dimension(q, dimension)
-    SI.set_quantity_scale_factor(q, scale)
-    return q
-
-
-# --- physical units ---------------------------------------------------------
-dimensionless = sympy.Integer(1)
-_molar = _unit("molar", "M", amount_of_substance / length**3, u.mol / u.liter)
-_kj_mol = u.kilo * u.joule / u.mol
-
-# --- counting units (dimensionless, scale 1) --------------------------------
-# The model normalises every pool to the "standard PSII content".
-PSII = _unit("PSII")
-PSI = _unit("PSI")
-b6f = _unit("b6f")
-ATPsynthase = _unit("ATPsynthase")
-QA = _unit("QA")
-PQ = _unit("PQ")
-PQH2 = _unit("PQH2")
-PC = _unit("PC")
-P700 = _unit("P700")
-Fd = _unit("Fd")
-NADP = _unit("NADP")
-NADPH = _unit("NADPH")
-ATP = _unit("ATP")
-electron = _unit("electron", "e")
-proton = _unit("proton", "H")
-charge = _unit("charge")
-singlet_O2 = _unit("singlet_O2", "1O2")
-pH_unit = _unit("pH_unit", "pH")
-
 
 # Pools are relative to one reaction centre (dimensionless), K+ and protons are molar
 _molar = mol / liter
-per_second = 1 / second
-_per_molar2_s = 1 / (_molar**2 * second)
-_per_volt_s = 1 / (volt * second)
-_per_volt_molar_s = 1 / (volt * _molar * second)
+_kj_mol = u.kilo * u.joule / u.mol
 
 
 def _neg_div(x: float, y: float) -> float:
@@ -103,24 +52,12 @@ def _moiety_1(concentration: float, total: float) -> float:
     return total - concentration
 
 
-def _twice(x: float) -> float:
-    return x * 2
-
-
 def _div(x: float, y: float) -> float:
     return x / y
 
 
 def _neg(x: float) -> float:
     return -x
-
-
-def _neg_point_one_val(x: float) -> float:
-    return -0.1 * x
-
-
-def _neg_point_two_val(x: float) -> float:
-    return -0.2 * x
 
 
 def _neg_proportional(x: float, y: float) -> float:
@@ -302,66 +239,90 @@ def get_davis2017() -> Model:
     """
     m = Model()
 
-    m.add_parameters( 
+    m.add_parameters(
         {
-            "PPFD": Parameter(0, unit=per_second),  # not in SI
+            "PPFD": Parameter(0, unit=ppfd),  # not in SI
             "k_recomb": Parameter(0.33, unit=per_second),  # SI
             "phi_triplet": Parameter(0.45, unit=dimensionless),  # SI: fraction
             "phi_1O2": Parameter(1, unit=dimensionless),  # SI: fraction
-            "sigma0_II": Parameter(1, unit=dimensionless),  # SI: ratio (PSII_antenna_size)
-            "c_b6f": Parameter(1, unit=b6f / PSII),  # SI: complex per standard PSII content
-            "pKa_reg": Parameter(6.5, unit=pH_unit),  
-            "Em_PC_pH7": Parameter(0.37, unit=volt), 
-            "Em_PQH2_pH7": Parameter(0.11, unit=volt), 
-            "Vmax_b6f": Parameter(500, unit=electron / (b6f * u.s)), 
-            "pKa_PsbS": Parameter(6.4, unit=pH_unit),  
-            "NPQ_max": Parameter(5, unit=dimensionless),  
-            "pH_stroma": Parameter(7.8, unit=pH_unit),  # SI: pH units
+            "sigma0_II": Parameter(
+                1, unit=dimensionless
+            ),  # SI: ratio (PSII_antenna_size)
+            "c_b6f": Parameter(
+                1, unit=dimensionless
+            ),  # SI: b6f complex per standard PSII content
+            "pKa_reg": Parameter(6.5, unit=dimensionless),
+            "Em_PC_pH7": Parameter(0.37, unit=volt),
+            "Em_PQH2_pH7": Parameter(0.11, unit=volt),
+            "Vmax_b6f": Parameter(500, unit=per_second),
+            "pKa_PsbS": Parameter(6.4, unit=dimensionless),
+            "NPQ_max": Parameter(5, unit=dimensionless),
+            "pH_stroma": Parameter(7.8, unit=dimensionless),  # SI: pH units
             "PSI_antenna_size": Parameter(1, unit=dimensionless),  # SI: ratio
-            "k_QA": Parameter(1000, unit=per_second),  # SI: s^-1 (second-order QA- x PQ, per standard PSII)
+            "k_QA": Parameter(
+                1000, unit=per_second
+            ),  # SI: s^-1 (second-order QA- x PQ, per standard PSII)
             "Keq_QA": Parameter(200, unit=dimensionless),  # not in SI
-            "k_PCtoP700": Parameter(500, unit=per_second / PC),  # SI: PC^-1 s^-1
+            "k_PCtoP700": Parameter(500, unit=per_second),  # SI: PC^-1 s^-1
             "k_FdtoNADP": Parameter(1000, unit=per_second),  # not in SI
             "K_st": Parameter(0.04, unit=_molar),  # SI: M
-            "k_KEA3": Parameter(0, unit=_molar**-1 * per_second),# v_KEA is M/s, so 1/(M s)
-            "P_K": Parameter(6000, unit=per_second / volt),  # SI: ions s^-1 V^-1 PSII^-1; dK/dt is M/s, so 1/(V s)
-            "lumen_protons_per_turnover": Parameter(1.4e-05, unit=_molar * PSII / proton),  # SI text: M change per H+ per PSII
-            "n": Parameter(14 / 3, unit=proton / ATP),  # SI: H+ per ATP
+            "k_KEA3": Parameter(
+                0, unit=_molar**-1 * per_second
+            ),  # v_KEA is M/s, so 1/(M s)
+            "P_K": Parameter(
+                6000, unit=per_second / volt
+            ),  # SI: ions s^-1 V^-1 PSII^-1; dK/dt is M/s, so 1/(V s)
+            "lumen_protons_per_turnover": Parameter(
+                1.4e-05, unit=_molar
+            ),  # SI text: M change per H+ per PSII
+            "n": Parameter(14 / 3, unit=dimensionless),  # SI: H+ per ATP
             "DeltaGATP": Parameter(42, unit=_kj_mol),  # SI: kJ/mol
-            "Vmax_ATPsynth": Parameter(1000, unit=per_second / volt),  # SI :ATP s^-1 complex^-1
-            "b_H": Parameter(0.03, unit=_molar / pH_unit),  # SI: M/pH unit
-            "volt_per_charge": Parameter(0.033, unit=volt * PSII / charge),  # SI: V charge^-1 standard PSII content^-1
+            "Vmax_ATPsynth": Parameter(
+                1000, unit=per_second / volt
+            ),  # SI :ATP s^-1 complex^-1
+            "b_H": Parameter(0.03, unit=_molar),  # SI: M/pH unit
+            "volt_per_charge": Parameter(
+                0.033, unit=volt
+            ),  # SI: V charge^-1 standard PSII content^-1
             "k_EZ": Parameter(0.03, unit=per_second),  # (table value 0.01)
-            "nh_VDE": Parameter(4, unit=dimensionless), 
-            "pKa_VDE": Parameter(5.8, unit=pH_unit),  # SI: pH units
+            "nh_VDE": Parameter(4, unit=dimensionless),
+            "pKa_VDE": Parameter(5.8, unit=dimensionless),  # SI: pH units
             "Vmax_VDE": Parameter(1, unit=per_second),  # SI: s^-1 PSII^-1
-            "QA_total": Parameter(1, unit=QA / PSII),  # SI: relative to standard PSII
-            "PQ_tot": Parameter(6, unit=PQ / PSII),  # SI: relative to standard PSII
-            "P700_total": Parameter(1, unit=P700 / PSI),  # SI: relative to PSI
-            "PC_tot": Parameter(2, unit=PC / PSII),  # SI: relative to standard PSII
-            "Fd_tot": Parameter(1, unit=Fd / PSII),  # SI: relative to standard PSII
-            "NADP_tot": Parameter(1, unit=NADP / PSII),  # not in SI: same normalisation assumed
+            "QA_total": Parameter(
+                1, unit=dimensionless
+            ),  # SI: relative to standard PSII
+            "PQ_tot": Parameter(6, unit=dimensionless),  # SI: relative to standard PSII
+            "P700_total": Parameter(1, unit=dimensionless),  # SI: relative to PSI
+            "PC_tot": Parameter(2, unit=dimensionless),  # SI: relative to standard PSII
+            "Fd_tot": Parameter(1, unit=dimensionless),  # SI: relative to standard PSII
+            "NADP_tot": Parameter(
+                1, unit=dimensionless
+            ),  # not in SI: same normalisation assumed
             "Xanthophyll_tot": Parameter(1, unit=dimensionless),  # SI: relative units
             "k_CBB": Parameter(3000, unit=per_second),  # not in SI
         }
     )
 
-    m.add_variables(  
+    m.add_variables(
         {
-            "QA_red": Variable(0, unit=QA / PSII),  # SI: relative to standard PSII
-            "PQH_2": Variable(0, unit=PQH2 / PSII),  # SI: relative to standard PSII
-            "pH_lumen": Variable(7, unit=pH_unit),
-            "Dpsi": Variable(0.1, unit=volt),  
-            "K_lu": Variable(0.04, unit=_molar), 
-            "PC_ox": Variable(0, unit=PC / PSII),  # SI: relative to standard PSII
+            "QA_red": Variable(0, unit=dimensionless),  # SI: relative to standard PSII
+            "PQH_2": Variable(0, unit=dimensionless),  # SI: relative to standard PSII
+            "pH_lumen": Variable(7, unit=dimensionless),
+            "Dpsi": Variable(0.1, unit=volt),
+            "K_lu": Variable(0.04, unit=_molar),
+            "PC_ox": Variable(0, unit=dimensionless),  # SI: relative to standard PSII
             "Zx": Variable(0, unit=dimensionless),  # SI: relative units
             # "PsbS": Variable(0),
-            "singO2": Variable(0, unit=singlet_O2 / PSII),  # SI: 1O2 molecules per standard PSII
-            "P700_ox": Variable(0, unit=P700 / PSI),  # SI: relative to PSI
-            "Fd_red": Variable(0, unit=Fd / PSII),  # SI: relative to standard PSII
-            "NADPH_st": Variable(0, unit=NADPH / PSII),  # not in SI; same normalisation as NADP_tot
-            "LEF": Variable(0, unit=electron / PSII),  # not in SI; cumulative electrons
-            "ATP_made": Variable(0, unit=ATP / PSII), 
+            "singO2": Variable(
+                0, unit=dimensionless
+            ),  # SI: 1O2 molecules per standard PSII
+            "P700_ox": Variable(0, unit=dimensionless),  # SI: relative to PSI
+            "Fd_red": Variable(0, unit=dimensionless),  # SI: relative to standard PSII
+            "NADPH_st": Variable(
+                0, unit=dimensionless
+            ),  # not in SI; same normalisation as NADP_tot
+            "LEF": Variable(0, unit=dimensionless),  # not in SI; cumulative electrons
+            "ATP_made": Variable(0, unit=dimensionless),
         }
     )
 
