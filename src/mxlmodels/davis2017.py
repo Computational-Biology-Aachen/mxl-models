@@ -35,16 +35,11 @@ from mxlpy.units import (
     liter,
     mol,
     per_second,
-    second,
     volt,
 )
 
 # Pools are relative to one reaction centre (dimensionless), K+ and protons are molar
 _molar = mol / liter
-_per_molar = 1 / _molar
-_per_molar2_s = 1 / (_molar**2 * second)
-_per_volt_s = 1 / (volt * second)
-_per_volt_molar_s = 1 / (volt * _molar * second)
 _kj_mol = joule * kilo / mol
 
 
@@ -280,10 +275,10 @@ def get_davis2017() -> Model:
             "K_st": Parameter(0.04, unit=_molar),  # SI: M
             "k_KEA3": Parameter(
                 0, unit=_molar**-2 * per_second
-            ),  # v_KEA is M/s, so 1/(M s)
+            ),  # rate in turnovers per PSII s^-1; K_lu stoichiometry converts to M/s
             "P_K": Parameter(
                 6000, unit=per_second / (volt * _molar)
-            ),  # SI: ions s^-1 V^-1 PSII^-1; dK/dt is M/s, so 1/(V s)
+            ),  # SI: ions s^-1 V^-1 PSII^-1; K_lu stoichiometry converts to M/s
             "lumen_protons_per_turnover": Parameter(
                 1.4e-05, unit=_molar
             ),  # SI text: M change per H+ per PSII
