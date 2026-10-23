@@ -46,7 +46,7 @@ from .salvatori2022 import get_salvatori2022
 from .selkov1968_oscillator import get_selkov1968_glycolysis_oscillator
 from .sir import get_sir, get_sird
 from .ss.bernacchi2013 import get_bernacchi_2013
-from .ss.fvcb1980 import get_fvcb as get_fvcb_1980
+from .ss.fvcb1980 import get_fvcb1980
 from .ss.gu2023 import get_gu2023
 from .ss.johnson2021 import get_johnson2021
 from .yokota1985 import get_yokota1985
@@ -66,7 +66,7 @@ __all__ = [
     "get_ebenhoeh2014",
     "get_elowitz2000_repressilator",
     "get_fuente_2024",
-    "get_fvcb_1980",
+    "get_fvcb1980",
     "get_gu2023",
     "get_hahn1987",
     "get_johnson2021",

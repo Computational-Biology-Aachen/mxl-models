@@ -15,13 +15,33 @@ min-W formulation with triose-phosphate utilisation limitation.
 """
 
 import math
-from typing import Literal
 
-T_REF = 298.0  # reference temperature (K) of the 298 K parameter values
+from mxlpy import SteadyStateModelBuilder
+from mxlpy.units import (
+    bar,
+    dimensionless,
+    joule,
+    kelvin,
+    micro,
+    milli,
+    mol,
+    ppfd,
+    second,
+    sqm,
+)
+
+ubar = micro * bar
+mbar = milli * bar
+rate = micro * mol / sqm / second
+uEq_rate = micro * mol / sqm / second
 
 
 def min_solve(a: float, b: float, c: float) -> float:
-    r"""Minimum of quadratic solutions of a * x\*\*2 + b * x + c"""
+    r"""Return the smaller root of a quadratic.
+
+    The units of `a`, `b`, and `c` depend on the equation being solved; the
+    returned root has the units of `x`.
+    """
     discriminant = max(0.0, (b**2) - (4 * a * c))
     root1 = (-b + math.sqrt(discriminant)) / (2 * a)
     root2 = (-b - math.sqrt(discriminant)) / (2 * a)
@@ -29,149 +49,144 @@ def min_solve(a: float, b: float, c: float) -> float:
 
 
 def arrhenius(param_298: float, Ea: float, T: float) -> float:
-    r"""Scale a parameter given at T_REF to temperature T (Arrhenius)."""
-    return param_298 * math.exp(Ea * (T - T_REF) / (T_REF * 8.314 * T))
+    r"""Scale a parameter at 298 K to temperature `T`.
+
+    `Ea` is in `\mathrm{J\,mol^{-1}}` and `T` is in `\mathrm{K}`. The returned
+    value has the same units as `param_298`.
+    """
+    return param_298 * math.exp(Ea * (T - 298) / (298 * 8.314 * T))
 
 
 def jmax_tempscaling(
     jmax_298: float, Ea_jmax: float, S: float, H: float, T: float
 ) -> float:
-    r"""Scale Jmax from T_REF to temperature T with high-temperature deactivation."""
+    r"""Scale `Jmax` to `T`.
+
+    `jmax_298` is in `\mathrm{\mu Eq\,m^{-2}\,s^{-1}}`, `Ea_jmax` and `H` are in
+    `\mathrm{J\,mol^{-1}}`, `S` is in `\mathrm{J\,K^{-1}\,mol^{-1}}`, and `T` is in
+    `\mathrm{K}`.
+    """
     R = 8.314
-    den_298 = 1 + math.exp((S * T_REF - H) / (R * T_REF))
+    den_298 = 1 + math.exp((S * 298 - H) / (R * 298))
     den_T = 1 + math.exp((S * T - H) / (R * T))
     return arrhenius(jmax_298, Ea_jmax, T) * (den_298 / den_T)
 
 
-def get_fvcb(
-    pco2: float,
-    po2: float = 210.0,
-    T: float = 298.0,
-    I: float = 1000.0,
-    vc_max: float = 98.0,
-    j_max: float = 210.0,
-    tp: float = 11.8,
-    alpha_old: float = 0.0,
-    km_co2: float = 460.0,
-    km_o2: float = 330.0,
-    kc: float = 2.5,
-    f: float = 0.23,
-    z: float = 0.0,
-    r_light: float = 1.1,
-    *,
-    j_infinite: bool = False,
-    model_version: Literal["1980", "2025"] = "1980",
-    use_2025_default: bool = False,
-) -> dict[str, float]:
-    r"""Net assimilation and its limiting rates at intercellular pCO2 `pco2`.
+def _derived_ko(kc):
+    r"""Calculate oxygenase turnover, in `\mathrm{s^{-1}}`."""
+    return 0.21 * kc
 
-    Units:
 
-    - pco2: intercellular CO2 partial pressure, ubar
-    - po2: O2 partial pressure, mbar
-    - T: leaf temperature, K
-    - I: absorbed photon flux density, umol (quanta) m^-2 s^-1
-    - vc_max, j_max, tp, r_light: rates at 298 K, umol m^-2 s^-1
-    - km_co2: ubar, km_o2: mbar (at 298 K)
-    - kc: Rubisco carboxylation turnover at 298 K, s^-1
-    - alpha_old, f: dimensionless
-    - z: umol m^-2 s^-1 (assumed, as it is added to j_max)
-    - activation energies of the temperature scaling: J mol^-1
-    - returned rates: umol m^-2 s^-1, gammastar: ubar
-    """
-    if use_2025_default:
-        # Override parameters with 2025 defaults
-        vc_max = 100.0
-        j_max = 170.0
-        tp = 11.8
-        alpha_old = 0.0
-        km_co2 = 259.0
-        km_o2 = 179.0
-        kc = 2.5
-        f = 0.23
-        z = 0.0
-        r_light = 1.0
-        gammastar = 38.6
+def _derived_phi(ko, kc, O2, km_o2, Ci, km_co2):
+    r"""Calculate the dimensionless oxygenation/carboxylation ratio."""
+    return (ko / kc) * ((O2 / km_o2) / (Ci / km_co2))
 
-    # ----------------------------------------
-    # A. Shared Temperature Scaling
-    # ----------------------------------------
-    if T != T_REF:
-        km_co2 = arrhenius(km_co2, 59356, T)
-        km_o2 = arrhenius(km_o2, 35948, T)
-        kc = arrhenius(kc, 58520, T)
-        vc_max = arrhenius(vc_max, 58520, T)
-        r_light = arrhenius(r_light, 66405, T)
-        j_max = jmax_tempscaling(j_max, 37000, 710, 220000, T)
 
-    # ----------------------------------------
-    # B. Shared Base Kinetics
-    # ----------------------------------------
-    ko = 0.21 * kc
-    phi = (ko / kc) * ((po2 / km_o2) / (pco2 / km_co2))
+def _derived_Wc(Ci, vcmax, km_co2, km_o2, O2):
+    r"""Calculate Rubisco-limited carboxylation in `\mathrm{\mu mol\,m^{-2}\,s^{-1}}`."""
+    return (Ci * vcmax) / (Ci + km_co2 * (1 + (O2) / (km_o2)))
 
-    # Wc (Rubisco limitation)
-    Wc = vc_max * (pco2) / (pco2 + km_co2 * (1 + po2 / km_o2))
 
-    # Potential linear electron transport (J) based on light (I)
-    if model_version == "1980":
-        if j_infinite:
-            J = math.inf
-        else:
-            J = min_solve(
-                a=1.0, b=-(0.5 * (1 - f) * I + j_max + z), c=0.5 * (1 - f) * I * j_max
-            )
+def _derived_J(f, I, j_max, z):
+    r"""Calculate potential electron transport in `\mathrm{\mu Eq\,m^{-2}\,s^{-1}}`."""
+    return min_solve(
+        a=1.0, b=-(0.5 * (1 - f) * I + j_max + z), c=0.5 * (1 - f) * I * j_max
+    )
 
-        gammastar = km_co2 * po2 * ko / (2 * km_o2 * kc)
-    elif model_version == "2025":
-        J = j_max
 
-    # ----------------------------------------
-    # C. Version-Specific Logic
-    # ----------------------------------------
-    if model_version == "1980":
-        # The 1980 paper explicitly models the RuBP pool size
-        J_prime = J / (2 * (2 + 2 * phi))
-        P = Wc * (300.0 / 87.0)
-        M = 2.0 * vc_max
-        M_prime = M / (2.0 + 1.5 * phi)
+def _derived_Wj(J, phi, Wc, vc_max):
+    r"""Calculate RuBP-regeneration-limited carboxylation in `\mathrm{\mu mol\,m^{-2}\,s^{-1}}`."""
+    J_prime = J / (2 * (2 + 2 * phi))
+    P = Wc * (300.0 / 87.0)
+    M = 2.0 * vc_max
+    M_prime = M / (2.0 + 1.5 * phi)
+    B = J_prime + P + (J_prime * P) / M_prime
+    C_quad = J_prime * P
+    return min_solve(a=1.0, b=-B, c=C_quad)
 
-        B = J_prime + P + (J_prime * P) / M_prime
-        C_quad = J_prime * P
 
-        Wj = min_solve(a=1.0, b=-B, c=C_quad) if not j_infinite else math.inf
-        Wp = math.inf  # TPU limitation was not modeled in the 1980 paper
+def _derived_gammastar(km_co2, O2, ko, km_o2, kc):
+    r"""Calculate `Gamma*` in `\mathrm{\mu bar}`."""
+    return km_co2 * O2 * ko / (2 * km_o2 * kc)
 
-        vc = Wc if j_infinite else min(Wc, Wj)
 
-    elif model_version == "2025":
-        # The modern "min-W" approach simplifies Wj and adds TPU limitation
-        Wj = (pco2 * J) / (4 * pco2 + 8 * gammastar) if not j_infinite else math.inf
+def _derived_Vc(Wc, Wj):
+    r"""Calculate carboxylation in `\mathrm{\mu mol\,m^{-2}\,s^{-1}}`."""
+    return min(Wc, Wj)
 
-        # TPU (Triose Phosphate Utilization) limited rate
-        if pco2 <= gammastar * (1 + 3 * alpha_old):
-            Wp = math.inf
-        else:
-            Wp = 3 * pco2 * tp / (pco2 - gammastar * (1 + 3 * alpha_old))
 
-        vc = min(Wc, Wj, Wp)
+def _derived_A(vc, gammastar, Ci, r_light):
+    r"""Calculate net assimilation in `\mathrm{\mu mol\,m^{-2}\,s^{-1}}`."""
+    return vc * (1 - gammastar / Ci) - r_light
 
-    else:
-        msg = "model_version must be either '1980' or '2025'"
-        raise ValueError(msg)
 
-    # ----------------------------------------
-    # D. Final Assimilation
-    # ----------------------------------------
-    A = vc * (1 - gammastar / pco2) - r_light
-    Vo = phi * vc
+def _derived_Vo(vc, phi):
+    r"""Calculate oxygenation in `\mathrm{\mu mol\,m^{-2}\,s^{-1}}`."""
+    return vc * phi
 
-    return {
-        "A": A,
-        "Vc": vc,
-        "Wc": Wc,
-        "Wj": Wj,
-        "Wp": Wp,
-        "Vo": Vo,
-        "gammastar": gammastar,
-    }
+
+def get_fvcb1980() -> SteadyStateModelBuilder:
+    m = SteadyStateModelBuilder()
+    m.add_parameter("Ci", 230, unit=ubar)
+    m.add_parameter("vcmax_25", 98, unit=rate)
+    m.add_parameter("km_co2_25", 460, unit=ubar)
+    m.add_parameter("km_o2_25", 330, unit=mbar)
+    m.add_parameter("O2", 210, unit=mbar)
+    m.add_parameter("kc_25", 2.5, unit=1 / second)
+    m.add_parameter("f", 0.23, unit=dimensionless)
+    m.add_parameter("I", 1000, unit=ppfd)
+    m.add_parameter("j_max_25", 210, unit=uEq_rate)
+    m.add_parameter("z", 20, unit=uEq_rate)
+    m.add_parameter("r_light_25", 1.1, unit=rate)
+    m.add_parameter("T", 298, unit=kelvin)
+
+    ### Activation energies
+    m.add_parameter("Ea_km_co2", 59356, unit=joule / mol)
+    m.add_parameter("Ea_km_o2", 35948, unit=joule / mol)
+    m.add_parameter("Ea_vcmax", 58520, unit=joule / mol)
+    m.add_parameter("Ea_kc", 58520, unit=joule / mol)
+    m.add_parameter("Ea_r_light", 66405, unit=joule / mol)
+
+    m.add_parameter("Ea_jmax", 37000, unit=joule / mol)
+    m.add_parameter("S", 710, unit=joule / kelvin / mol)
+    m.add_parameter("H", 220000, unit=joule / mol)
+
+    ### Temp scaling
+    m.add_derived("km_co2", arrhenius, args=["km_co2_25", "Ea_km_co2", "T"], unit=ubar)
+    m.add_derived("km_o2", arrhenius, args=["km_o2_25", "Ea_km_o2", "T"], unit=mbar)
+    m.add_derived("vcmax", arrhenius, args=["vcmax_25", "Ea_vcmax", "T"], unit=rate)
+    m.add_derived("kc", arrhenius, args=["kc_25", "Ea_kc", "T"], unit=1 / second)
+    m.add_derived(
+        "r_light", arrhenius, args=["r_light_25", "Ea_r_light", "T"], unit=rate
+    )
+
+    m.add_derived(
+        "j_max",
+        jmax_tempscaling,
+        args=["j_max_25", "Ea_jmax", "S", "H", "T"],
+        unit=uEq_rate,
+    )
+
+    m.add_derived("ko", _derived_ko, args=["kc"], unit=1 / second)
+    m.add_derived(
+        "phi",
+        _derived_phi,
+        args=["ko", "kc", "O2", "km_o2", "Ci", "km_co2"],
+        unit=dimensionless,
+    )
+    m.add_derived(
+        "Wc", _derived_Wc, args=["Ci", "vcmax", "km_co2", "km_o2", "O2"], unit=rate
+    )
+    m.add_derived("J", _derived_J, args=["f", "I", "j_max", "z"], unit=uEq_rate)
+    m.add_derived("Wj", _derived_Wj, args=["J", "phi", "Wc", "vcmax"], unit=rate)
+    m.add_derived(
+        "gammastar",
+        _derived_gammastar,
+        args=["km_co2", "O2", "ko", "km_o2", "kc"],
+        unit=ubar,
+    )
+    m.add_derived("Vc", _derived_Vc, args=["Wc", "Wj"], unit=rate)
+    m.add_derived("A", _derived_A, args=["Vc", "gammastar", "Ci", "r_light"], unit=rate)
+    m.add_derived("Vo", _derived_Vo, args=["Vc", "phi"], unit=rate)
+
+    return m
