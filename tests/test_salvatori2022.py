@@ -25,9 +25,8 @@ def test_rhs() -> None:
     )
 
 
-@pytest.mark.parametrize("load", ["Minn", "Eiko"])
-def test_units(load: str) -> None:
-    model = get_salvatori2022(load=load)  # type: ignore[arg-type]
+def test_units() -> None:
+    model = get_salvatori2022()  # type: ignore[arg-type]
     check = model.check_units(time_unit=second)
     assert set(check.per_variable) == set(model.get_raw_variables())
     # flux in umol m^-2 s^-1 acting on dimensionless NADP pools, see FIXME in _etr_in

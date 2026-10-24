@@ -109,75 +109,41 @@ def _a_func(nadph: float, r: float, v_c: float) -> float:
     return v_c * r * nadph
 
 
-def get_salvatori2022(load: Literal["Minn", "Eiko"] = "Eiko") -> Model:
+def get_salvatori2022() -> Model:
     r"""Get Salvatori model"""
     m = Model()
-
-    if load == "Minn":
-        m.add_parameters(
-            {
-                "PAR": Parameter(0, unit=ppfd),  # Photosynthetically active radiation
-                "alpha": Parameter(0.54, unit=dimensionless),  # Absorption coefficient
-                "c_in": Parameter(0.25, unit=dimensionless),  # Energy input coefficient
-                "Ec_PSII": Parameter(
-                    9.98, unit=_umol_m2
-                ),  # PSII energy carrying capacity
-                "v_ETR": Parameter(11.56, unit=_per_s),  # Velocity of ETR
-                "v_d": Parameter(7.00, unit=_per_s),  # Velocity of energy dissipation
-                "Qc": Parameter(
-                    0.03, unit=_umol_m2
-                ),  # PSII-zeax complex energy carrying capacity
-                "v_NPQ": Parameter(53.87, unit=_per_s),  # Velocity of NPQ
-                "v_p": Parameter(
-                    0.01, unit=_per_s
-                ),  # Maximum velocity of NPQ-related proteins activation
-                "v_C": Parameter(
-                    13.04, unit=_per_s
-                ),  # Maximum velocity of Calvin Cycle reactions
-                "eta_NADPH": Parameter(4.10, unit=dimensionless),  # Efficiency of NADPH
-                "eta_NADP": Parameter(0.75, unit=dimensionless),  # Efficiency of NADP+
-                "v_R": Parameter(
-                    14e-4, unit=_per_s
-                ),  # Maximum velocity of Rubisco activation
-                "d": Parameter(3.69, unit=dimensionless),  # Maximum pH balance value
-                "c_y": Parameter(
-                    0, unit=dimensionless
-                ),  # Minimum necessary cyclic electron flow
-            }
-        )
-
-    else:
-        m.add_parameters(
-            {
-                "PAR": Parameter(0, unit=ppfd),  # Photosynthetically active radiation
-                "alpha": Parameter(0.78, unit=dimensionless),  # Absorption coefficient
-                "c_in": Parameter(0.23, unit=dimensionless),  # Energy input coefficient
-                "Ec_PSII": Parameter(
-                    157.56, unit=_umol_m2
-                ),  # PSII energy carrying capacity
-                "v_ETR": Parameter(0.78, unit=_per_s),  # Velocity of ETR
-                "v_d": Parameter(0.08, unit=_per_s),  # Velocity of energy dissipation
-                "Qc": Parameter(
-                    0.07, unit=_umol_m2
-                ),  # PSII-zeax complex energy carrying capacity
-                "v_NPQ": Parameter(70.58, unit=_per_s),  # Velocity of NPQ
-                "v_p": Parameter(
-                    0.07, unit=_per_s
-                ),  # Maximum velocity of NPQ-related proteins activation
-                "v_C": Parameter(
-                    11.75, unit=_per_s
-                ),  # Maximum velocity of Calvin Cycle reactions
-                "eta_NADPH": Parameter(5.07, unit=dimensionless),  # Efficiency of NADPH
-                "eta_NADP": Parameter(0.89, unit=dimensionless),  # Efficiency of NADP+
-                "v_R": Parameter(
-                    8.9e-4, unit=_per_s
-                ),  # Maximum velocity of Rubisco activation
-                "d": Parameter(8.40, unit=dimensionless),  # Maximum pH balance value
-                "c_y": Parameter(
-                    -4, unit=dimensionless
-                ),  # Minimum necessary cyclic electron flow
-            }
-        )
+    
+    m.add_parameters(
+        {
+            "PPFD": Parameter(0, unit=ppfd),  # Photosynthetically active radiation
+            "alpha": Parameter(0.78, unit=dimensionless),  # Absorption coefficient
+            "c_in": Parameter(0.23, unit=dimensionless),  # Energy input coefficient
+            "Ec_PSII": Parameter(
+                157.56, unit=_umol_m2
+            ),  # PSII energy carrying capacity
+            "v_ETR": Parameter(0.78, unit=_per_s),  # Velocity of ETR
+            "v_d": Parameter(0.08, unit=_per_s),  # Velocity of energy dissipation
+            "Qc": Parameter(
+                0.07, unit=_umol_m2
+            ),  # PSII-zeax complex energy carrying capacity
+            "v_NPQ": Parameter(70.58, unit=_per_s),  # Velocity of NPQ
+            "v_p": Parameter(
+                0.07, unit=_per_s
+            ),  # Maximum velocity of NPQ-related proteins activation
+            "v_C": Parameter(
+                11.75, unit=_per_s
+            ),  # Maximum velocity of Calvin Cycle reactions
+            "eta_NADPH": Parameter(5.07, unit=dimensionless),  # Efficiency of NADPH
+            "eta_NADP": Parameter(0.89, unit=dimensionless),  # Efficiency of NADP+
+            "v_R": Parameter(
+                8.9e-4, unit=_per_s
+            ),  # Maximum velocity of Rubisco activation
+            "d": Parameter(8.40, unit=dimensionless),  # Maximum pH balance value
+            "c_y": Parameter(
+                -4, unit=dimensionless
+            ),  # Minimum necessary cyclic electron flow
+        }
+    )
 
     m.add_variables(
         {
@@ -198,7 +164,7 @@ def get_salvatori2022(load: Literal["Minn", "Eiko"] = "Eiko") -> Model:
         "Energy_input",
         _energy_input,
         stoichiometry={"E_PSII": 1},
-        args=["E_PSII", "alpha", "c_in", "PAR", "Ec_PSII"],
+        args=["E_PSII", "alpha", "c_in", "PPFD", "Ec_PSII"],
     )
     m.add_reaction(
         "ETR_out",
@@ -229,7 +195,7 @@ def get_salvatori2022(load: Literal["Minn", "Eiko"] = "Eiko") -> Model:
             "NADP",
             "alpha",
             "c_in",
-            "PAR",
+            "PPFD",
             "Ec_PSII",
             "v_ETR",
             "c_y",
