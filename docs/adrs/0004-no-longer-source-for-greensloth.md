@@ -1,6 +1,6 @@
 # ADR 0004: No Longer the Source Feeding GreenSloth — Decoupled So It Can Accept Non-Python Contributions
 
-**Status:** Implemented (supersedes earlier practice)
+**Status:** Implemented (supersedes earlier practice); superseded by ADR 0006 for models in both collections
 **Scope:** relationship between `mxlmodels` and the `greensloth` site; no code in this
 repo depends on `greensloth`
 
