@@ -201,9 +201,10 @@ def _ps1states(
     keq_pcp700: float,
     k_pc_ox: float,
     ppfd: float,
+    c_ppfd: float,
 ) -> float:
     r"""QSSA open state of PSI as a function of PC and Fd redox states."""
-    L = (1 - ps2cs) * ppfd
+    L = (1 - ps2cs) * ppfd * c_ppfd
     return psi_tot / (
         1
         + L / (k_fd_red * fd_ox)
@@ -309,9 +310,9 @@ def _rate_ps2(
     return 0.5 * k2 * b1
 
 
-def _rate_ps1(a: float, ps2cs: float, ppfd: float) -> float:
+def _rate_ps1(a: float, ps2cs: float, ppfd: float, c_ppfd: float) -> float:
     r"""PSI electron transfer rate: open PSI centres (a) * light absorbed by PSI antenna."""
-    return (1 - ps2cs) * ppfd * a
+    return (1 - ps2cs) * ppfd * c_ppfd * a
 
 
 def _rate_leak(
@@ -348,6 +349,7 @@ def _ps2states_surrogate(
     k_pq_red: float,
     ppfd: float,
     k_h0: float,
+    c_ppfd: float,
 ) -> tuple[float, float, float, float]:
     r"""PSII state populations via the analytical closed-form of the 4-state QSSA.
 
@@ -371,7 +373,7 @@ def _ps2states_surrogate(
     x13 = k_pq_red * keq_pq_red * pq_ox
     x14 = k_pq_red * pq_red
     x15 = k2 * x14
-    x16 = ppfd * ps2cs
+    x16 = ppfd * c_ppfd * ps2cs
     x17 = k_f * x14
     x18 = k_h0 * x14
     x19 = x14 * x6
@@ -394,7 +396,7 @@ def _ps2states_surrogate(
     x23 = psii_tot / (
         k_f * x20
         + k_h0 * x20
-        + (ppfd) ** 2 * ps2cs**2 * x12
+        + (ppfd * c_ppfd) ** 2 * ps2cs**2 * x12
         + x0 * x13
         + x1 * x13
         + x10 * x13
@@ -459,9 +461,19 @@ def get_ebenhoeh2014() -> Model:
     """
     m: Model = Model()
     # Dynamic variables (initial values from the original main.ipynb)
-    m.add_variable("Plastoquinone (oxidised)", initial_value=17.5, unit=_mmol_mol_chl)
+    m.add_variable(
+        "Plastoquinone (oxidised)",
+        initial_value=17.5,
+        unit=_mmol_mol_chl,
+        display_name="PQ",
+    )
     m.add_variable("Plastocyanine (oxidised)", initial_value=0.0202, unit=_mmol_mol_chl)
-    m.add_variable("Ferredoxine (oxidised)", initial_value=5.0, unit=_mmol_mol_chl)
+    m.add_variable(
+        "Ferredoxine (oxidised)",
+        initial_value=5.0,
+        unit=_mmol_mol_chl,
+        display_name="Fd_ox",
+    )
     m.add_variable("ATP", initial_value=0.0, unit=_mmol_mol_chl)
     m.add_variable("NADPH", initial_value=0.0, unit=_mmol_mol_chl)
     m.add_variable(
@@ -473,14 +485,16 @@ def get_ebenhoeh2014() -> Model:
     # Used as excitation rate per reaction centre; the conversion factor from
     # umol m^-2 s^-1 is unknown (Matuszynska 2019)
     m = m.add_parameter("PPFD", value=100.0, unit=_per_s)
+    # Scales PPFD wherever it drives excitation (taken over from green-sloth)
+    m.add_parameter("cPPFD", value=1 / 3, unit=dimensionless)
     # Total pool sizes
     m.add_parameter("PSII_total", value=2.5, unit=_mmol_mol_chl)
     m.add_parameter("PSI_total", value=2.5, unit=_mmol_mol_chl)
     m.add_parameter("PQ_tot", value=17.5, unit=_mmol_mol_chl)
     m.add_parameter("PC_tot", value=4.0, unit=_mmol_mol_chl)
-    m.add_parameter("Fd*", value=5.0, unit=_mmol_mol_chl)
-    m.add_parameter("NADP*", value=25.0, unit=_mmol_mol_chl)
-    m.add_parameter("A*P", value=60.0, unit=_mmol_mol_chl)
+    m.add_parameter("Fd*", value=5.0, unit=_mmol_mol_chl, display_name="Fd_tot")
+    m.add_parameter("NADP*", value=25.0, unit=_mmol_mol_chl, display_name="NADP_tot")
+    m.add_parameter("A*P", value=60.0, unit=_mmol_mol_chl, display_name="AP_tot")
     m.add_parameter("LHC_tot", value=1.0, unit=dimensionless)
     # Physical constants
     m.add_parameter("F", value=96.485, unit=_kj_mol_v)
@@ -488,13 +502,13 @@ def get_ebenhoeh2014() -> Model:
     m.add_parameter("T", value=298.0, unit=kelvin)
     m.add_parameter("bH", value=100.0, unit=dimensionless)
     # Standard redox potentials (V, at pH 0)
-    m.add_parameter("E^0_QA", value=-0.14, unit=volt)
-    m.add_parameter("E^0_PQ", value=0.354, unit=volt)
-    m.add_parameter("E^0_PC", value=0.38, unit=volt)
-    m.add_parameter("E^0_P700", value=0.48, unit=volt)
-    m.add_parameter("E^0_FA", value=-0.55, unit=volt)
-    m.add_parameter("E^0_Fd", value=-0.43, unit=volt)
-    m.add_parameter("E^0_NADP", value=-0.113, unit=volt)
+    m.add_parameter("E^0_QA", value=-0.14, unit=volt, display_name="E0_QA")
+    m.add_parameter("E^0_PQ", value=0.354, unit=volt, display_name="E0_PQ")
+    m.add_parameter("E^0_PC", value=0.38, unit=volt, display_name="E0_PC")
+    m.add_parameter("E^0_P700", value=0.48, unit=volt, display_name="E0_P700")
+    m.add_parameter("E^0_FA", value=-0.55, unit=volt, display_name="E0_FA")
+    m.add_parameter("E^0_Fd", value=-0.43, unit=volt, display_name="E0_Fd")
+    m.add_parameter("E^0_NADP", value=-0.113, unit=volt, display_name="E0_NADP")
     # PSII rate constants
     m.add_parameter("kH0", value=500000000.0, unit=_per_s)
     m.add_parameter("kH", value=0.0, unit=_per_s)
@@ -561,6 +575,7 @@ def get_ebenhoeh2014() -> Model:
         "Plastoquinone (reduced)",
         fn=_moiety_1,
         args=["Plastoquinone (oxidised)", "PQ_tot"],
+        display_name="PQH2",
     )
     m.add_derived(
         "Plastocyanine (reduced)",
@@ -571,6 +586,7 @@ def get_ebenhoeh2014() -> Model:
         "Ferredoxine (reduced)",
         fn=_moiety_1,
         args=["Ferredoxine (oxidised)", "Fd*"],
+        display_name="Fd_red",
     )
     m.add_derived(
         "ADP",
@@ -642,6 +658,7 @@ def get_ebenhoeh2014() -> Model:
             "keq_PCP700",
             "kPCox",
             "PPFD",
+            "cPPFD",
         ],
     )
     # Reactions
@@ -657,7 +674,7 @@ def get_ebenhoeh2014() -> Model:
     m.add_reaction(
         "PSI",
         fn=_rate_ps1,
-        args=["A1", "PSII_cross_section", "PPFD"],
+        args=["A1", "PSII_cross_section", "PPFD", "cPPFD"],
         stoichiometry={
             "Ferredoxine (oxidised)": -1,
             "Plastocyanine (oxidised)": 1,
@@ -674,6 +691,7 @@ def get_ebenhoeh2014() -> Model:
         fn=_mass_action_1s,
         args=["Plastoquinone (oxidised)", "kf_ndh"],
         stoichiometry={"Plastoquinone (oxidised)": -1},
+        display_name="NDH",
     )
     m.add_reaction(
         "b6f",
@@ -691,6 +709,7 @@ def get_ebenhoeh2014() -> Model:
             "Plastoquinone (oxidised)": 1,
             "protons_lumen": Derived(fn=_four_div_by, args=["bH"]),
         },
+        display_name="cyt b6f",
     )
     m.add_reaction(
         "cyclic_electron_flow",
@@ -704,6 +723,7 @@ def get_ebenhoeh2014() -> Model:
             "Plastoquinone (oxidised)": -1,
             "Ferredoxine (oxidised)": 2,
         },
+        display_name="cyclic electron flow",
     )
     m.add_reaction(
         "fnr",
@@ -722,12 +742,14 @@ def get_ebenhoeh2014() -> Model:
             "Ferredoxine (oxidised)": 2,
             "NADPH": 1,
         },
+        display_name="FNR",
     )
     m.add_reaction(
         "proton_leak",
         fn=_rate_leak,
         args=["protons_lumen", "protons_stroma_chl", "kf_proton_leak"],
         stoichiometry={"protons_lumen": Derived(fn=_neg_one_div_by, args=["bH"])},
+        display_name="proton leak",
     )
     m.add_reaction(
         "lhc_state_transition_12",
@@ -741,12 +763,14 @@ def get_ebenhoeh2014() -> Model:
             "n_ST",
         ],
         stoichiometry={"Light-harvesting complex": -1},
+        display_name="LHC state transition 1->2",
     )
     m.add_reaction(
         "lhc_state_transition_21",
         fn=_mass_action_1s,
         args=["Light-harvesting complex (protonated)", "kPph1"],
         stoichiometry={"Light-harvesting complex": 1},
+        display_name="LHC state transition 2->1",
     )
     m.add_reaction(
         "atp_synthase",
@@ -756,6 +780,7 @@ def get_ebenhoeh2014() -> Model:
             "ATP": 1.0,
             "protons_lumen": Derived(fn=_neg_div, args=["HPR", "bH"]),
         },
+        display_name="ATP synthase",
     )
     m.add_reaction(
         "atp_consumption",
@@ -786,6 +811,7 @@ def get_ebenhoeh2014() -> Model:
                 "kPQred",
                 "PPFD",
                 "kH0",
+                "cPPFD",
             ],
             outputs=["B0", "B1", "B2", "B3"],
             units=dict.fromkeys(["B0", "B1", "B2", "B3"], _mmol_mol_chl),

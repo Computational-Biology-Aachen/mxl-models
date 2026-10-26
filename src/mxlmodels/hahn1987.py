@@ -20,7 +20,7 @@ concentrations are varied: photosynthesis is inhibited by higher oxygen levels,
 while photorespiration is inhibited by higher carbon dioxide levels.
 """
 
-from mxlpy import Model, Parameter, Variable
+from mxlpy import Model, Parameter, Slider, Variable
 from mxlpy.units import gram, meter, mol, second
 
 # Concentrations are in mol m^-3 (= mM)
@@ -260,7 +260,9 @@ def get_hahn1987() -> Model:
                 "Glm": Variable(1, unit=_mm),
                 "OxA": Variable(1, unit=_mm),
                 "NH3": Variable(1, unit=_mm),
-                "CO2": Variable(0.330, unit=_mm),
+                "CO2": Variable(
+                    0.330, unit=_mm, slider=Slider(min="0.1", max="1.0", step="0.01")
+                ),
                 "O2": Variable(0.245, unit=_mm),
                 "Ci": Variable(0.400, unit=_mm),
                 "Oi": Variable(101.0, unit=_mm),

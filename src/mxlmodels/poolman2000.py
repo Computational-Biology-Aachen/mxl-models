@@ -12,7 +12,7 @@ r"""Poolman 2000 Calvin-Benson-Bassham cycle model.
 | Ported by   | Marvin van Aalst ( @marvinvanaalst )     |
 """
 
-from mxlpy import Model
+from mxlpy import Model, Slider
 from mxlpy.units import dimensionless, liter, mmol, second
 
 _mmol_l = mmol / liter
@@ -290,7 +290,9 @@ def get_poolman2000() -> Model:
     (2000): 319-328
     """
     m: Model = Model()
-    m.add_variable("3PGA", initial_value=0.6387788347932627, unit=_mmol_l)
+    m.add_variable(
+        "3PGA", initial_value=0.6387788347932627, unit=_mmol_l, display_name="PGA"
+    )
     m.add_variable("BPGA", initial_value=0.0013570885908749779, unit=_mmol_l)
     m.add_variable("GAP", initial_value=0.011259431827358068, unit=_mmol_l)
     m.add_variable("DHAP", initial_value=0.24770748227012374, unit=_mmol_l)
@@ -306,23 +308,36 @@ def get_poolman2000() -> Model:
     m.add_variable("RUBP", initial_value=0.2672164362349537, unit=_mmol_l)
     m.add_variable("RU5P", initial_value=0.0244365238237522, unit=_mmol_l)
     m.add_variable("ATP", initial_value=0.43633201706180874, unit=_mmol_l)
-    m.add_parameter("CO2 (dissolved)", value=0.2, unit=_mmol_l)
+    m.add_parameter("CO2 (dissolved)", value=0.2, unit=_mmol_l, display_name="CO2")
     m.add_parameter("NADPH", value=0.21, unit=_mmol_l)
     m.add_parameter("protons", value=1.2589254117941661e-05, unit=_mmol_l)
-    m.add_parameter("A*P", value=0.5, unit=_mmol_l)
-    m.add_parameter("NADP*", value=0.5, unit=_mmol_l)
+    m.add_parameter("A*P", value=0.5, unit=_mmol_l, display_name="AP_tot")
+    m.add_parameter("NADP*", value=0.5, unit=_mmol_l, display_name="NADP_tot")
     m.add_parameter("Pi_tot", value=15.0, unit=_mmol_l)
-    m.add_parameter("E0_rubisco_carboxylase", value=1.0, unit=_mmol_l)
+    m.add_parameter(
+        "E0_rubisco_carboxylase",
+        value=1.0,
+        unit=_mmol_l,
+        slider=Slider(min="0.1", max="2.0", step="0.1"),
+    )
     m.add_parameter("kcat_rubisco_carboxylase", value=2.72, unit=_per_s)
     m.add_parameter("km_rubisco_carboxylase_RUBP", value=0.02, unit=_mmol_l)
     m.add_parameter(
-        "km_rubisco_carboxylase_CO2 (dissolved)", value=0.0107, unit=_mmol_l
+        "km_rubisco_carboxylase_CO2 (dissolved)",
+        value=0.0107,
+        unit=_mmol_l,
+        display_name="km_rubisco_carboxylase_CO2",
     )
     # Pettersson 1988 Table 3 gives K_i11 (PGA) = 0.84 mM; 0.04 is K_i12 (FBP)
     m.add_parameter("ki_rubisco_carboxylase_3PGA", value=0.04, unit=_mmol_l)
     m.add_parameter("ki_rubisco_carboxylase_FBP", value=0.04, unit=_mmol_l)
     m.add_parameter("ki_rubisco_carboxylase_SBP", value=0.075, unit=_mmol_l)
-    m.add_parameter("ki_rubisco_carboxylase_Orthophosphate", value=0.9, unit=_mmol_l)
+    m.add_parameter(
+        "ki_rubisco_carboxylase_Orthophosphate",
+        value=0.9,
+        unit=_mmol_l,
+        display_name="ki_rubisco_carboxylase_Pi",
+    )
     m.add_parameter("ki_rubisco_carboxylase_NADPH", value=0.07, unit=_mmol_l)
     m.add_parameter(
         "kre_phosphoglycerate_kinase", value=800000000.0, unit=_per_mmol_l_s
@@ -340,7 +355,12 @@ def get_poolman2000() -> Model:
     m.add_parameter("kcat_fbpase", value=1.6, unit=_per_s)
     m.add_parameter("km_fbpase_s", value=0.03, unit=_mmol_l)
     m.add_parameter("ki_fbpase_F6P", value=0.7, unit=_mmol_l)
-    m.add_parameter("ki_fbpase_Orthophosphate", value=12.0, unit=_mmol_l)
+    m.add_parameter(
+        "ki_fbpase_Orthophosphate",
+        value=12.0,
+        unit=_mmol_l,
+        display_name="ki_fbpase_Pi",
+    )
     m.add_parameter("kre_transketolase_gap_f6p", value=800000000.0, unit=_per_mmol_l_s)
     m.add_parameter("keq_transketolase_gap_f6p", value=0.084, unit=dimensionless)
     m.add_parameter("kre_transketolase_gap_s7p", value=800000000.0, unit=_per_mmol_l_s)
@@ -348,7 +368,12 @@ def get_poolman2000() -> Model:
     m.add_parameter("E0_SBPase", value=1.0, unit=_mmol_l)
     m.add_parameter("kcat_SBPase", value=0.32, unit=_per_s)
     m.add_parameter("km_SBPase_s", value=0.013, unit=_mmol_l)
-    m.add_parameter("ki_SBPase_Orthophosphate", value=12.0, unit=_mmol_l)
+    m.add_parameter(
+        "ki_SBPase_Orthophosphate",
+        value=12.0,
+        unit=_mmol_l,
+        display_name="ki_SBPase_Pi",
+    )
     m.add_parameter("kre_ribose_phosphate_isomerase", value=800000000.0, unit=_per_s)
     m.add_parameter("keq_ribose_phosphate_isomerase", value=0.4, unit=dimensionless)
     m.add_parameter("kre_ribulose_phosphate_epimerase", value=800000000.0, unit=_per_s)
@@ -359,7 +384,12 @@ def get_poolman2000() -> Model:
     m.add_parameter("km_phosphoribulokinase_ATP", value=0.05, unit=_mmol_l)
     m.add_parameter("ki_phosphoribulokinase_3PGA", value=2.0, unit=_mmol_l)
     m.add_parameter("ki_phosphoribulokinase_RUBP", value=0.7, unit=_mmol_l)
-    m.add_parameter("ki_phosphoribulokinase_Orthophosphate", value=4.0, unit=_mmol_l)
+    m.add_parameter(
+        "ki_phosphoribulokinase_Orthophosphate",
+        value=4.0,
+        unit=_mmol_l,
+        display_name="ki_phosphoribulokinase_Pi",
+    )
     m.add_parameter("ki_phosphoribulokinase_4", value=2.5, unit=_mmol_l)
     m.add_parameter("ki_phosphoribulokinase_5", value=0.4, unit=_mmol_l)
     m.add_parameter("kre_g6pi", value=800000000.0, unit=_per_s)
@@ -494,6 +524,7 @@ def get_poolman2000() -> Model:
             "ki_rubisco_carboxylase_NADPH",
         ],
         stoichiometry={"RUBP": -1.0, "3PGA": 2.0},
+        display_name="rubisco carboxylase",
     )
     m.add_reaction(
         "phosphoglycerate_kinase",
@@ -507,6 +538,7 @@ def get_poolman2000() -> Model:
             "keq_phosphoglycerate_kinase",
         ],
         stoichiometry={"3PGA": -1.0, "ATP": -1.0, "BPGA": 1.0},
+        display_name="phosphoglycerate kinase",
     )
     m.add_reaction(
         "gadph",
@@ -522,6 +554,7 @@ def get_poolman2000() -> Model:
             "keq_gadph",
         ],
         stoichiometry={"BPGA": -1.0, "GAP": 1.0},
+        display_name="GAPDH",
     )
     m.add_reaction(
         "triose_phosphate_isomerase",
@@ -533,18 +566,21 @@ def get_poolman2000() -> Model:
             "keq_triose_phosphate_isomerase",
         ],
         stoichiometry={"GAP": -1, "DHAP": 1},
+        display_name="triose phosphate isomerase",
     )
     m.add_reaction(
         "aldolase_dhap_gap",
         fn=_rapid_equilibrium_2s_1p,
         args=["GAP", "DHAP", "FBP", "kre_aldolase_dhap_gap", "keq_aldolase_dhap_gap"],
         stoichiometry={"GAP": -1, "DHAP": -1, "FBP": 1},
+        display_name="aldolase (DHAP+GAP)",
     )
     m.add_reaction(
         "aldolase_dhap_e4p",
         fn=_rapid_equilibrium_2s_1p,
         args=["DHAP", "E4P", "SBP", "kre_aldolase_dhap_e4p", "keq_aldolase_dhap_e4p"],
         stoichiometry={"DHAP": -1, "E4P": -1, "SBP": 1},
+        display_name="aldolase (DHAP+E4P)",
     )
     m.add_reaction(
         "fbpase",
@@ -559,6 +595,7 @@ def get_poolman2000() -> Model:
             "ki_fbpase_Orthophosphate",
         ],
         stoichiometry={"FBP": -1, "F6P": 1},
+        display_name="FBPase",
     )
     m.add_reaction(
         "transketolase_gap_f6p",
@@ -572,6 +609,7 @@ def get_poolman2000() -> Model:
             "keq_transketolase_gap_f6p",
         ],
         stoichiometry={"GAP": -1, "F6P": -1, "E4P": 1, "X5P": 1},
+        display_name="transketolase (GAP+F6P)",
     )
     m.add_reaction(
         "transketolase_gap_s7p",
@@ -585,6 +623,7 @@ def get_poolman2000() -> Model:
             "keq_transketolase_gap_s7p",
         ],
         stoichiometry={"GAP": -1, "S7P": -1, "R5P": 1, "X5P": 1},
+        display_name="transketolase (GAP+S7P)",
     )
     m.add_reaction(
         "SBPase",
@@ -608,6 +647,7 @@ def get_poolman2000() -> Model:
             "keq_ribose_phosphate_isomerase",
         ],
         stoichiometry={"R5P": -1, "RU5P": 1},
+        display_name="ribose phosphate isomerase",
     )
     m.add_reaction(
         "ribulose_phosphate_epimerase",
@@ -619,6 +659,7 @@ def get_poolman2000() -> Model:
             "keq_ribulose_phosphate_epimerase",
         ],
         stoichiometry={"X5P": -1, "RU5P": 1},
+        display_name="ribulose phosphate epimerase",
     )
     m.add_reaction(
         "phosphoribulokinase",
@@ -646,6 +687,7 @@ def get_poolman2000() -> Model:
         fn=_rapid_equilibrium_1s_1p,
         args=["F6P", "G6P", "kre_g6pi", "keq_g6pi"],
         stoichiometry={"F6P": -1, "G6P": 1},
+        display_name="G6P isomerase",
     )
     m.add_reaction(
         "phosphoglucomutase",
@@ -658,18 +700,21 @@ def get_poolman2000() -> Model:
         fn=_rate_out,
         args=["3PGA", "N_translocator", "vmax_ex_pga", "km_ex_pga"],
         stoichiometry={"3PGA": -1},
+        display_name="PGA export",
     )
     m.add_reaction(
         "ex_gap",
         fn=_rate_out,
         args=["GAP", "N_translocator", "vmax_ex_pga", "km_ex_gap"],
         stoichiometry={"GAP": -1},
+        display_name="GAP export",
     )
     m.add_reaction(
         "ex_dhap",
         fn=_rate_out,
         args=["DHAP", "N_translocator", "vmax_ex_pga", "km_ex_dhap"],
         stoichiometry={"DHAP": -1},
+        display_name="DHAP export",
     )
     m.add_reaction(
         "ex_g1p",
@@ -691,6 +736,7 @@ def get_poolman2000() -> Model:
             "ki_ex_g1p_FBP",
         ],
         stoichiometry={"G1P": -1.0, "ATP": -1.0},
+        display_name="G1P export",
     )
     m.add_reaction(
         "atp_synthase",
@@ -703,5 +749,6 @@ def get_poolman2000() -> Model:
             "km_atp_synthase_Orthophosphate",
         ],
         stoichiometry={"ATP": 1.0},
+        display_name="ATP synthase",
     )
     return m

@@ -11,7 +11,7 @@ mxlpy implementation skeleton:
 """
 
 import numpy as np
-from mxlpy import Model, Parameter, Variable
+from mxlpy import Model, Parameter, Slider, Variable
 from mxlpy.units import (
     cbm,
     dimensionless,
@@ -927,9 +927,15 @@ def get_morales2018() -> Model:
     # default Ib / Ir of 100 / 900 look like umol m^-2 s^-1
     m.add_parameters(
         {
-            "Ib": Parameter(100.0, unit=_flux),
-            "Ig": Parameter(0.0, unit=_flux),
-            "Ir": Parameter(900.0, unit=_flux),
+            "Ib": Parameter(
+                100.0, unit=_flux, slider=Slider(min="50.0", max="200.0", step="0.1")
+            ),
+            "Ig": Parameter(
+                0.0, unit=_flux, slider=Slider(min="0.0", max="0.0", step="0.1")
+            ),
+            "Ir": Parameter(
+                900.0, unit=_flux, slider=Slider(min="450.0", max="1800.0", step="0.1")
+            ),
             "Ta": Parameter(298.15, unit=kelvin),
             "Tl": Parameter(298.15, unit=kelvin),
             "H2OR": Parameter(0.015, unit=dimensionless),

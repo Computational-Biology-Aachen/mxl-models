@@ -42,7 +42,7 @@ are correct or not.
 """
 
 import numpy as np
-from mxlpy import Derived, InitialAssignment, Model, Parameter, Variable
+from mxlpy import Derived, InitialAssignment, Model, Parameter, Slider, Variable
 from mxlpy.units import (
     dimensionless,
     liter,
@@ -598,7 +598,9 @@ def get_bellasio_2019() -> Model:
             "p_o2": Parameter(210000, unit=_umol_mol),
             "Kh_o2": Parameter(833300, unit=_umol_mol / _mm),
             "V_m": Parameter(0.03, unit=liter / sqm),
-            "PPFD": Parameter(1500, unit=ppfd),
+            "PPFD": Parameter(
+                1500, unit=ppfd, slider=Slider(min="100", max="2000", step="10")
+            ),
             # Table S2 lists 0.0012 umol m^-2 s^-1, but it is a flux in mmol m^-2 s^-1 like all others
             "RLight": Parameter(0.001, unit=_flux),
             "s": Parameter(0.43, unit=dimensionless),
@@ -620,25 +622,49 @@ def get_bellasio_2019() -> Model:
             "theta_co2": Parameter(0.98, unit=dimensionless),
             "tau_i": Parameter(360, unit=second),
             "tau_d": Parameter(1200, unit=second),
-            "km_v_RuBisCO_c_CO2": Parameter(0.014, unit=_mm),
-            "km_v_RuBisCO_c_RUBP": Parameter(0.02, unit=_mm),
+            "km_v_RuBisCO_c_CO2": Parameter(
+                0.014, unit=_mm, display_name="km_rubisco_carboxylase_CO2"
+            ),
+            "km_v_RuBisCO_c_RUBP": Parameter(
+                0.02, unit=_mm, display_name="km_rubisco_carboxylase_RUBP"
+            ),
             "km_v_RuBisCO_c_O2": Parameter(0.222, unit=_mm),
-            "ki_v_RuBisCO_c_PGA": Parameter(2.52, unit=_mm),
+            "ki_v_RuBisCO_c_PGA": Parameter(
+                2.52, unit=_mm, display_name="ki_rubisco_carboxylase_3PGA"
+            ),
             "ki_v_RuBisCO_c_NADP_st": Parameter(0.21, unit=_mm),
             "ki_v_RuBisCO_c_ADP_st": Parameter(0.2, unit=_mm),
-            "ki_v_RuBisCO_c_Pi_st": Parameter(3.6, unit=_mm),
-            "vmax_v_RuBisCO_c": Parameter(0.2, unit=_flux),
-            "kcat_v_RuBisCO_c": Parameter(4.7, unit=1 / second),
+            "ki_v_RuBisCO_c_Pi_st": Parameter(
+                3.6, unit=_mm, display_name="ki_rubisco_carboxylase_Pi"
+            ),
+            "vmax_v_RuBisCO_c": Parameter(
+                0.2, unit=_flux, display_name="vmax_rubisco_carboxylase"
+            ),
+            "kcat_v_RuBisCO_c": Parameter(
+                4.7, unit=1 / second, display_name="kcat_rubisco_carboxylase"
+            ),
             "S_co_gas": Parameter(2200, unit=dimensionless),
-            "vmax_v_PRKase": Parameter(1.17, unit=_flux),
+            "vmax_v_PRKase": Parameter(
+                1.17, unit=_flux, display_name="vmax_phosphoribulokinase"
+            ),
             # Table S1 lists mM, but v_PRKase requires it dimensionless
             "keq_v_PRKase": Parameter(6846, unit=dimensionless),
-            "km_v_PRKase_ATP_st": Parameter(0.625, unit=_mm),
+            "km_v_PRKase_ATP_st": Parameter(
+                0.625, unit=_mm, display_name="km_phosphoribulokinase_ATP"
+            ),
             "ki_v_PRKase_ADP_st": Parameter(0.1, unit=_mm),
-            "km_v_PRKase_RU5P": Parameter(0.034, unit=_mm),
-            "ki_v_PRKase_PGA": Parameter(2, unit=_mm),
-            "ki_v_PRKase_RUBP": Parameter(0.7, unit=_mm),
-            "ki_v_PRKase_Pi_st": Parameter(4, unit=_mm),
+            "km_v_PRKase_RU5P": Parameter(
+                0.034, unit=_mm, display_name="km_phosphoribulokinase_RU5P"
+            ),
+            "ki_v_PRKase_PGA": Parameter(
+                2, unit=_mm, display_name="ki_phosphoribulokinase_3PGA"
+            ),
+            "ki_v_PRKase_RUBP": Parameter(
+                0.7, unit=_mm, display_name="ki_phosphoribulokinase_RUBP"
+            ),
+            "ki_v_PRKase_Pi_st": Parameter(
+                4, unit=_mm, display_name="ki_phosphoribulokinase_Pi"
+            ),
             "vmax_v_pgareduction": Parameter(0.4, unit=_flux),
             "km_v_pgareduction_ATP_st": Parameter(0.3, unit=_mm),
             "km_v_pgareduction_PGA": Parameter(10, unit=_mm),
@@ -660,11 +686,13 @@ def get_bellasio_2019() -> Model:
             "km_v_co2_hydration_HCO3": Parameter(34, unit=_mm),
             # Table S1 lists mM, but v_FNR requires it dimensionless
             "keq_v_FNR": Parameter(502, unit=dimensionless),
-            "km_v_FNR_NADP_st": Parameter(0.0072, unit=_mm),
+            "km_v_FNR_NADP_st": Parameter(0.0072, unit=_mm, display_name="km_fnr_NADP"),
             "km_v_FNR_NADPH_st": Parameter(0.036, unit=_mm),
             "Kj_NADPH": Parameter(200, unit=second),
             # Table S1 lists it dimensionless, but v_ATPsynth requires mM^-1 (ADP * Pi vs ATP / keq)
-            "keq_v_ATPsynth": Parameter(5734, unit=1 / _mm),
+            "keq_v_ATPsynth": Parameter(
+                5734, unit=1 / _mm, display_name="keq_atp_synthase"
+            ),
             "km_v_ATPsynth_ADP_st": Parameter(0.014, unit=_mm),
             "km_v_ATPsynth_Pi_st": Parameter(0.3, unit=_mm),
             "km_v_ATPsynth_ATP_st": Parameter(0.3, unit=_mm),
@@ -695,8 +723,8 @@ def get_bellasio_2019() -> Model:
             "RUBP": Variable(2, unit=_mm),
             "PGA": Variable(4, unit=_mm),
             "DHAP": Variable(4, unit=_mm),
-            "ATP_st": Variable(0.68, unit=_mm),
-            "NADPH_st": Variable(0.21, unit=_mm),
+            "ATP_st": Variable(0.68, unit=_mm, display_name="ATP"),
+            "NADPH_st": Variable(0.21, unit=_mm, display_name="NADPH"),
             "RU5P": Variable(0.34, unit=_mm),
             "Ract": Variable(1, unit=dimensionless),
             "J_NADPH": Variable(0.1, unit=_flux),
@@ -709,15 +737,11 @@ def get_bellasio_2019() -> Model:
     )
 
     m.add_derived(
-        name="ADP_st",
-        fn=_moiety_1,
-        args=["ATP_st", "AP_tot"],
+        name="ADP_st", fn=_moiety_1, args=["ATP_st", "AP_tot"], display_name="ADP"
     )
 
     m.add_derived(
-        name="NADP_st",
-        fn=_moiety_1,
-        args=["NADPH_st", "NADP_tot"],
+        name="NADP_st", fn=_moiety_1, args=["NADPH_st", "NADP_tot"], display_name="NADP"
     )
 
     m.add_derived(
@@ -935,6 +959,7 @@ def get_bellasio_2019() -> Model:
                 unit=None,
             ),
         },
+        display_name="rubisco carboxylase",
     )
     m.add_reaction(
         name="rubisco_oxygenase",
@@ -979,6 +1004,7 @@ def get_bellasio_2019() -> Model:
                 unit=None,
             ),
         },
+        display_name="glycine decarboxylase",
     )
     m.add_reaction(
         name="v_PRKase",
@@ -1021,6 +1047,7 @@ def get_bellasio_2019() -> Model:
                 unit=None,
             ),
         },
+        display_name="phosphoribulokinase",
     )
     m.add_reaction(
         name="v_pgareduction",
@@ -1157,6 +1184,7 @@ def get_bellasio_2019() -> Model:
                 unit=None,
             ),
         },
+        display_name="FNR",
     )
     m.add_reaction(
         name="v_ATPsynth",
@@ -1178,6 +1206,7 @@ def get_bellasio_2019() -> Model:
                 unit=None,
             ),
         },
+        display_name="ATP synthase",
     )
     m.add_reaction(
         name="CO2_dissolution",

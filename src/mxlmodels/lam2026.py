@@ -316,11 +316,11 @@ def get_lam2026() -> Model:
             "kappa_qZ": Parameter(0.030, unit=_per_mmol_mol_chl_s),
             "kappa_qI": Parameter(3.86, unit=_per_s),
             "kappa_qI_double_mut": Parameter(7.05, unit=_per_s),
-            "ppfd": Parameter(0, unit=ppfd),
+            "ppfd": Parameter(0, unit=ppfd, display_name="PPFD"),
             "tau_0": Parameter(
                 1.73089079100000, unit=second
             ),  # from the paper WT tau_0 for 5-10-5 dataset
-            "PSII_tot": Parameter(1, unit=dimensionless),
+            "PSII_tot": Parameter(1, unit=dimensionless, display_name="PSII_total"),
         }
     )
 

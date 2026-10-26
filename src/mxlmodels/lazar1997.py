@@ -374,5 +374,5 @@ def get_lazar1997() -> Model:
             fn=_eprime,
             args=["y2", "y4", "y6", "y8", "y12", "y14"],
         )
-        .add_derived(name="F", fn=_f, args=["eprime", "p", "y15"])
+        .add_derived(name="F", fn=_f, args=["eprime", "p", "y15"], display_name="Fluo")
     )

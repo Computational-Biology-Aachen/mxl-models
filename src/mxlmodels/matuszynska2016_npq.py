@@ -11,10 +11,15 @@ Non-photochemical quenching via PsbS and xanthophyll cycle.
 | journal     | Biochimica et Biophysica Acta (BBA) - Bioenergetics                                            |
 | organism    | Arabidopsis thaliana                                                                           |
 | Ported by   | Marvin van Aalst ( @marvinvanaalst )                                                           |
+
+ODE model of photoprotection in plant PSII. Tracks PSII open/closed states,
+plastoquinone (PQ/PQH2) redox, lumenal proton buffering, ATP synthesis, PsbS
+protonation, and xanthophyll de-epoxidation (zeaxanthin formation). Supports PAM
+fluorescence protocol simulation to reproduce Fm/Fm' quenching.
 """
 
 import numpy as np
-from mxlpy import Derived, Model
+from mxlpy import Derived, Model, Slider
 from mxlpy.surrogates import qss
 from mxlpy.units import (
     dimensionless,
@@ -491,13 +496,15 @@ def get_matuszynska2016_npq() -> Model:
     Acta (BBA)-Bioenergetics 1857.12 (2016): 1860-1869
     """
     m: Model = Model()
-    m.add_variable("pq_red", initial_value=0, unit=_mmol_mol_chl)
+    m.add_variable("pq_red", initial_value=0, unit=_mmol_mol_chl, display_name="PQH2")
     m.add_variable("protons", initial_value=6.32975752e-05, unit=_mmol_mol_chl)
     m.add_variable("vmax_atp_synthase", initial_value=0, unit=dimensionless)
-    m.add_variable("atp", initial_value=25.0, unit=_mmol_mol_chl)
+    m.add_variable("atp", initial_value=25.0, unit=_mmol_mol_chl, display_name="ATP")
     m.add_variable("psbs_de", initial_value=1, unit=dimensionless)
     m.add_variable("vx", initial_value=1, unit=dimensionless)
-    m.add_parameter("PSII_tot", value=2.5, unit=_mmol_mol_chl)
+    m.add_parameter(
+        "PSII_tot", value=2.5, unit=_mmol_mol_chl, display_name="PSII_total"
+    )
     m.add_parameter("PQ_tot", value=20, unit=_mmol_mol_chl)
     m.add_parameter("AP_tot", value=50, unit=_mmol_mol_chl)
     m.add_parameter("PsbS_tot", value=1, unit=dimensionless)
@@ -511,14 +518,18 @@ def get_matuszynska2016_npq() -> Model:
     m.add_parameter("k_ATPsynth", value=20.0, unit=_per_s)
     m.add_parameter("k_ATPconsum", value=10.0, unit=_per_s)
     m.add_parameter("k_PQH2", value=250.0, unit=_per_mmol_mol_chl_s)
-    m.add_parameter("k_H", value=5000000000.0, unit=_per_s)
-    m.add_parameter("k_F", value=625000000.0, unit=_per_s)
-    m.add_parameter("k_P", value=5000000000.0, unit=_per_s)
-    m.add_parameter("k_PTOX", value=0.01, unit=_per_mmol_mol_chl_s)
-    m.add_parameter("pH_st", value=7.8, unit=dimensionless)
+    m.add_parameter("k_H", value=5000000000.0, unit=_per_s, display_name="kH")
+    m.add_parameter("k_F", value=625000000.0, unit=_per_s, display_name="kF")
+    m.add_parameter("k_P", value=5000000000.0, unit=_per_s, display_name="k2")
+    m.add_parameter(
+        "k_PTOX", value=0.01, unit=_per_mmol_mol_chl_s, display_name="kPTOX"
+    )
+    m.add_parameter("pH_st", value=7.8, unit=dimensionless, display_name="pH")
     m.add_parameter("k_leak", value=1000, unit=_per_s)
-    m.add_parameter("b_H", value=100, unit=dimensionless)
-    m.add_parameter("hpr", value=4.666666666666667, unit=dimensionless)
+    m.add_parameter("b_H", value=100, unit=dimensionless, display_name="bH")
+    m.add_parameter(
+        "hpr", value=4.666666666666667, unit=dimensionless, display_name="HPR"
+    )
     m.add_parameter("k_DV", value=0.0024, unit=_per_s)
     m.add_parameter("k_EZ", value=0.00024, unit=_per_s)
     m.add_parameter("K_pHSat", value=5.8, unit=dimensionless)
@@ -528,10 +539,10 @@ def get_matuszynska2016_npq() -> Model:
     m.add_parameter("k_deprot", value=0.0096, unit=_per_s)
     m.add_parameter("k_prot", value=0.0096, unit=_per_s)
     m.add_parameter("K_pHSatLHC", value=5.8, unit=dimensionless)
-    m.add_parameter("gamma_0", value=0.1, unit=dimensionless)
-    m.add_parameter("gamma_1", value=0.25, unit=dimensionless)
-    m.add_parameter("gamma_2", value=0.6, unit=dimensionless)
-    m.add_parameter("gamma_3", value=0.15, unit=dimensionless)
+    m.add_parameter("gamma_0", value=0.1, unit=dimensionless, display_name="gamma0")
+    m.add_parameter("gamma_1", value=0.25, unit=dimensionless, display_name="gamma1")
+    m.add_parameter("gamma_2", value=0.6, unit=dimensionless, display_name="gamma2")
+    m.add_parameter("gamma_3", value=0.15, unit=dimensionless, display_name="gamma3")
     m.add_parameter("F", value=96.485, unit=_kj_mol_v)
     m.add_parameter("R", value=0.0083, unit=_kj_mol_k)
     m.add_parameter("T", value=298, unit=kelvin)
@@ -541,12 +552,10 @@ def get_matuszynska2016_npq() -> Model:
     m.add_parameter("DG_ATP", value=30.6, unit=_kj_mol)
     # Reported in umol m^-2 s^-1, but used as excitation rate per reaction centre;
     # the conversion factor is unknown (Matuszynska 2019)
-    m.add_parameter("PPFD", value=100, unit=_per_s)
-    m.add_derived(
-        "pH_lu",
-        fn=_ph,
-        args=["protons"],
+    m.add_parameter(
+        "PPFD", value=100, unit=_per_s, slider=Slider(min="50", max="500", step="10")
     )
+    m.add_derived("pH_lu", fn=_ph, args=["protons"], display_name="pH_lumen")
     # pH -> concentration conversions hide the unit in a constant, so set it explicitly
     m.add_derived(
         "H_st",
@@ -581,16 +590,8 @@ def get_matuszynska2016_npq() -> Model:
         fn=_keq_atp_synth,
         args=["pH_lu", "DG_ATP", "pH_st", "R", "T", "Pi"],
     )
-    m.add_derived(
-        "pq_ox",
-        fn=_moiety_1s,
-        args=["pq_red", "PQ_tot"],
-    )
-    m.add_derived(
-        "adp",
-        fn=_moiety_1s,
-        args=["atp", "AP_tot"],
-    )
+    m.add_derived("pq_ox", fn=_moiety_1s, args=["pq_red", "PQ_tot"], display_name="PQ")
+    m.add_derived("adp", fn=_moiety_1s, args=["atp", "AP_tot"], display_name="ADP")
     m.add_derived(
         "psbs_pr",
         fn=_moiety_1s,
@@ -628,6 +629,7 @@ def get_matuszynska2016_npq() -> Model:
             "pq_red": 1,
             "protons": Derived(fn=_two_divided_value, args=["b_H"]),
         },
+        display_name="PSII",
     )
     m.add_reaction(
         "v_PQ",
@@ -637,6 +639,7 @@ def get_matuszynska2016_npq() -> Model:
             "pq_red": -1,
             "protons": Derived(fn=_four_divided_value, args=["b_H"]),
         },
+        display_name="PQ reduction",
     )
     m.add_reaction(
         "atp_synthase",
@@ -646,6 +649,7 @@ def get_matuszynska2016_npq() -> Model:
             "atp": 1,
             "protons": Derived(fn=_neg_fourteenthirds_divided_value, args=["b_H"]),
         },
+        display_name="ATP synthase",
     )
     m.add_reaction(
         "atp_activase",
@@ -658,6 +662,7 @@ def get_matuszynska2016_npq() -> Model:
         fn=_proton_leak,
         args=["protons", "k_leak", "H_st"],
         stoichiometry={"protons": Derived(fn=_neg_divided_value, args=["b_H"])},
+        display_name="proton leak",
     )
     m.add_reaction(
         "v_ATPcons",

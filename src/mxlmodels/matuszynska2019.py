@@ -11,12 +11,19 @@ Photosynthesis model with NPQ, state transitions, and Calvin cycle.
 | journal     | Physiologia Plantarum                                                     |
 | organism    | higher plants                                                             |
 | Ported by   | Marvin van Aalst ( @marvinvanaalst )                                      |
+
+Merges two previously developed models, a photosynthetic electron transport
+chain (PETC) model (originally for non-photochemical quenching) and a dynamic
+Calvin-Benson-Bassham (CBB) cycle model for C3 carbon fixation, into one ODE
+system to study how energy/redox supply by photosynthesis matches downstream
+demand. Illustrates the dark stand-by mode needed to restart carbon fixation
+after dark-light transitions.
 """
 
 import math
 
 import numpy as np
-from mxlpy import Derived, Model
+from mxlpy import Derived, Model, Slider
 from mxlpy.surrogates import qss
 from mxlpy.units import (
     dimensionless,
@@ -739,7 +746,9 @@ def get_matuszynska2019() -> Model:
     plantarum 166.1 (2019): 392-402.
     """
     m: Model = Model()
-    m.add_variable("3PGA", initial_value=0.9928653922138561, unit=_mmol_l)
+    m.add_variable(
+        "3PGA", initial_value=0.9928653922138561, unit=_mmol_l, display_name="PGA"
+    )
     m.add_variable("BPGA", initial_value=0.0005297732935310749, unit=_mmol_l)
     m.add_variable("GAP", initial_value=0.0062663539939955834, unit=_mmol_l)
     m.add_variable("DHAP", initial_value=0.13785977143668732, unit=_mmol_l)
@@ -756,7 +765,10 @@ def get_matuszynska2019() -> Model:
     m.add_variable("RU5P", initial_value=0.015060770937455408, unit=_mmol_l)
     m.add_variable("ATP", initial_value=1.612922506604933, unit=_mmol_l)
     m.add_variable(
-        "Ferredoxine (oxidised)", initial_value=3.8624032084329674, unit=_mmol_mol_chl
+        "Ferredoxine (oxidised)",
+        initial_value=3.8624032084329674,
+        unit=_mmol_mol_chl,
+        display_name="Fd_ox",
     )
     m.add_variable(
         "protons_lumen", initial_value=0.002208423037307405, unit=_mmol_mol_chl
@@ -769,7 +781,10 @@ def get_matuszynska2019() -> Model:
         "Plastocyanine (oxidised)", initial_value=1.885391998090184, unit=_mmol_mol_chl
     )
     m.add_variable(
-        "Plastoquinone (oxidised)", initial_value=10.991562708096392, unit=_mmol_mol_chl
+        "Plastoquinone (oxidised)",
+        initial_value=10.991562708096392,
+        unit=_mmol_mol_chl,
+        display_name="PQ",
     )
     m.add_variable(
         "PsbS (de-protonated)", initial_value=0.9610220887579118, unit=dimensionless
@@ -777,39 +792,50 @@ def get_matuszynska2019() -> Model:
     m.add_variable("Violaxanthin", initial_value=0.9514408605906095, unit=dimensionless)
     m.add_parameter("protons", value=1.2589254117941661e-05, unit=_mmol_l)
     m.add_parameter("pH", value=7.9, unit=dimensionless)
-    m.add_parameter("CO2 (dissolved)", value=0.2, unit=_mmol_l)
+    m.add_parameter(
+        "CO2 (dissolved)",
+        value=0.2,
+        unit=_mmol_l,
+        display_name="CO2",
+        slider=Slider(min="0.0008", max="0.014", step="0.0001"),
+    )
     m.add_parameter("O2 (dissolved)_lumen", value=8.0, unit=_mmol_mol_chl)
     # Reported in umol m^-2 s^-1, but used as excitation rate per reaction centre;
     # the conversion factor is unknown (Matuszynska 2019)
-    m.add_parameter("PPFD", value=100.0, unit=_per_s)
+    m.add_parameter(
+        "PPFD",
+        value=100.0,
+        unit=_per_s,
+        slider=Slider(min="100", max="2000", step="10"),
+    )
     m.add_parameter("bH", value=100.0, unit=dimensionless)
     m.add_parameter("F", value=96.485, unit=_kj_mol_v)
-    m.add_parameter("E^0_PC", value=0.38, unit=volt)
-    m.add_parameter("E^0_P700", value=0.48, unit=volt)
-    m.add_parameter("E^0_FA", value=-0.55, unit=volt)
-    m.add_parameter("E^0_Fd", value=-0.43, unit=volt)
-    m.add_parameter("E^0_NADP", value=-0.113, unit=volt)
+    m.add_parameter("E^0_PC", value=0.38, unit=volt, display_name="E0_PC")
+    m.add_parameter("E^0_P700", value=0.48, unit=volt, display_name="E0_P700")
+    m.add_parameter("E^0_FA", value=-0.55, unit=volt, display_name="E0_FA")
+    m.add_parameter("E^0_Fd", value=-0.43, unit=volt, display_name="E0_Fd")
+    m.add_parameter("E^0_NADP", value=-0.113, unit=volt, display_name="E0_NADP")
     # 1 mmol (mol Chl)^-1 corresponds to 3.2e-5 M in the stroma (Matuszynska 2019)
     m.add_parameter("convf", value=0.032, unit=_mmol_l / _mmol_mol_chl)
     m.add_parameter("R", value=0.0083, unit=_kj_mol_k)
     m.add_parameter("T", value=298.0, unit=kelvin)
     m.add_parameter("Carotenoids_tot", value=1.0, unit=dimensionless)
-    m.add_parameter("Fd*", value=5.0, unit=_mmol_mol_chl)
+    m.add_parameter("Fd*", value=5.0, unit=_mmol_mol_chl, display_name="Fd_tot")
     m.add_parameter("PC_tot", value=4.0, unit=_mmol_mol_chl)
-    m.add_parameter("PSBS_tot", value=1.0, unit=dimensionless)
+    m.add_parameter("PSBS_tot", value=1.0, unit=dimensionless, display_name="PsbS_tot")
     m.add_parameter("LHC_tot", value=1.0, unit=dimensionless)
     m.add_parameter("gamma0", value=0.1, unit=dimensionless)
     m.add_parameter("gamma1", value=0.25, unit=dimensionless)
     m.add_parameter("gamma2", value=0.6, unit=dimensionless)
     m.add_parameter("gamma3", value=0.15, unit=dimensionless)
-    m.add_parameter("kZSat", value=0.12, unit=dimensionless)
-    m.add_parameter("E^0_QA", value=-0.14, unit=volt)
-    m.add_parameter("E^0_PQ", value=0.354, unit=volt)
+    m.add_parameter("kZSat", value=0.12, unit=dimensionless, display_name="K_ZSat")
+    m.add_parameter("E^0_QA", value=-0.14, unit=volt, display_name="E0_QA")
+    m.add_parameter("E^0_PQ", value=0.354, unit=volt, display_name="E0_PQ")
     m.add_parameter("PQ_tot", value=17.5, unit=_mmol_mol_chl)
     m.add_parameter("staticAntII", value=0.1, unit=dimensionless)
     m.add_parameter("staticAntI", value=0.37, unit=dimensionless)
-    m.add_parameter("NADP*", value=0.8, unit=_mmol_l)
-    m.add_parameter("A*P", value=2.55, unit=_mmol_l)
+    m.add_parameter("NADP*", value=0.8, unit=_mmol_l, display_name="NADP_tot")
+    m.add_parameter("A*P", value=2.55, unit=_mmol_l, display_name="AP_tot")
     m.add_parameter("Pi_tot", value=17.05, unit=_mmol_l)
     m.add_parameter("kf_atp_synthase", value=20.0, unit=_per_s)
     m.add_parameter("HPR", value=4.666666666666667, unit=dimensionless)
@@ -821,7 +847,12 @@ def get_matuszynska2019() -> Model:
     m.add_parameter("kf_lhc_protonation", value=0.0096, unit=_per_s)
     m.add_parameter("ksat_lhc_protonation", value=5.8, unit=dimensionless)
     m.add_parameter("kf_lhc_deprotonation", value=0.0096, unit=_per_s)
-    m.add_parameter("kf_cyclic_electron_flow", value=1.0, unit=_per_mmol2_mol_chl2_s)
+    m.add_parameter(
+        "kf_cyclic_electron_flow",
+        value=1.0,
+        unit=_per_mmol2_mol_chl2_s,
+        slider=Slider(min="0.0", max="1.0", step="0.1"),
+    )
     m.add_parameter("kf_violaxanthin_deepoxidase", value=0.0024, unit=_per_s)
     m.add_parameter("kh_violaxanthin_deepoxidase", value=5.0, unit=dimensionless)
     m.add_parameter("ksat_violaxanthin_deepoxidase", value=5.8, unit=dimensionless)
@@ -850,13 +881,21 @@ def get_matuszynska2019() -> Model:
     m.add_parameter("kcat_rubisco_carboxylase", value=2.72, unit=_per_s)
     m.add_parameter("km_rubisco_carboxylase_RUBP", value=0.02, unit=_mmol_l)
     m.add_parameter(
-        "km_rubisco_carboxylase_CO2 (dissolved)", value=0.0107, unit=_mmol_l
+        "km_rubisco_carboxylase_CO2 (dissolved)",
+        value=0.0107,
+        unit=_mmol_l,
+        display_name="km_rubisco_carboxylase_CO2",
     )
     # Pettersson 1988 Table 3 gives K_i11 (PGA) = 0.84 mM; 0.04 is K_i12 (FBP)
     m.add_parameter("ki_rubisco_carboxylase_3PGA", value=0.04, unit=_mmol_l)
     m.add_parameter("ki_rubisco_carboxylase_FBP", value=0.04, unit=_mmol_l)
     m.add_parameter("ki_rubisco_carboxylase_SBP", value=0.075, unit=_mmol_l)
-    m.add_parameter("ki_rubisco_carboxylase_Orthophosphate", value=0.9, unit=_mmol_l)
+    m.add_parameter(
+        "ki_rubisco_carboxylase_Orthophosphate",
+        value=0.9,
+        unit=_mmol_l,
+        display_name="ki_rubisco_carboxylase_Pi",
+    )
     m.add_parameter("ki_rubisco_carboxylase_NADPH", value=0.07, unit=_mmol_l)
     m.add_parameter(
         "kre_phosphoglycerate_kinase", value=800000000.0, unit=_per_mmol_l_s
@@ -874,7 +913,12 @@ def get_matuszynska2019() -> Model:
     m.add_parameter("kcat_fbpase", value=1.6, unit=_per_s)
     m.add_parameter("km_fbpase_s", value=0.03, unit=_mmol_l)
     m.add_parameter("ki_fbpase_F6P", value=0.7, unit=_mmol_l)
-    m.add_parameter("ki_fbpase_Orthophosphate", value=12.0, unit=_mmol_l)
+    m.add_parameter(
+        "ki_fbpase_Orthophosphate",
+        value=12.0,
+        unit=_mmol_l,
+        display_name="ki_fbpase_Pi",
+    )
     m.add_parameter("kre_transketolase_gap_f6p", value=800000000.0, unit=_per_mmol_l_s)
     m.add_parameter("keq_transketolase_gap_f6p", value=0.084, unit=dimensionless)
     m.add_parameter("kre_transketolase_gap_s7p", value=800000000.0, unit=_per_mmol_l_s)
@@ -882,7 +926,12 @@ def get_matuszynska2019() -> Model:
     m.add_parameter("E0_SBPase", value=1.0, unit=_mmol_l)
     m.add_parameter("kcat_SBPase", value=0.32, unit=_per_s)
     m.add_parameter("km_SBPase_s", value=0.013, unit=_mmol_l)
-    m.add_parameter("ki_SBPase_Orthophosphate", value=12.0, unit=_mmol_l)
+    m.add_parameter(
+        "ki_SBPase_Orthophosphate",
+        value=12.0,
+        unit=_mmol_l,
+        display_name="ki_SBPase_Pi",
+    )
     m.add_parameter("kre_ribose_phosphate_isomerase", value=800000000.0, unit=_per_s)
     m.add_parameter("keq_ribose_phosphate_isomerase", value=0.4, unit=dimensionless)
     m.add_parameter("kre_ribulose_phosphate_epimerase", value=800000000.0, unit=_per_s)
@@ -893,7 +942,12 @@ def get_matuszynska2019() -> Model:
     m.add_parameter("km_phosphoribulokinase_ATP", value=0.05, unit=_mmol_l)
     m.add_parameter("ki_phosphoribulokinase_3PGA", value=2.0, unit=_mmol_l)
     m.add_parameter("ki_phosphoribulokinase_RUBP", value=0.7, unit=_mmol_l)
-    m.add_parameter("ki_phosphoribulokinase_Orthophosphate", value=4.0, unit=_mmol_l)
+    m.add_parameter(
+        "ki_phosphoribulokinase_Orthophosphate",
+        value=4.0,
+        unit=_mmol_l,
+        display_name="ki_phosphoribulokinase_Pi",
+    )
     m.add_parameter("ki_phosphoribulokinase_4", value=2.5, unit=_mmol_l)
     m.add_parameter("ki_phosphoribulokinase_5", value=0.4, unit=_mmol_l)
     m.add_parameter("kre_g6pi", value=800000000.0, unit=_per_s)
@@ -962,6 +1016,7 @@ def get_matuszynska2019() -> Model:
         "Ferredoxine (reduced)",
         fn=_moiety_1,
         args=["Ferredoxine (oxidised)", "Fd*"],
+        display_name="Fd_red",
     )
     m.add_derived(
         "Plastocyanine (reduced)",
@@ -1002,6 +1057,7 @@ def get_matuszynska2019() -> Model:
         "Plastoquinone (reduced)",
         fn=_moiety_1,
         args=["Plastoquinone (oxidised)", "PQ_tot"],
+        display_name="PQH2",
     )
     m.add_derived(
         "PSII_cross_section",
@@ -1142,6 +1198,7 @@ def get_matuszynska2019() -> Model:
             "protons_lumen": Derived(fn=_neg_div, args=["HPR", "bH"]),
             "ATP": Derived(fn=_value, args=["convf"]),
         },
+        display_name="ATP synthase",
     )
     m.add_reaction(
         "b6f",
@@ -1159,6 +1216,7 @@ def get_matuszynska2019() -> Model:
             "Plastoquinone (oxidised)": 1,
             "protons_lumen": Derived(fn=_four_div_by, args=["bH"]),
         },
+        display_name="cyt b6f",
     )
     m.add_reaction(
         "lhc_protonation",
@@ -1171,12 +1229,14 @@ def get_matuszynska2019() -> Model:
             "ksat_lhc_protonation_protons",
         ],
         stoichiometry={"PsbS (de-protonated)": -1},
+        display_name="LHC protonation",
     )
     m.add_reaction(
         "lhc_deprotonation",
         fn=_mass_action_1s,
         args=["PsbS (protonated)", "kf_lhc_deprotonation"],
         stoichiometry={"PsbS (de-protonated)": 1},
+        display_name="LHC deprotonation",
     )
     m.add_reaction(
         "cyclic_electron_flow",
@@ -1187,6 +1247,7 @@ def get_matuszynska2019() -> Model:
             "kf_cyclic_electron_flow",
         ],
         stoichiometry={"Plastoquinone (oxidised)": -1, "Ferredoxine (oxidised)": 2},
+        display_name="cyclic electron flow",
     )
     m.add_reaction(
         "violaxanthin_deepoxidase",
@@ -1199,12 +1260,14 @@ def get_matuszynska2019() -> Model:
             "ksat_violaxanthin_deepoxidase_protons",
         ],
         stoichiometry={"Violaxanthin": -1},
+        display_name="violaxanthin deepoxidase",
     )
     m.add_reaction(
         "zeaxanthin_epoxidase",
         fn=_mass_action_1s,
         args=["Zeaxanthin", "kf_zeaxanthin_epoxidase"],
         stoichiometry={"Violaxanthin": 1},
+        display_name="zeaxanthin epoxidase",
     )
     m.add_reaction(
         "fnr",
@@ -1224,12 +1287,14 @@ def get_matuszynska2019() -> Model:
             "Ferredoxine (oxidised)": 2,
             "NADPH": Derived(fn=_value, args=["convf"]),
         },
+        display_name="FNR",
     )
     m.add_reaction(
         "ndh",
         fn=_mass_action_1s,
         args=["Plastoquinone (oxidised)", "kf_ndh"],
         stoichiometry={"Plastoquinone (oxidised)": -1},
+        display_name="NDH",
     )
     m.add_reaction(
         "PSII",
@@ -1251,6 +1316,7 @@ def get_matuszynska2019() -> Model:
         fn=_rate_leak,
         args=["protons_lumen", "protons_stroma_chl", "kf_proton_leak"],
         stoichiometry={"protons_lumen": Derived(fn=_neg_one_div_by, args=["bH"])},
+        display_name="proton leak",
     )
     m.add_reaction(
         "PTOX",
@@ -1270,12 +1336,14 @@ def get_matuszynska2019() -> Model:
             "n_ST",
         ],
         stoichiometry={"Light-harvesting complex": -1},
+        display_name="LHC state transition 1->2",
     )
     m.add_reaction(
         "lhc_state_transition_21",
         fn=_mass_action_1s,
         args=["Light-harvesting complex (protonated)", "kPph1"],
         stoichiometry={"Light-harvesting complex": 1},
+        display_name="LHC state transition 2->1",
     )
     m.add_reaction(
         "rubisco_carboxylase",
@@ -1298,6 +1366,7 @@ def get_matuszynska2019() -> Model:
             "ki_rubisco_carboxylase_NADPH",
         ],
         stoichiometry={"RUBP": -1.0, "3PGA": 2.0},
+        display_name="rubisco carboxylase",
     )
     m.add_reaction(
         "phosphoglycerate_kinase",
@@ -1311,6 +1380,7 @@ def get_matuszynska2019() -> Model:
             "keq_phosphoglycerate_kinase",
         ],
         stoichiometry={"3PGA": -1.0, "ATP": -1.0, "BPGA": 1.0},
+        display_name="phosphoglycerate kinase",
     )
     m.add_reaction(
         "gadph",
@@ -1326,6 +1396,7 @@ def get_matuszynska2019() -> Model:
             "keq_gadph",
         ],
         stoichiometry={"NADPH": -1.0, "BPGA": -1.0, "GAP": 1.0},
+        display_name="GAPDH",
     )
     m.add_reaction(
         "triose_phosphate_isomerase",
@@ -1337,18 +1408,21 @@ def get_matuszynska2019() -> Model:
             "keq_triose_phosphate_isomerase",
         ],
         stoichiometry={"GAP": -1, "DHAP": 1},
+        display_name="triose phosphate isomerase",
     )
     m.add_reaction(
         "aldolase_dhap_gap",
         fn=_rapid_equilibrium_2s_1p,
         args=["GAP", "DHAP", "FBP", "kre_aldolase_dhap_gap", "keq_aldolase_dhap_gap"],
         stoichiometry={"GAP": -1, "DHAP": -1, "FBP": 1},
+        display_name="aldolase (DHAP+GAP)",
     )
     m.add_reaction(
         "aldolase_dhap_e4p",
         fn=_rapid_equilibrium_2s_1p,
         args=["DHAP", "E4P", "SBP", "kre_aldolase_dhap_e4p", "keq_aldolase_dhap_e4p"],
         stoichiometry={"DHAP": -1, "E4P": -1, "SBP": 1},
+        display_name="aldolase (DHAP+E4P)",
     )
     m.add_reaction(
         "fbpase",
@@ -1363,6 +1437,7 @@ def get_matuszynska2019() -> Model:
             "ki_fbpase_Orthophosphate",
         ],
         stoichiometry={"FBP": -1, "F6P": 1},
+        display_name="FBPase",
     )
     m.add_reaction(
         "transketolase_gap_f6p",
@@ -1376,6 +1451,7 @@ def get_matuszynska2019() -> Model:
             "keq_transketolase_gap_f6p",
         ],
         stoichiometry={"GAP": -1, "F6P": -1, "E4P": 1, "X5P": 1},
+        display_name="transketolase (GAP+F6P)",
     )
     m.add_reaction(
         "transketolase_gap_s7p",
@@ -1389,6 +1465,7 @@ def get_matuszynska2019() -> Model:
             "keq_transketolase_gap_s7p",
         ],
         stoichiometry={"GAP": -1, "S7P": -1, "R5P": 1, "X5P": 1},
+        display_name="transketolase (GAP+S7P)",
     )
     m.add_reaction(
         "SBPase",
@@ -1412,6 +1489,7 @@ def get_matuszynska2019() -> Model:
             "keq_ribose_phosphate_isomerase",
         ],
         stoichiometry={"R5P": -1, "RU5P": 1},
+        display_name="ribose phosphate isomerase",
     )
     m.add_reaction(
         "ribulose_phosphate_epimerase",
@@ -1423,6 +1501,7 @@ def get_matuszynska2019() -> Model:
             "keq_ribulose_phosphate_epimerase",
         ],
         stoichiometry={"X5P": -1, "RU5P": 1},
+        display_name="ribulose phosphate epimerase",
     )
     m.add_reaction(
         "phosphoribulokinase",
@@ -1450,6 +1529,7 @@ def get_matuszynska2019() -> Model:
         fn=_rapid_equilibrium_1s_1p,
         args=["F6P", "G6P", "kre_g6pi", "keq_g6pi"],
         stoichiometry={"F6P": -1, "G6P": 1},
+        display_name="G6P isomerase",
     )
     m.add_reaction(
         "phosphoglucomutase",
@@ -1462,18 +1542,21 @@ def get_matuszynska2019() -> Model:
         fn=_rate_out,
         args=["3PGA", "N_translocator", "vmax_ex_pga", "km_ex_pga"],
         stoichiometry={"3PGA": -1},
+        display_name="PGA export",
     )
     m.add_reaction(
         "ex_gap",
         fn=_rate_out,
         args=["GAP", "N_translocator", "vmax_ex_pga", "km_ex_gap"],
         stoichiometry={"GAP": -1},
+        display_name="GAP export",
     )
     m.add_reaction(
         "ex_dhap",
         fn=_rate_out,
         args=["DHAP", "N_translocator", "vmax_ex_pga", "km_ex_dhap"],
         stoichiometry={"DHAP": -1},
+        display_name="DHAP export",
     )
     m.add_reaction(
         "ex_g1p",
@@ -1495,6 +1578,7 @@ def get_matuszynska2019() -> Model:
             "ki_ex_g1p_FBP",
         ],
         stoichiometry={"G1P": -1.0, "ATP": -1.0},
+        display_name="G1P export",
     )
     m.add_surrogate(
         "ps2states",

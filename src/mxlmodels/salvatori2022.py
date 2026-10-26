@@ -43,6 +43,7 @@ from mxlpy.units import dimensionless, mumol, ppfd, second, sqm
 # Units from Table 1
 _umol_m2 = mumol / sqm
 _per_s = 1 / second
+_umol_m2_s = _umol_m2 / second
 
 
 def _energy_input(
@@ -116,7 +117,9 @@ def get_salvatori2022(load: Literal["Minn", "Eiko"] = "Eiko") -> Model:
     if load == "Minn":
         m.add_parameters(
             {
-                "PAR": Parameter(0, unit=ppfd),  # Photosynthetically active radiation
+                "PAR": Parameter(
+                    0, unit=ppfd, display_name="PPFD"
+                ),  # Photosynthetically active radiation
                 "alpha": Parameter(0.54, unit=dimensionless),  # Absorption coefficient
                 "c_in": Parameter(0.25, unit=dimensionless),  # Energy input coefficient
                 "Ec_PSII": Parameter(
@@ -149,7 +152,9 @@ def get_salvatori2022(load: Literal["Minn", "Eiko"] = "Eiko") -> Model:
     else:
         m.add_parameters(
             {
-                "PAR": Parameter(0, unit=ppfd),  # Photosynthetically active radiation
+                "PAR": Parameter(
+                    0, unit=ppfd, display_name="PPFD"
+                ),  # Photosynthetically active radiation
                 "alpha": Parameter(0.78, unit=dimensionless),  # Absorption coefficient
                 "c_in": Parameter(0.23, unit=dimensionless),  # Energy input coefficient
                 "Ec_PSII": Parameter(
@@ -190,35 +195,41 @@ def get_salvatori2022(load: Literal["Minn", "Eiko"] = "Eiko") -> Model:
         }
     )
 
-    m.add_derived("pH", _p_h_func, args=["NADPH", "NADP"])
-    m.add_derived("ETR", _etr_func, args=["E_PSII", "NADP", "v_ETR"])
-    m.add_derived("A", _a_func, args=["NADPH", "R", "v_C"])
+    m.add_derived("pH", _p_h_func, args=["NADPH", "NADP"], unit=dimensionless)
+    m.add_derived("ETR", _etr_func, args=["E_PSII", "NADP", "v_ETR"], unit=_umol_m2_s)
+    m.add_derived("A", _a_func, args=["NADPH", "R", "v_C"], unit=_umol_m2_s)
 
     m.add_reaction(
         "Energy_input",
         _energy_input,
         stoichiometry={"E_PSII": 1},
         args=["E_PSII", "alpha", "c_in", "PAR", "Ec_PSII"],
+        unit=_umol_m2_s,
     )
     m.add_reaction(
         "ETR_out",
         _etr_out,
         stoichiometry={"E_PSII": -1},
         args=["E_PSII", "NADP", "v_ETR"],
+        unit=_umol_m2_s,
     )
     m.add_reaction(
         "ETR_in",
         _etr_in,
         stoichiometry={"NADP": -1, "NADPH": 1},
         args=["NADP", "E_PSII", "v_ETR", "eta_NADP"],
+        unit=_umol_m2_s,
     )
     m.add_reaction(
         "energy_dissipation",
         _energy_dissipation,
         stoichiometry={"E_PSII": -1, "Q": 1},
         args=["E_PSII", "P_NPQ", "Q", "v_d", "Qc"],
+        unit=_umol_m2_s,
     )
-    m.add_reaction("NPQ", _npq_func, stoichiometry={"Q": -1}, args=["Q", "v_NPQ"])
+    m.add_reaction(
+        "NPQ", _npq_func, stoichiometry={"Q": -1}, args=["Q", "v_NPQ"], unit=_umol_m2_s
+    )
     m.add_reaction(
         "NPQ_activation",
         _activation_p_npq,
@@ -235,18 +246,21 @@ def get_salvatori2022(load: Literal["Minn", "Eiko"] = "Eiko") -> Model:
             "c_y",
             "v_p",
         ],
+        unit=_per_s,
     )
     m.add_reaction(
         "Carbon_assimilation",
         _a_in,
         stoichiometry={"NADPH": -1, "NADP": 1},
         args=["NADPH", "R", "v_C", "eta_NADPH"],
+        unit=_umol_m2_s,
     )
     m.add_reaction(
         "RuBisCO_activation",
         _rubisco_activation,
         stoichiometry={"R": 1},
         args=["R", "pH", "v_R", "d"],
+        unit=_per_s,
     )
 
     return m

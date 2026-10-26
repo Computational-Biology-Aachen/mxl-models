@@ -515,7 +515,7 @@ def get_li_2021() -> Model:
             "Vmax_b6f": Parameter(300, unit=_per_s),
             "pKa_PsbS": Parameter(6.2, unit=dimensionless),
             "NPQ_max": Parameter(3, unit=dimensionless),
-            "pH_st": Parameter(7.8, unit=dimensionless),
+            "pH_st": Parameter(7.8, unit=dimensionless, display_name="pH"),
             "Em_Fd": Parameter(-0.42, unit=volt),
             "k_NDH1": Parameter(1000, unit=_per_s),
             "Vmax_PGR": Parameter(0, unit=_per_s),
@@ -532,7 +532,7 @@ def get_li_2021() -> Model:
             "k_ClCe": Parameter(800000, unit=_per_volt_molar2_s),
             "HPR": Parameter(4.666666666666667, unit=dimensionless),
             "Vmax_ATPsynth": Parameter(200, unit=_per_s),
-            "b_H": Parameter(0.014, unit=_molar),
+            "b_H": Parameter(0.014, unit=_molar, display_name="bH"),
             "vpc": Parameter(0.047, unit=volt),
             "k_EZ": Parameter(0.004, unit=_per_s),
             "nh_VDE": Parameter(4, unit=dimensionless),
@@ -554,16 +554,16 @@ def get_li_2021() -> Model:
     m.add_variables(
         {
             "QA_red": Variable(0, unit=dimensionless),
-            "PQH_2": Variable(0, unit=dimensionless),
+            "PQH_2": Variable(0, unit=dimensionless, display_name="PQH2"),
             "pH_lumen": Variable(7.8, unit=dimensionless),
             "Dpsi": Variable(0, unit=volt),
             "K_lu": Variable(0.1, unit=_molar),
             "PC_ox": Variable(0, unit=dimensionless),
             "Y2": Variable(0, unit=dimensionless),
-            "Zx": Variable(0, unit=dimensionless),
+            "Zx": Variable(0, unit=dimensionless, display_name="zx"),
             "singO2": Variable(0, unit=dimensionless),
             "Fd_red": Variable(0, unit=dimensionless),
-            "NADPH_st": Variable(1.5, unit=dimensionless),
+            "NADPH_st": Variable(1.5, unit=dimensionless, display_name="NADPH"),
             "Cl_lu": Variable(0.04, unit=_molar),
             "Cl_st": Variable(0.04, unit=_molar),
         }
@@ -600,15 +600,11 @@ def get_li_2021() -> Model:
     )
 
     m.add_derived(
-        name="NADP_st",
-        fn=_moiety_1,
-        args=["NADPH_st", "NADP_tot"],
+        name="NADP_st", fn=_moiety_1, args=["NADPH_st", "NADP_tot"], display_name="NADP"
     )
 
     m.add_derived(
-        name="Vx",
-        fn=_moiety_1,
-        args=["Zx", "Carotenoids_tot"],
+        name="Vx", fn=_moiety_1, args=["Zx", "Carotenoids_tot"], display_name="vx"
     )
 
     # These functions hide unit-carrying constants (0.06 V per pH unit, the PPFD to
@@ -650,13 +646,11 @@ def get_li_2021() -> Model:
         fn=_calc_h,
         args=["pH_lumen"],
         unit=_molar,
+        display_name="protons_lumen",
     )
 
     m.add_derived(
-        name="H_st",
-        fn=_calc_h,
-        args=["pH_st"],
-        unit=_molar,
+        name="H_st", fn=_calc_h, args=["pH_st"], unit=_molar, display_name="H_stroma"
     )
 
     m.add_derived(
@@ -667,10 +661,7 @@ def get_li_2021() -> Model:
     )
 
     m.add_derived(
-        name="kCBB",
-        fn=_calc_k_cbb,
-        args=["PPFD"],
-        unit=_per_s,
+        name="kCBB", fn=_calc_k_cbb, args=["PPFD"], unit=_per_s, display_name="k_CBB"
     )
 
     m.add_derived(
@@ -765,6 +756,7 @@ def get_li_2021() -> Model:
             "QA_red": -1,
             "PQH_2": 0.5,
         },
+        display_name="PSII",
     )
     m.add_reaction(
         name="v_PQ",
@@ -774,6 +766,7 @@ def get_li_2021() -> Model:
             "QA_red": 1,
             "PQH_2": -0.5,
         },
+        display_name="PQ reduction",
     )
     m.add_reaction(
         name="v_b6f",
@@ -805,6 +798,7 @@ def get_li_2021() -> Model:
                 unit=None,
             ),
         },
+        display_name="cyt b6f",
     )
     m.add_reaction(
         name="v_NDH",
@@ -875,6 +869,7 @@ def get_li_2021() -> Model:
             "Fd_red": -1,
             "NADPH_st": 0.5,
         },
+        display_name="FNR",
     )
     m.add_reaction(
         name="v_Mehler",
@@ -991,6 +986,7 @@ def get_li_2021() -> Model:
                 unit=None,
             ),
         },
+        display_name="proton leak",
     )
     m.add_reaction(
         name="v_pmf_protons_activity",

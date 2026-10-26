@@ -27,7 +27,7 @@ xanthophyll cycle (violaxanthin \<-> zeaxanthin).
 """
 
 import numpy as np
-from mxlpy import Derived, Model, Parameter, Variable
+from mxlpy import Derived, Model, Parameter, Slider, Variable
 from mxlpy.units import (
     dimensionless,
     joule,
@@ -248,7 +248,9 @@ def get_davis2017() -> Model:
 
     m.add_parameters(
         {
-            "PPFD": Parameter(0, unit=per_second),  # not in SI
+            "PPFD": Parameter(
+                0, unit=per_second, slider=Slider(min="100", max="2000", step="10")
+            ),  # not in SI
             "k_recomb": Parameter(0.33, unit=per_second),  # SI
             "phi_triplet": Parameter(0.45, unit=dimensionless),  # SI: fraction
             "phi_1O2": Parameter(1, unit=dimensionless),  # SI: fraction
@@ -287,7 +289,7 @@ def get_davis2017() -> Model:
             "Vmax_ATPsynth": Parameter(
                 1000, unit=per_second / volt
             ),  # SI :ATP s^-1 complex^-1
-            "b_H": Parameter(0.03, unit=_molar),  # SI: M/pH unit
+            "b_H": Parameter(0.03, unit=_molar, display_name="bH"),  # SI: M/pH unit
             "volt_per_charge": Parameter(
                 0.033, unit=volt
             ),  # SI: V charge^-1 standard PSII content^-1
@@ -313,12 +315,16 @@ def get_davis2017() -> Model:
     m.add_variables(
         {
             "QA_red": Variable(0, unit=dimensionless),  # SI: relative to standard PSII
-            "PQH_2": Variable(0, unit=dimensionless),  # SI: relative to standard PSII
+            "PQH_2": Variable(
+                0, unit=dimensionless, display_name="PQH2"
+            ),  # SI: relative to standard PSII
             "pH_lumen": Variable(7, unit=dimensionless),
             "Dpsi": Variable(0.1, unit=volt),
             "K_lu": Variable(0.04, unit=_molar),
             "PC_ox": Variable(0, unit=dimensionless),  # SI: relative to standard PSII
-            "Zx": Variable(0, unit=dimensionless),  # SI: relative units
+            "Zx": Variable(
+                0, unit=dimensionless, display_name="zx"
+            ),  # SI: relative units
             # "PsbS": Variable(0),
             "singO2": Variable(
                 0, unit=dimensionless
@@ -326,7 +332,7 @@ def get_davis2017() -> Model:
             "P700_ox": Variable(0, unit=dimensionless),  # SI: relative to PSI
             "Fd_red": Variable(0, unit=dimensionless),  # SI: relative to standard PSII
             "NADPH_st": Variable(
-                0, unit=dimensionless
+                0, unit=dimensionless, display_name="NADPH"
             ),  # not in SI; same normalisation as NADP_tot
             "LEF": Variable(0, unit=dimensionless),  # not in SI; cumulative electrons
             "ATP_made": Variable(0, unit=dimensionless),
@@ -364,15 +370,11 @@ def get_davis2017() -> Model:
     )
 
     m.add_derived(
-        name="NADP_st",
-        fn=_moiety_1,
-        args=["NADPH_st", "NADP_tot"],
+        name="NADP_st", fn=_moiety_1, args=["NADPH_st", "NADP_tot"], display_name="NADP"
     )
 
     m.add_derived(
-        name="Vx",
-        fn=_moiety_1,
-        args=["Zx", "Xanthophyll_tot"],
+        name="Vx", fn=_moiety_1, args=["Zx", "Xanthophyll_tot"], display_name="vx"
     )
 
     # Several functions hide 0.06 V per pH unit (or similar) in a constant, so their
@@ -407,6 +409,7 @@ def get_davis2017() -> Model:
         fn=_calc_h,
         args=["pH_lumen"],
         unit=_molar,
+        display_name="protons_lumen",
     )
 
     m.add_derived(
@@ -495,6 +498,7 @@ def get_davis2017() -> Model:
             "QA_red": -1,
             "PQH_2": 0.5,
         },
+        display_name="PSII",
     )
     m.add_reaction(
         name="v_PQ",
@@ -504,6 +508,7 @@ def get_davis2017() -> Model:
             "QA_red": 1,
             "PQH_2": -0.5,
         },
+        display_name="PQ reduction",
     )
     m.add_reaction(
         name="v_b6f",
@@ -531,6 +536,7 @@ def get_davis2017() -> Model:
             ),
             "Dpsi": Derived(fn=_value, args=["volt_per_charge"], unit=None),
         },
+        display_name="cyt b6f",
     )
     m.add_reaction(
         name="PSI_ChSep",
@@ -557,6 +563,7 @@ def get_davis2017() -> Model:
         fn=_v_fnr,
         args=["Fd_red", "NADP_st", "k_FdtoNADP"],
         stoichiometry={"Fd_red": -1, "NADPH_st": 0.5, "LEF": 1},
+        display_name="FNR",
     )
 
     m.add_reaction(

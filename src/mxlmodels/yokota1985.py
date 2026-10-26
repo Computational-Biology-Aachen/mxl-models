@@ -16,7 +16,7 @@ Units:
 - Km: mM
 """
 
-from mxlpy import Model
+from mxlpy import Model, Slider
 from mxlpy.units import liter, mmol, second
 
 _mmol_l = mmol / liter
@@ -80,7 +80,12 @@ def get_yokota1985() -> Model:
     m.add_variable("hydroxypyruvate", initial_value=0.009782608695111009, unit=_mmol_l)
     m.add_variable("H2O2", initial_value=0.010880542843616855, unit=_mmol_l)
     # constant influx of glycolate into the pathway
-    m.add_parameter("kf_phosphoglycolate_phosphatase", value=60.0, unit=_mmol_l_s)
+    m.add_parameter(
+        "kf_phosphoglycolate_phosphatase",
+        value=60.0,
+        unit=_mmol_l_s,
+        slider=Slider(min="0.1", max="2.0", step="0.1"),
+    )
     m.add_parameter("E0_glycolate_oxidase", value=1.0, unit=_mmol_l)
     m.add_parameter("kcat_glycolate_oxidase", value=100, unit=_per_s)
     m.add_parameter("km_glycolate_oxidase_s", value=0.06, unit=_mmol_l)
@@ -160,6 +165,7 @@ def get_yokota1985() -> Model:
         fn=_michaelis_menten_1s,
         args=["glycine", "vmax_glycine_decarboxylase", "km_glycine_decarboxylase_s"],
         stoichiometry={"glycine": -2.0, "serine": 1.0},
+        display_name="glycine decarboxylase",
     )
     m.add_reaction(
         "serine_glyoxylate_transaminase",

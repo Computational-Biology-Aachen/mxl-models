@@ -25,7 +25,7 @@ essential autocatalytic structure of carbon fixation, where RuBP is both
 consumed by RuBisCO and regenerated downstream.
 """
 
-from mxlpy import Model, Parameter, Variable
+from mxlpy import Model, Parameter, Slider, Variable
 from mxlpy.fns import michaelis_menten_1s
 from mxlpy.units import liter, mmol, mumol, second, sqm
 
@@ -55,13 +55,27 @@ def get_zhu_2009() -> Model:
     m.add_parameters(
         {
             # Vmax:
-            "V1_max": Parameter(3.78, unit=_mm_s),  # [mM/S] Zhu et al 2009
-            "V2_max": Parameter(11.75, unit=_mm_s),  # [mM/S] Zhu et al 2009
-            "V3_max": Parameter(5.04, unit=_mm_s),  # [mM/S] Zhu et al 2009
-            "V4_max": Parameter(3.05, unit=_mm_s),  # [mM/S] estimate by Zhu et al.
-            "V5_max": Parameter(3.0, unit=_mm_s),  # [mM/S] Zhu et al 2009
-            "V6_max": Parameter(0.1, unit=_mm_s),  # [mM/S] estimate by Zhu et al.
-            "V13_max": Parameter(8.0, unit=_mm_s),
+            "V1_max": Parameter(
+                3.78, unit=_mm_s, slider=Slider(min="1.9", max="7.6", step="0.1")
+            ),  # [mM/S] Zhu et al 2009
+            "V2_max": Parameter(
+                11.75, unit=_mm_s, slider=Slider(min="5.9", max="23.5", step="0.1")
+            ),  # [mM/S] Zhu et al 2009
+            "V3_max": Parameter(
+                5.04, unit=_mm_s, slider=Slider(min="2.5", max="10.1", step="0.1")
+            ),  # [mM/S] Zhu et al 2009
+            "V4_max": Parameter(
+                3.05, unit=_mm_s, slider=Slider(min="1.5", max="6.1", step="0.1")
+            ),  # [mM/S] estimate by Zhu et al.
+            "V5_max": Parameter(
+                3.0, unit=_mm_s, slider=Slider(min="1.5", max="6", step="0.1")
+            ),  # [mM/S] Zhu et al 2009
+            "V6_max": Parameter(
+                0.1, unit=_mm_s, slider=Slider(min="0.1", max="0.2", step="0.1")
+            ),  # [mM/S] estimate by Zhu et al.
+            "V13_max": Parameter(
+                8.0, unit=_mm_s, slider=Slider(min="4.0", max="16", step="0.1")
+            ),
             # Km:
             "K_m1": Parameter(1.0, unit=_mm),  # [mM] Zhu et al 2009
             "K_m21": Parameter(0.24, unit=_mm),  # [mM] Zhu et al 2009
@@ -76,16 +90,16 @@ def get_zhu_2009() -> Model:
             "K_m131": Parameter(0.15, unit=_mm),  # [mM] Zhu et al 2009
             "K_m132": Parameter(0.059, unit=_mm),  # [mM] Zhu et al 2009
             "ATP": Parameter(
-                0.2, unit=_mm
+                0.2, unit=_mm, slider=Slider(min="0.1", max="0.4", step="0.1")
             ),  # [mM]Not in Zhu et al 2009 but in the reference [9] in the paper
         }
     )
     m.add_variables(
         {
-            "RuBP": Variable(2, unit=_mm),  # Zhu et al 2009
+            "RuBP": Variable(2, unit=_mm, display_name="RUBP"),  # Zhu et al 2009
             "PGA": Variable(2.4, unit=_mm),  # Zhu et al 2009
-            "DPGA": Variable(1, unit=_mm),  # Zhu et al 2009
-            "Ru5P": Variable(1, unit=_mm),  # Zhu et al 2009
+            "DPGA": Variable(1, unit=_mm, display_name="BPGA"),  # Zhu et al 2009
+            "Ru5P": Variable(1, unit=_mm, display_name="RU5P"),  # Zhu et al 2009
             "GAP": Variable(1, unit=_mm),  # Zhu et al 2009
         }
     )

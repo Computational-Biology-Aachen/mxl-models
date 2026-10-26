@@ -20,7 +20,7 @@ synthase F8 - Lumen ion fluxes (Mg, Cl, K)
 """
 
 import numpy as np
-from mxlpy import Derived, Model, Parameter, Variable
+from mxlpy import Derived, Model, Parameter, Slider, Variable
 from mxlpy.units import (
     coulomb,
     dimensionless,
@@ -475,10 +475,10 @@ PARAMS: dict[str, Parameter] = {
     # params.txt says mM but 10e-3 = 10 mM, so value is in M
     "StromaKStart": Parameter(0.01, unit=_molar),
     # confirmed: getparamsfromfilename computes voltsperlog = R*T/F
-    "Rconst": Parameter(8.314, unit=joule / (mol * kelvin)),
+    "Rconst": Parameter(8.314, unit=joule / (mol * kelvin), display_name="R"),
     # confirmed: getStaticThylakoidValues, F * lumenVolumePerArea * charge = C/cm^2
-    "Fconst": Parameter(96485.0, unit=coulomb / mol),
-    "Tconst": Parameter(300.0, unit=kelvin),
+    "Fconst": Parameter(96485.0, unit=coulomb / mol, display_name="F"),
+    "Tconst": Parameter(300.0, unit=kelvin, display_name="T"),
     "LumenVolume": Parameter(6.7e-21, unit=liter),  # per PSII
     "StromaVolume": Parameter(5.36e-20, unit=liter),  # per PSII
     # confirmed: fluxToConcentration divides mol/(cm^2 s) fluxes by it to get M/s
@@ -512,7 +512,12 @@ PARAMS: dict[str, Parameter] = {
     # confirmed: getparamsfromfilename overwrites it with R*T/F ('Volts per Log')
     "voltsperlog": Parameter(0.02585065036015961, unit=volt),
     # umol photons m^-2 s^-1, from the crosssection comment in evolvePSII
-    "LightIntensity": Parameter(0.0, unit=ppfd),
+    "LightIntensity": Parameter(
+        0.0,
+        unit=ppfd,
+        display_name="PPFD",
+        slider=Slider(min="0", max="1000", step="100"),
+    ),
     "P680neut": Parameter(1.0, unit=dimensionless),  # flag
     # quench-mode trigger flags (quenchmodel=1)
     "qtrigg1": Parameter(1.0, unit=dimensionless),  # flag
@@ -558,8 +563,12 @@ VARS: dict[str, Variable] = {
     "ActiveATPs": Variable(0.05, unit=dimensionless),  # fraction of ATP synthase active
     # fraction of TotalXanthophyll
     "Antheraxanthin": Variable(1e-14, unit=dimensionless),
-    "Fdxox": Variable(1.0, unit=dimensionless),  # fraction of ferredoxin
-    "Fdxr": Variable(1e-14, unit=dimensionless),  # fraction of ferredoxin
+    "Fdxox": Variable(
+        1.0, unit=dimensionless, display_name="Fd_ox"
+    ),  # fraction of ferredoxin
+    "Fdxr": Variable(
+        1e-14, unit=dimensionless, display_name="Fd_red"
+    ),  # fraction of ferredoxin
     "LumenCl": Variable(0.01, unit=_molar),
     "LumenK": Variable(0.01, unit=_molar),
     "LumenMg": Variable(0.01, unit=_molar),
@@ -580,7 +589,7 @@ VARS: dict[str, Variable] = {
     # fraction of PsbS in the quenching state
     "PsbSQ": Variable(1e-14, unit=dimensionless),
     # fraction of PSII reaction centres (QAred = 1 - QAox)
-    "QAox": Variable(1, unit=dimensionless),
+    "QAox": Variable(1, unit=dimensionless, display_name="QA"),
     # fraction of QB sites (called QBox in evolvePQ)
     "QBneut": Variable(1, unit=dimensionless),
     "QBred1": Variable(1e-7, unit=dimensionless),  # fraction of QB sites
@@ -648,7 +657,9 @@ def get_zaks2012() -> Model:
             "MembraneCapacitance",
         ],
     )
-    m.add_derived("deltapH", _delta_p_h, args=["pH_stroma", "pH_lumen"])
+    m.add_derived(
+        "deltapH", _delta_p_h, args=["pH_stroma", "pH_lumen"], display_name="delta_pH"
+    )
     m.add_derived("pmf", _pmf, args=["deltapH", "deltapsi", "voltsperlog"])
 
     # Ion electrochemical potentials
@@ -718,7 +729,9 @@ def get_zaks2012() -> Model:
     )
 
     # PSII moiety complements
-    m.add_derived("QAred", _moeity_frac, args=["QAox", "fracIntactRC"])
+    m.add_derived(
+        "QAred", _moeity_frac, args=["QAox", "fracIntactRC"], display_name="QA_red"
+    )
     m.add_derived("Pheneut", _moeity_frac, args=["PheAnion", "fracIntactRC"])
 
     # PQ pool fractions
@@ -1076,6 +1089,7 @@ def get_zaks2012() -> Model:
                 fn=_atpsyn_proton_stoi, args=["lumenVolumePerArea"]
             ),
         },
+        display_name="proton leak",
     )
 
     m.add_reaction(
