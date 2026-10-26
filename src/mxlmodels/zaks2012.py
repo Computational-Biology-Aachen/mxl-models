@@ -513,7 +513,7 @@ PARAMS: dict[str, Parameter] = {
     "voltsperlog": Parameter(0.02585065036015961, unit=volt),
     # umol photons m^-2 s^-1, from the crosssection comment in evolvePSII
     "LightIntensity": Parameter(
-        0.0,
+        100.0,
         unit=ppfd,
         display_name="PPFD",
         slider=Slider(min="0", max="1000", step="100"),

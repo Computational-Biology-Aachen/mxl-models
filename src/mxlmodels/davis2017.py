@@ -249,7 +249,7 @@ def get_davis2017() -> Model:
     m.add_parameters(
         {
             "PPFD": Parameter(
-                0, unit=per_second, slider=Slider(min="100", max="2000", step="10")
+                100, unit=per_second, slider=Slider(min="100", max="2000", step="10")
             ),  # not in SI
             "k_recomb": Parameter(0.33, unit=per_second),  # SI
             "phi_triplet": Parameter(0.45, unit=dimensionless),  # SI: fraction
