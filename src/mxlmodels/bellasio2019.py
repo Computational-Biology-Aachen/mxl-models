@@ -46,6 +46,7 @@ from mxlpy import Derived, InitialAssignment, Model, Parameter, Slider, Variable
 from mxlpy.units import (
     dimensionless,
     liter,
+    mega,
     mmol,
     mol,
     mumol,
@@ -61,7 +62,7 @@ _mm = mmol / liter
 _flux = mmol / sqm / second
 _mol_m2_s = mol / sqm / second
 _umol_mol = mumol / mol
-_mpa = pascal  # pressures of the stomatal model are given in MPa
+_mpa = mega * pascal  # pressures of the stomatal model are given in MPa
 
 
 def _value(
