@@ -4,6 +4,8 @@
 
 # MxlModels
 
+[![mxl-e2e](https://img.shields.io/github/actions/workflow/status/Computational-Biology-Aachen/mxl-models/e2e.yml?branch=main&label=mxl-e2e&style=flat-square)](https://github.com/Computational-Biology-Aachen/mxl-models/actions/workflows/e2e.yml)
+
 `MxlModels` is a Python package of reference mechanistic models.
 It contains the same models as in the [MxlBricks](https://github.com/Computational-Biology-Aachen/mxl-bricks) repo, but written as single, flat files to make inspection easier.
 
