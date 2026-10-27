@@ -1,5 +1,5 @@
 version = 1
-revision = 5
+revision = 3
 requires-python = ">=3.13"
 resolution-markers = [
     "python_full_version >= '3.14' and sys_platform == 'win32'",
@@ -1966,7 +1966,7 @@ dev = [
 
 [package.metadata]
 requires-dist = [
-    { name = "mxlpy", specifier = ">=0.62.0" },
+    { name = "mxlpy", specifier = ">=0.64.0" },
     { name = "nbdime", specifier = ">=4.0.4" },
 ]
 
@@ -1991,7 +1991,7 @@ dev = [
 
 [[package]]
 name = "mxlpy"
-version = "0.62.0"
+version = "0.64.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "dill" },
@@ -2021,9 +2021,9 @@ dependencies = [
     { name = "typing-extensions" },
     { name = "wadler-lindig" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/9f/f5/af8e0f9a7e27832be5fca993c977a1674448bb55298c4b01e0c5fdc87271/mxlpy-0.62.0.tar.gz", hash = "sha256:5123ad03667f07b40effa6832f84f558e52027bd3b6e5157aec40fada2ef5352", size = 5504670, upload-time = "2026-10-14T08:12:12.27Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/cc/7d/26da8361dc7b4e23a8be001f389e18016f6377980e7dc816b4ce2109f51f/mxlpy-0.64.0.tar.gz", hash = "sha256:739e03052fde7b7b2a1c191e9dfc5ac75dea9a22094913812bfa1bf3d377930b", size = 5550914, upload-time = "2026-10-27T07:36:44.369Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/17/e9/b7d5817d5fa6c0b8413488b4a87e21c75a7bdd4df7570c64ea8c06943fa6/mxlpy-0.62.0-py3-none-any.whl", hash = "sha256:75fb479f29c63ecd7426a1068cd792bb70c2b35f89d3b4df25ecbcc0e9a1544c", size = 329740, upload-time = "2026-10-14T08:12:10.661Z" },
+    { url = "https://files.pythonhosted.org/packages/c3/18/9944db4ee64788437b169d8128d05c25c649c2dd51500c355692bf5b5489/mxlpy-0.64.0-py3-none-any.whl", hash = "sha256:dcce3b62107a6b93095a4e2d6c9234ffbf2cc3390fc057d47caa943b0ce3215d", size = 338286, upload-time = "2026-10-27T07:36:42.359Z" },
 ]
 
 [[package]]
