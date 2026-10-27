@@ -11,6 +11,11 @@ With ROS scavenging, Calvin cycle, and thioredoxin regulation.
 | journal     | Frontiers in Plant Science                                                                       |
 | organism    | higher plants                                                                                    |
 | Ported by   | Marvin van Aalst ( @marvinvanaalst )                                                             |
+
+Linear electron flow runs from plastocyanin (PC) through P700, the iron-sulfur
+cluster (FA) and ferredoxin (Fd) to NADPH, driven by PPFD and governed by the
+Nernst equilibrium potentials of the carriers. Includes the Mehler reaction (O2
+reduction at PSI).
 """
 
 import math

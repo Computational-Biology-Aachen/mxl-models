@@ -16,6 +16,8 @@ ODE model of photoprotection in plant PSII. Tracks PSII open/closed states,
 plastoquinone (PQ/PQH2) redox, lumenal proton buffering, ATP synthesis, PsbS
 protonation, and xanthophyll de-epoxidation (zeaxanthin formation). Supports PAM
 fluorescence protocol simulation to reproduce Fm/Fm' quenching.
+
+Ref: Matuszynska et al. (2016) Biochim Biophys Acta 1857:1948-1960
 """
 
 import numpy as np
