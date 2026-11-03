@@ -44,12 +44,13 @@ are correct or not.
 import numpy as np
 from mxlpy import Derived, InitialAssignment, Model, Parameter, Slider, Variable
 from mxlpy.units import (
+    bar,
     dimensionless,
     liter,
     mega,
+    micro,
     mmol,
     mol,
-    mumol,
     pascal,
     ppfd,
     second,
@@ -57,11 +58,33 @@ from mxlpy.units import (
 )
 
 # Metabolites in mM, leaf-level fluxes in mmol m^-2 s^-1 (converted to mM/s via the
-# mesophyll volume V_m), partial pressures in ubar = umol/mol (Table S2)
+# mesophyll volume V_m), partial pressures in ubar (Table S2: "umol/mol = ubar", i.e.
+# at 1 bar total pressure, which the stomatal/mesophyll diffusion terms assume)
 _mm = mmol / liter
 _flux = mmol / sqm / second
 _mol_m2_s = mol / sqm / second
-_umol_mol = mumol / mol
+_ubar = micro * bar
+
+# TODO: green-sloth's bellasio2019 differs from this model  # noqa: FIX002
+# Its model.ts is NOT the codegen of this model: it was hand-edited (2026-11-03) to
+# show the units of Tables S1/S2 verbatim, so mxl-e2e's greensloth/bellasio2019
+# `generated` check is a strict xfail until the two agree again.
+# Remaining differences (paper / green-sloth vs. here):
+# - Codegen display only (same quantity): the exporter re-folds prefixes, so
+#   Kh_o2/Kh_co2 (ubar/mM) come out as L bar/kmol and Kh (mmol m^-2 s^-1 MPa^-1) as
+#   nmol m^-2 s^-1 Pa^-1. Fix in MxlPy's unit export (keep the authored prefixes).
+# - The paper's units are dimensionally inconsistent with its own equations, so
+#   this model deliberately deviates:
+#   - tau0: paper mM, here dimensionless; Eq. 41 adds it to f(RuBP), a ratio.
+#   - chi_beta: paper "mol air MPa^-1", here mol m^-2 s^-1 MPa^-1; Eq. 40 must yield
+#     gs in mol m^-2 s^-1.
+#   - keq_v_PRKase, keq_v_FNR: paper mM, here dimensionless; both divide terms that
+#     already share a unit (ADP*RuBP vs ATP*Ru5P; NADPH vs NADP).
+#   - RLight: paper "0.0012 umol m^-2 s^-1", here 0.001 mmol m^-2 s^-1. The paper's
+#     unit is likely a typo for mmol (~1 umol m^-2 s^-1 light respiration, all other
+#     fluxes in mmol); green-sloth shows umol with the value 0.001.
+# Resolve by agreeing on one set of units (here, then regenerate green-sloth) and
+# drop the xfail entry in misc/mxl-e2e/xfails.toml.
 _mpa = mega * pascal  # pressures of the stomatal model are given in MPa
 
 
@@ -596,8 +619,8 @@ def get_bellasio_2019() -> Model:
         {
             "AP_tot": Parameter(1.5, unit=_mm),
             "Pi_tot": Parameter(15, unit=_mm),
-            "p_o2": Parameter(210000, unit=_umol_mol),
-            "Kh_o2": Parameter(833300, unit=_umol_mol / _mm),
+            "p_o2": Parameter(210000, unit=_ubar),
+            "Kh_o2": Parameter(833300, unit=_ubar / _mm),
             "V_m": Parameter(0.03, unit=liter / sqm),
             "PPFD": Parameter(
                 1500, unit=ppfd, slider=Slider(min="100", max="2000", step="10")
@@ -614,7 +637,7 @@ def get_bellasio_2019() -> Model:
             "fq": Parameter(1, unit=dimensionless),
             "f_ndh": Parameter(0, unit=dimensionless),
             "h": Parameter(4, unit=dimensionless),
-            "Ca": Parameter(350, unit=_umol_mol),
+            "Ca": Parameter(350, unit=_ubar),
             "alpha_ppfd_rub": Parameter(0.0018, unit=1 / ppfd),
             "V0_ppfd_rub": Parameter(0.16, unit=dimensionless),
             "theta_ppfd_rub": Parameter(0.95, unit=dimensionless),
@@ -699,7 +722,7 @@ def get_bellasio_2019() -> Model:
             "km_v_ATPsynth_ATP_st": Parameter(0.3, unit=_mm),
             "Kj_ATP": Parameter(200, unit=second),
             "gm": Parameter(0.5, unit=_mol_m2_s),
-            "Kh_co2": Parameter(30303.0303030303, unit=_umol_mol / _mm),
+            "Kh_co2": Parameter(30303.0303030303, unit=_ubar / _mm),
             "Kd": Parameter(150, unit=second),
             "Ki": Parameter(900, unit=second),
             # Table S2 lists mM, but it is added to the dimensionless f_rubp
@@ -730,9 +753,7 @@ def get_bellasio_2019() -> Model:
             "Ract": Variable(1, unit=dimensionless),
             "J_NADPH": Variable(0.1, unit=_flux),
             "J_ATP": Variable(0.16, unit=_flux),
-            "Ci": Variable(
-                InitialAssignment(fn=_ci_initial, args=["Ca"]), unit=_umol_mol
-            ),
+            "Ci": Variable(InitialAssignment(fn=_ci_initial, args=["Ca"]), unit=_ubar),
             "gs": Variable(0.334934046786077, unit=_mol_m2_s),
         }
     )
