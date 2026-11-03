@@ -5,7 +5,7 @@ from mxlmodels import get_fuente_2024
 
 
 def test_rhs() -> None:
-    model = get_fuente_2024(at_reference=True)
+    model = get_fuente_2024()
     expected = pd.Series(
         {
             "Q_active": 0.0004512110259626644,

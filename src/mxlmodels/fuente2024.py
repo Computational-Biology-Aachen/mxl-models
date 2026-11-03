@@ -36,13 +36,9 @@ extension, they provide a detailed Wolfram Language notebook that reproduces
 several figures from the publication.
 """
 
-from collections.abc import Iterable
-from functools import partial
-
 import numpy as np
-from mxlpy import Derived, InitialAssignment, Model, Parameter, Variable
+from mxlpy import Derived, Model, Parameter, Variable
 from mxlpy.units import dimensionless, liter, mumol, second
-from scipy.optimize import least_squares
 
 # Pools are per RCII (dimensionless), H+ and ATP in uM. PPFD acts as an excitation
 # rate: the effective antenna size sigma_II = 1 s^-1/(umol photons m^-2 s^-1) is folded in
@@ -224,240 +220,7 @@ def _v_leak(
     return k7 * (h_lumen - h_stroma)
 
 
-def _initial_equations(
-    initial_guess: Iterable,
-    pq_tot: float,
-    h_stroma: float,
-    atot: float,
-    n_psi: float,
-    stoic_psii: float,
-    npq_max: float,
-    b_h: float,
-    v_stroma: float,
-    v_lumen: float,
-    k1p: float,
-    k1m: float,
-    k2p: float,
-    k2m: float,
-    k3: float,
-    k_npq: float,
-    n_npq: float,
-    k4: float,
-    k5: float,
-    c_eq_p: float,
-    k6: float,
-    k7: float,
-    pfd: float,
-    k_x: float,
-    l_psi: float,
-    stoic_psi: float,
-    sigma_psi: float,
-    n_a: float,
-) -> list[float]:
-
-    q_active, pq_ox, psi_ox, h_lumen, atp = initial_guess
-
-    light = _osc_light(
-        pfd=pfd,
-        pfd_add=0,
-        f=0,
-        time=0,
-    )
-    pq_red = pq_tot - pq_ox
-    psi_red = n_psi - psi_ox
-    adp = atot - atp
-    sigma_psii = _sigma_psii(npq_max=npq_max, q_active=q_active)
-    rcii_closed = _rcii_closed(
-        k1p=k1p,
-        pq_ox=pq_ox,
-        sigma_psii=sigma_psii,
-        light=light,
-        k1m=k1m,
-        pq_red=pq_red,
-    )
-    rcii_open = _rcii_open(
-        k1p=k1p,
-        pq_ox=pq_ox,
-        sigma_psii=sigma_psii,
-        k1m=k1m,
-        pq_red=pq_red,
-    )
-
-    v_PSII_O2 = _v_psii_o2(
-        stoic_psii=stoic_psii,
-        sigma_psii=sigma_psii,
-        light=light,
-        rcii_closed=rcii_closed,
-    )
-    v_ps1 = _v_psi(
-        stoic_psi=stoic_psi,
-        sigma_psi=sigma_psi,
-        light=light,
-        psi_ox=psi_ox,
-        l_psi=l_psi,
-    )
-    v_PSII_PQ = _v_psii_pq(
-        k1p=k1p,
-        rcii_closed=rcii_closed,
-        pq_ox=pq_ox,
-        k1m=k1m,
-        rcii_open=rcii_open,
-        pq_red=pq_red,
-    )
-    v_PQH2_PSI = _v_pqh2_psi(
-        k2p=k2p,
-        pq_red=pq_red,
-        psi_ox=psi_ox,
-        k2m=k2m,
-        pq_ox=pq_ox,
-        psi_red=psi_red,
-    )
-    v3 = _v3(
-        k3=k3,
-        h_lumen=h_lumen,
-        q_active=q_active,
-        k_npq=k_npq,
-        n=n_npq,
-    )
-    v4 = _mass_action_1s(q_active, k4)
-    v_ATPsynth = _v_at_psynth(
-        k5=k5,
-        adp=adp,
-        atp=atp,
-        h_stroma=h_stroma,
-        h_lumen=h_lumen,
-        c_eq_p=c_eq_p,
-    )
-    v_ATPcons = _mass_action_1s(atp, k6)
-    v_Leak = _v_leak(
-        k7=k7,
-        h_lumen=h_lumen,
-        h_stroma=h_stroma,
-    )
-    v_PQ = _mass_action_1s(psi_red, k_x)
-
-    alpha = b_h / (n_a * v_lumen)
-    beta = 14 / 3 * b_h * v_stroma / v_lumen
-
-    dqactive_dt = v3 - v4
-    dpqox_dt = 1 / 2 * (v_PQH2_PSI - v_PSII_PQ) + v_PQ
-    dpsiox_dt = v_ps1 - v_PQH2_PSI
-    dhlumen_dt = (
-        alpha * v_PSII_O2 + alpha * v_PQH2_PSI - beta * v_ATPsynth - b_h * v_Leak
-    )
-    datp_dt = v_ATPsynth - v_ATPcons
-    return [dqactive_dt, dpqox_dt, dpsiox_dt, dhlumen_dt, datp_dt]
-
-
-def _x0_guess(
-    pq_tot: float,
-    h_stroma: float,
-    atot: float,
-    n_psi: float,
-) -> tuple[float, float, float, float, float]:
-    PQ_ox_stst = pq_tot / 2
-    h_lumen_stst = h_stroma * 10
-    qactive_stst = 0.5
-    atp_stst = atot / 2
-    psi_ox_stst = n_psi / 2
-
-    return qactive_stst, PQ_ox_stst, psi_ox_stst, h_lumen_stst, atp_stst
-
-
-def _initial_combined(
-    pq_tot: float,
-    h_stroma: float,
-    atot: float,
-    n_psi: float,
-    stoic_psii: float,
-    npq_max: float,
-    b_h: float,
-    v_stroma: float,
-    v_lumen: float,
-    k1p: float,
-    k1m: float,
-    k2p: float,
-    k2m: float,
-    k3: float,
-    k_npq: float,
-    n_npq: float,
-    k4: float,
-    k5: float,
-    c_eq_p: float,
-    k6: float,
-    k7: float,
-    pfd: float,
-    k_x: float,
-    l_psi: float,
-    stoic_psi: float,
-    sigma_psi: float,
-    n_a: float,
-    extract_str: str,
-) -> float:
-
-    bounds = [
-        (0, 1),  # Q_active
-        (0, pq_tot),  # PQ_ox
-        (0, n_psi),  # PSI_ox
-        (h_stroma, h_stroma * 100),  # h_lumen
-        (0, atot),  # ATP
-    ]
-
-    bounds_low = [b[0] for b in bounds]
-    bounds_high = [b[1] for b in bounds]
-
-    res = least_squares(
-        fun=_initial_equations,
-        x0=_x0_guess(
-            pq_tot=pq_tot,
-            h_stroma=h_stroma,
-            atot=atot,
-            n_psi=n_psi,
-        ),
-        args=(
-            pq_tot,
-            h_stroma,
-            atot,
-            n_psi,
-            stoic_psii,
-            npq_max,
-            b_h,
-            v_stroma,
-            v_lumen,
-            k1p,
-            k1m,
-            k2p,
-            k2m,
-            k3,
-            k_npq,
-            n_npq,
-            k4,
-            k5,
-            c_eq_p,
-            k6,
-            k7,
-            pfd,
-            k_x,
-            l_psi,
-            stoic_psi,
-            sigma_psi,
-            n_a,
-        ),
-        bounds=(bounds_low, bounds_high),
-        method="trf",
-        xtol=1e-8,
-    )
-    pointer = {
-        "qactive": 0,
-        "pqox": 1,
-        "psiox": 2,
-        "hlumen": 3,
-        "atp": 4,
-    }
-    return np.real(res.x[pointer[extract_str]])
-
-
-def get_fuente_2024(*, at_reference: bool = False) -> Model:
+def get_fuente_2024() -> Model:
     r"""Fuente 2024 model
 
     The Fuente2024 model is a kinetic model of photosynthesis designed according to
@@ -484,6 +247,11 @@ def get_fuente_2024(*, at_reference: bool = False) -> Model:
     that may be missed by traditional steady-state models. To support reuse and
     extension, they provide a detailed Wolfram Language notebook that reproduces
     several figures from the publication.
+
+    The initial state is a fixed reference state. The paper starts every
+    oscillating-light simulation from the steady state in the constant light
+    u0 (Section 3.2): to reproduce it, simulate to steady state with
+    `PPFD_add = 0` first and continue from that state.
     """
     m = Model()
 
@@ -491,9 +259,9 @@ def get_fuente_2024(*, at_reference: bool = False) -> Model:
         {
             "stoic_PSII": Parameter(1, unit=dimensionless),
             "stoic_PSI": Parameter(1, unit=dimensionless),
-            "PQ_tot": Parameter(7, unit=dimensionless),
+            "PQ_tot": Parameter(7, unit=dimensionless, display_name="PQ_tot"),
             "H_stroma": Parameter(0.015848931924611134, unit=_um),
-            "AP_tot": Parameter(1000, unit=_um),
+            "AP_tot": Parameter(1000, unit=_um, display_name="AP_tot"),
             "V_lumen": Parameter(2.62e-21, unit=liter),
             "V_stroma": Parameter(2.09e-20, unit=liter),
             "sigma_PSI_0": Parameter(1, unit=dimensionless),
@@ -508,101 +276,35 @@ def get_fuente_2024(*, at_reference: bool = False) -> Model:
             "k7": Parameter(500, unit=_per_s),
             "k_X": Parameter(1, unit=_per_s),
             "L_PSI": Parameter(10000, unit=_per_s),
-            "bH": Parameter(0.01, unit=dimensionless),
-            "NPQ_max": Parameter(0.6, unit=dimensionless),
+            "bH": Parameter(0.01, unit=dimensionless, display_name="bH"),
+            "NPQ_max": Parameter(0.6, unit=dimensionless, display_name="NPQ_max"),
             "cEqP": Parameter(4.3e-08, unit=dimensionless),
             "keq_NPQ": Parameter(1, unit=_um),
             "n_NPQ": Parameter(5.3, unit=dimensionless),
             "N_A": Parameter(6.02214076e17, unit=1 / mumol),
-            "PPFD": Parameter(50, unit=_per_s),
+            "PPFD": Parameter(50, unit=_per_s, display_name="PPFD"),
             "PPFD_add": Parameter(0, unit=_per_s),
             "f": Parameter(1, unit=_per_s),
-            "PSI_total": Parameter(1, unit=dimensionless),
+            "PSI_total": Parameter(1, unit=dimensionless, display_name="PSI_total"),
             "Fluo_0": Parameter(0.25, unit=dimensionless),
             "Q_total": Parameter(1, unit=dimensionless),
         }
     )
-    if at_reference:
-        m.add_variables(
-            {
-                "Q_active": Variable(
-                    np.float64(1.6044277821745498e-23), unit=dimensionless
-                ),
-                "PQ": Variable(np.float64(3.537090541057567), unit=dimensionless),
-                "PSI_ox": Variable(np.float64(0.197310072778891), unit=dimensionless),
-                "H_lumen": Variable(np.float64(0.4120700665522831), unit=_um),
-                "ATP_st": Variable(np.float64(144.95412072145785), unit=_um),
-            }
-        )
-    else:
-        args = [
-            "PQ_tot",
-            "H_stroma",
-            "AP_tot",
-            "PSI_total",
-            "stoic_PSII",
-            "NPQ_max",
-            "bH",
-            "V_stroma",
-            "V_lumen",
-            "k1p",
-            "k1m",
-            "k2p",
-            "k2m",
-            "k3",
-            "keq_NPQ",
-            "n_NPQ",
-            "k4",
-            "k5",
-            "cEqP",
-            "k6",
-            "k7",
-            "PPFD",
-            "k_X",
-            "L_PSI",
-            "stoic_PSI",
-            "sigma_PSI_0",
-            "N_A",
-        ]
-        m.add_variables(
-            {
-                "Q_active": Variable(
-                    InitialAssignment(
-                        fn=partial(_initial_combined, extract_str="qactive"),
-                        args=args,
-                    ),
-                    unit=dimensionless,
-                ),
-                "PQ": Variable(
-                    InitialAssignment(
-                        fn=partial(_initial_combined, extract_str="pqox"),
-                        args=args,
-                    ),
-                    unit=dimensionless,
-                ),
-                "PSI_ox": Variable(
-                    InitialAssignment(
-                        fn=partial(_initial_combined, extract_str="psiox"),
-                        args=args,
-                    ),
-                    unit=dimensionless,
-                ),
-                "H_lumen": Variable(
-                    InitialAssignment(
-                        fn=partial(_initial_combined, extract_str="hlumen"),
-                        args=args,
-                    ),
-                    unit=_um,
-                ),
-                "ATP_st": Variable(
-                    InitialAssignment(
-                        fn=partial(_initial_combined, extract_str="atp"),
-                        args=args,
-                    ),
-                    unit=_um,
-                ),
-            }
-        )
+    m.add_variables(
+        {
+            "Q_active": Variable(
+                np.float64(1.6044277821745498e-23), unit=dimensionless
+            ),
+            "PQ": Variable(
+                np.float64(3.537090541057567), unit=dimensionless, display_name="PQ"
+            ),
+            "PSI_ox": Variable(np.float64(0.197310072778891), unit=dimensionless),
+            "H_lumen": Variable(np.float64(0.4120700665522831), unit=_um),
+            "ATP_st": Variable(
+                np.float64(144.95412072145785), unit=_um, display_name="ATP"
+            ),
+        }
+    )
 
     m.add_derived(
         name="Q_inactive",
@@ -612,6 +314,7 @@ def get_fuente_2024(*, at_reference: bool = False) -> Model:
 
     m.add_derived(
         name="PQH_2",
+        display_name="PQH2",
         fn=_moiety_1,
         args=["PQ", "PQ_tot"],
     )
@@ -624,6 +327,7 @@ def get_fuente_2024(*, at_reference: bool = False) -> Model:
 
     m.add_derived(
         name="ADP_st",
+        display_name="ADP",
         fn=_moiety_1,
         args=["ATP_st", "AP_tot"],
     )
@@ -654,18 +358,21 @@ def get_fuente_2024(*, at_reference: bool = False) -> Model:
 
     m.add_derived(
         name="Fluo",
+        display_name="Fluo",
         fn=_flourescence,
         args=["Fluo_0", "RCII_closed", "sigma_PSII"],
     )
 
     m.add_derived(
         name="NPQ",
+        display_name="NPQ",
         fn=_npq,
         args=["NPQ_max", "Q_active"],
     )
 
     m.add_derived(
         name="O2",
+        display_name="O2",
         fn=_o2,
         args=["PSI_total", "k1p", "RCII_closed", "PQ", "k1m", "PQH_2"],
     )
@@ -751,6 +458,7 @@ def get_fuente_2024(*, at_reference: bool = False) -> Model:
     )
     m.add_reaction(
         name="v_Leak",
+        display_name="proton leak",
         fn=_v_leak,
         args=["k7", "H_lumen", "H_stroma"],
         stoichiometry={
@@ -759,6 +467,7 @@ def get_fuente_2024(*, at_reference: bool = False) -> Model:
     )
     m.add_reaction(
         name="v_PQ",
+        display_name="PQ reduction",
         fn=_mass_action_1s,
         args=["PQH_2", "k_X"],
         stoichiometry={
