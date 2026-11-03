@@ -27,7 +27,7 @@ Dehydrogenase complex 2 Oxy: RuBisCO oxygenation PR: Photorespiration SDH:
 Succinate dehydrogenase
 """
 
-from typing import Literal, cast
+from typing import Literal
 
 import numpy as np
 import pandas as pd
@@ -36,6 +36,7 @@ from mxlpy.surrogates import qss
 from mxlpy.units import (
     coulomb,
     dimensionless,
+    gram,
     joule,
     kelvin,
     kilo,
@@ -291,7 +292,22 @@ parameters: dict[str, Parameter] = {
     "vNQ_max": Parameter(47.52413111835536, unit=_c_s),
     "KMNQ_Qox": Parameter(1.225188500783819, unit=_c),
     "KMNQ_Fdred": Parameter(1.3324893590389415, unit=_c),
+    # pigment contents [mg(pigment) mg(Chla)^-1] (Zavrel2023)
+    "chla_content": Parameter(1.000, unit=dimensionless),
+    "beta_carotene_content": Parameter(0.176, unit=dimensionless),
+    "allophycocyanin_content": Parameter(1.118, unit=dimensionless),
+    "phycocyanin_content": Parameter(6.765, unit=dimensionless),
+    # [g mol^-1] molar masses
+    "M_chla": Parameter(893.509, unit=gram / mol),
+    "M_beta_carotene": Parameter(536.888, unit=gram / mol),
+    # pigments per photosystem complex
+    "n_chla_PS1": Parameter(96.0, unit=dimensionless),
+    "n_chla_PS2": Parameter(35.0, unit=dimensionless),
+    "n_beta_carotene_PS1": Parameter(22.0, unit=dimensionless),
+    "n_beta_carotene_PS2": Parameter(11.0, unit=dimensionless),
 }
+
+PIGMENTS = ("chla", "beta_carotene", "allophycocyanin", "phycocyanin")
 
 
 ###############################################################################
@@ -382,110 +398,86 @@ def light_gaussian_led(
 ###############################################################################
 
 
-def _get_pigment_association(
-    *,
-    ps1_ratio: float,
+def _spectral_absorption(
+    content: float,
     # data
-    ps_comp: pd.DataFrame,
-    molar_masses: pd.Series,
-    pigment_content: pd.Series,
-) -> pd.DataFrame:
-    r"""Create a DataFrame containing the fractions of pigments associated to the main complexes (PS1, PS2. PBS)
-
-    Args: ps1_ratio (float): ratio of PS1:PS2 beta_carotene_method (str): how to
-    calculate the beta carotene energy donation, one of 'original' or
-    'stoichiometric' pigments (pd.DataFrame): DataFrame with the pigment amounts
-    [mg(pigment) mg(chlorophyll a)^-1] in named columns verbose (bool): issue a
-    warning if provided and calculated beta carotene amounts don't match
-
-    Returns: pd.DataFrame, with contents like this
-
-    |     |     chla | beta_carotene | allophycocyanin | phycocyanin |
-    | :-- | -------: | ------------: | --------------: | ----------: |
-    | ps1 | 0.215247 |      0.166667 |               0 |           0 |
-    | ps2 | 0.784753 |             0 |               0 |           0 |
-    | pbs |        0 |             0 |               1 |           1 |
-    """
-    df = pd.DataFrame(
-        np.zeros((3, 4)),
-        index=["ps1", "ps2", "pbs"],
-        columns=["chla", "beta_carotene", "allophycocyanin", "phycocyanin"],
-    )
-    df.loc["pbs", ["allophycocyanin", "phycocyanin"]] = 1.0
-
-    # Adapt the ratio tab in _ps_comp
-    ps_comp.loc["ratio", "ps1"] = ps1_ratio
-
-    # Chlorophyll a: Fraction of total pool
-    chla = ps_comp.loc[["ratio", "n_chla"], :].prod(axis=0)
-    chla = chla / chla.sum()
-
-    # Beta carotene: Fraction of total pool wih adjustment factor
-    beta_carotene = ps_comp.loc[["ratio", "n_beta_carotene"], :].prod(axis=0)
-    beta_carotene = beta_carotene / beta_carotene.sum()
-
-    # Calculate the molar ratio of beta carotene following from the stoichiometry
-    bc_stoich = ps_comp.loc[["ratio", "n_beta_carotene"], :].prod(axis=0) * (
-        1 / ps_comp.loc["ratio", :].sum()
-    )
-    bc_stoich = bc_stoich.mul(1 / ps_comp.loc["n_chla", :]).sum()  # type: ignore
-
-    # Compare with the measured value and calculate a proportionality factor
-    bc_measured = (
-        pigment_content.loc["beta_carotene"]
-        * molar_masses["chla"]
-        / molar_masses["beta_carotene"]
-    )
-    bc_fac = np.min(np.array([bc_stoich / bc_measured, 1]))
-
-    # Also take into account that only ps1 is excited by carotenoid absorption
-
-    df.loc[["ps1", "ps2"], "chla"] = chla
-    df.loc[["ps1", "ps2"], "beta_carotene"] = beta_carotene * pd.Series(
-        {"ps1": bc_fac, "ps2": 0}
-    )
-    return df
-
-
-def _absorption_per_complex(
-    ps_ratio: float,
-    # data
+    abs_coef: pd.Series,
     light_spectrum: pd.Series,
-    pigment_content: pd.Series,
-    molar_masses: pd.Series,
-    abs_coef: pd.DataFrame,
-    ps_comp: pd.DataFrame,
-) -> tuple[float, float, float]:
-    r"""Compute spectrally integrated light absorption for PSI, PSII, and PBS.
+    wavelength: pd.Series,
+) -> float:
+    r"""Light absorbed by one pigment, integrated over the spectrum.
 
-    Weights wavelength-resolved absorption coefficients by pigment content and
-    pigment-to-complex association, then integrates over the incident light
-    spectrum. Returns absorption values in \[mg(Chla) mmol(Chl)^-1 * (absorption
-    unit)\] for each complex as (ps1, ps2, pbs).
+    The pigment's wavelength-resolved absorption coefficient times the incident
+    light, integrated over wavelength (Simpson's rule) and scaled by the
+    pigment's content \[mg(pigment) mg(Chla)^-1\].
     """
-    absorption_per_pigment = (
-        (abs_coef * pigment_content)  # nm x pigment
-        .mul(light_spectrum, axis=0)  # nm x pigment
-        .apply(
-            simpson,  # type: ignore
-            axis=0,
-        )  # pigment
+    return content * simpson(abs_coef * light_spectrum, x=wavelength)
+
+
+def _chla_fraction_ps1(
+    ps_ratio: float,
+    n_chla_ps1: float,
+    n_chla_ps2: float,
+) -> float:
+    r"""Fraction of the chlorophyll a pool bound to PSI, from the PSI:PSII ratio and chlorophylls per complex."""
+    return ps_ratio * n_chla_ps1 / (ps_ratio * n_chla_ps1 + n_chla_ps2)
+
+
+def _beta_carotene_fraction_ps1(
+    ps_ratio: float,
+    n_chla_ps1: float,
+    n_chla_ps2: float,
+    n_beta_carotene_ps1: float,
+    n_beta_carotene_ps2: float,
+    beta_carotene_content: float,
+    molar_mass_chla: float,
+    molar_mass_beta_carotene: float,
+) -> float:
+    r"""Fraction of the beta carotene pool donating energy to PSI.
+
+    The PSI share of the beta carotene bound to the photosystems, scaled down by
+    the ratio of the stoichiometric to the measured beta carotene amount
+    (capped at 1). Only PSI is excited by carotenoid absorption.
+    """
+    bc_ps1 = ps_ratio * n_beta_carotene_ps1
+    bc_fraction = bc_ps1 / (bc_ps1 + n_beta_carotene_ps2)
+    bc_stoich = (bc_ps1 / n_chla_ps1 + n_beta_carotene_ps2 / n_chla_ps2) / (
+        ps_ratio + 1
     )
-    pigment_association_per_complex = _get_pigment_association(
-        ps1_ratio=ps_ratio,
-        pigment_content=pigment_content,
-        ps_comp=ps_comp,
-        molar_masses=molar_masses,
-    )  # complex x pigment
-    _absorption_per_complex = (
-        pigment_association_per_complex.dot(absorption_per_pigment)
-        * molar_masses["chla"]
-    )  # complex
+    bc_measured = beta_carotene_content * molar_mass_chla / molar_mass_beta_carotene
+    return bc_fraction * min(bc_stoich / bc_measured, 1.0)
+
+
+def _absorption_ps1(
+    chla_fraction_ps1: float,
+    beta_carotene_fraction_ps1: float,
+    absorption_chla: float,
+    absorption_beta_carotene: float,
+    molar_mass_chla: float,
+) -> float:
+    r"""Light absorbed by PSI: its chlorophyll a and beta carotene shares."""
     return (
-        _absorption_per_complex["ps1"],
-        _absorption_per_complex["ps2"],
-        _absorption_per_complex["pbs"],
-    )
+        chla_fraction_ps1 * absorption_chla
+        + beta_carotene_fraction_ps1 * absorption_beta_carotene
+    ) * molar_mass_chla
+
+
+def _absorption_ps2(
+    chla_fraction_ps1: float,
+    absorption_chla: float,
+    molar_mass_chla: float,
+) -> float:
+    r"""Light absorbed by PSII: the remaining chlorophyll a share."""
+    return (1 - chla_fraction_ps1) * absorption_chla * molar_mass_chla
+
+
+def _absorption_pbs(
+    absorption_allophycocyanin: float,
+    absorption_phycocyanin: float,
+    molar_mass_chla: float,
+) -> float:
+    r"""Light absorbed by the phycobilisomes: all allophycocyanin and phycocyanin."""
+    return (absorption_allophycocyanin + absorption_phycocyanin) * molar_mass_chla
 
 
 ###############################################################################
@@ -1132,11 +1124,14 @@ def _v_fnr(
     P = fd_ox * nadph
 
     # If delta G is positive calculate the reverse rate
-    # FIXME: np.exp(-d_g_fnr > 0) exponentiates a boolean (always e^0 here), likely a
-    # typo, e.g. for np.exp(-d_g_fnr). It also keeps this rate from being unit checked.
+    # FIXME: the published code computes the reverse rate as
+    #   k_fn_rev / np.exp(-d_g0_fnr / rt) * P * (np.exp(-d_g_fnr > 0) - 1)
+    # which exponentiates a boolean. In this branch `-d_g_fnr > 0` is always
+    # False, np.exp(False) == 1, so the reverse rate is always exactly zero. That
+    # is kept here (written out, so the rate can be exported and unit checked);
+    # the intended term was likely np.exp(-d_g_fnr).
     if d_g_fnr > 0:
-        Keq = np.exp(-d_g0_fnr / rt)
-        return k_fn_rev / Keq * P * (np.exp(-d_g_fnr > 0) - 1)
+        return 0.0 * k_fn_rev * d_g0_fnr * P / rt
 
     return k_fn_fwd * s * (1 - np.exp(d_g_fnr))
 
@@ -1511,26 +1506,29 @@ def _free_pbs(
     return 1 - pbs_ps1 - pbs_ps2
 
 
+def _spectral_overlap(
+    absorption: pd.Series,
+    light_spectrum: pd.Series,
+    wavelength: pd.Series,
+) -> float:
+    r"""Absorption spectrum times light spectrum, integrated over wavelength (Simpson's rule)."""
+    return simpson(absorption * light_spectrum, x=wavelength)
+
+
 def _ocp_activation(
     ocp: float,
     k_oc_pactivation: float,
     k_oc_pdeactivation: float,
     lcf: float,
     oc_pmax: float,
-    # data
-    light_spectrum: pd.Series,
-    ocp_absorption: pd.Series,
+    light_ocp: float,
 ) -> float:
     r"""Activation of orange carotenoid protein.
 
     As active, light-involved processwith passive reversal.
     """
     return (
-        cast(float, simpson(ocp_absorption.mul(light_spectrum)))
-        * lcf
-        * k_oc_pactivation
-        * (oc_pmax - ocp)
-        - k_oc_pdeactivation * ocp
+        light_ocp * lcf * k_oc_pactivation * (oc_pmax - ocp) - k_oc_pdeactivation * ocp
     )
 
 
@@ -1690,6 +1688,11 @@ def add_electron_transport_chain(
         args=["pHlumen", "pHcytoplasm"],
     )
 
+    m.add_derived(
+        "light_OCP",
+        fn=_spectral_overlap,
+        args=["ocp_absorption", "light_spectrum", "wavelength"],
+    )
     m.add_reaction(
         "OCPactivation",
         fn=_ocp_activation,
@@ -1699,9 +1702,7 @@ def add_electron_transport_chain(
             "kOCPdeactivation",
             "lcf",
             "OCPmax",
-            # data
-            "light_spectrum",
-            "ocp_absorption",
+            "light_OCP",
         ],
         stoichiometry={"OCP": 1},
     )
@@ -1710,52 +1711,63 @@ def add_electron_transport_chain(
     # Complex absorption
     ##########################################################################
 
-    m.add_surrogate(
-        "absorption_per_complex",
-        surrogate=qss.Surrogate(
-            model=_absorption_per_complex,
-            args=[
-                "ps_ratio",
-                # data
-                "light_spectrum",
-                "pigment_content",
-                "molar_masses",
-                "abs_coef",
-                "ps_comp",
-            ],
-            outputs=[
-                "absorption_ps1",
-                "absorption_ps2",
-                "absorption_pbs",
-            ],
-            units=dict.fromkeys(
-                ["absorption_ps1", "absorption_ps2", "absorption_pbs"], ppfd
-            ),
-        ),
+    m.add_derived(
+        "chla_fraction_PS1",
+        fn=_chla_fraction_ps1,
+        args=["ps_ratio", "n_chla_PS1", "n_chla_PS2"],
+        unit=dimensionless,
     )
-    m.add_surrogate(
-        "abs_per_complex_ml",
-        surrogate=qss.Surrogate(
-            model=_absorption_per_complex,
-            args=[
-                "ps_ratio",
-                # data
-                "light_spectrum_measure",
-                "pigment_content",
-                "molar_masses",
-                "abs_coef",
-                "ps_comp",
-            ],
-            outputs=[
-                "ml_absorption_ps1",
-                "ml_absorption_ps2",
-                "ml_absorption_pbs",
-            ],
-            units=dict.fromkeys(
-                ["ml_absorption_ps1", "ml_absorption_ps2", "ml_absorption_pbs"], ppfd
-            ),
-        ),
+    m.add_derived(
+        "beta_carotene_fraction_PS1",
+        fn=_beta_carotene_fraction_ps1,
+        args=[
+            "ps_ratio",
+            "n_chla_PS1",
+            "n_chla_PS2",
+            "n_beta_carotene_PS1",
+            "n_beta_carotene_PS2",
+            "beta_carotene_content",
+            "M_chla",
+            "M_beta_carotene",
+        ],
+        unit=dimensionless,
     )
+    # once for the actinic light, once for the measuring light ("ml_")
+    for prefix, light in (("", "light_spectrum"), ("ml_", "light_spectrum_measure")):
+        for pigment in PIGMENTS:
+            m.add_derived(
+                f"{prefix}absorption_{pigment}",
+                fn=_spectral_absorption,
+                args=[f"{pigment}_content", f"abs_coef_{pigment}", light, "wavelength"],
+            )
+        m.add_derived(
+            f"{prefix}absorption_ps1",
+            fn=_absorption_ps1,
+            args=[
+                "chla_fraction_PS1",
+                "beta_carotene_fraction_PS1",
+                f"{prefix}absorption_chla",
+                f"{prefix}absorption_beta_carotene",
+                "M_chla",
+            ],
+            unit=ppfd,
+        )
+        m.add_derived(
+            f"{prefix}absorption_ps2",
+            fn=_absorption_ps2,
+            args=["chla_fraction_PS1", f"{prefix}absorption_chla", "M_chla"],
+            unit=ppfd,
+        )
+        m.add_derived(
+            f"{prefix}absorption_pbs",
+            fn=_absorption_pbs,
+            args=[
+                f"{prefix}absorption_allophycocyanin",
+                f"{prefix}absorption_phycocyanin",
+                "M_chla",
+            ],
+            unit=ppfd,
+        )
 
     ##########################################################################
     # Normal absorption
@@ -2304,13 +2316,10 @@ def add_cbb_and_oxy(
 
 
 def get_pfennig2024_synechocystis(
-    light_spectrum: pd.Series,  # # [umol(photons) m^-2 s^-1], warm white led @ pfd 100
-    light_spectrum_measure: pd.Series,  # [umol(photons) m^-2 s^-1], 625 @ 1
-    ocp_absorption: pd.Series,
-    abs_coef: pd.DataFrame,
-    molar_masses: pd.Series,
-    ps_comp: pd.DataFrame,
-    pigment_content: pd.Series,
+    light_spectrum: pd.Series | None = None,
+    light_spectrum_measure: pd.Series | None = None,
+    ocp_absorption: pd.Series | None = None,
+    abs_coef: pd.DataFrame | None = None,
     # variants
     pbs_behaviour: Literal["static", "dynamic"] = "static",
 ) -> Model:
@@ -2318,9 +2327,34 @@ def get_pfennig2024_synechocystis(
 
     Assembles all sub-models (electron transport chain, ATP synthase, CBB cycle,
     photorespiratory salvage, and lumped consumption reactions) with experimentally
-    derived initial conditions and parameters. Light specGtra and pigment data are
-    attached as model data rather than parameters to allow dynamic updates.
+    derived initial conditions and parameters. The spectra are attached as model
+    data (one 1-D series per spectrum, over the shared `wavelength` axis) to allow
+    dynamic updates; each defaults to `mxlmodels.data.pfennig2024.default()`:
+
+    - light_spectrum: actinic light [umol(photons) m^-2 s^-1 nm^-1]
+    - light_spectrum_measure: measuring light [umol(photons) m^-2 s^-1 nm^-1]
+    - ocp_absorption: OCP absorption per wavelength
+    - abs_coef: absorption coefficient per wavelength [m^2 mg(pigment)^-1], one
+      column per pigment in `PIGMENTS`
     """
+    from mxlmodels.data import pfennig2024  # noqa: PLC0415 (it imports this module)
+
+    default = pfennig2024.default()
+    light_spectrum = (
+        default.light_spectrum if light_spectrum is None else light_spectrum
+    )
+    light_spectrum_measure = (
+        default.light_spectrum_measure
+        if light_spectrum_measure is None
+        else light_spectrum_measure
+    )
+    ocp_absorption = (
+        default.ocp_absorption_per_wavelength
+        if ocp_absorption is None
+        else ocp_absorption
+    )
+    abs_coef = default.pigment_abs_coef_per_wavelength if abs_coef is None else abs_coef
+
     m = Model()
     m.add_variables(
         {
@@ -2378,13 +2412,13 @@ def get_pfennig2024_synechocystis(
         }
     )
     m.add_parameters(parameters)
-    m.add_data("abs_coef", abs_coef)
+    wavelength = light_spectrum.index.to_series().astype(float)
+    m.add_data("wavelength", wavelength)
     m.add_data("light_spectrum", light_spectrum)
     m.add_data("light_spectrum_measure", light_spectrum_measure)
-    m.add_data("molar_masses", molar_masses)
     m.add_data("ocp_absorption", ocp_absorption)
-    m.add_data("ps_comp", ps_comp)
-    m.add_data("pigment_content", pigment_content)
+    for pigment in PIGMENTS:
+        m.add_data(f"abs_coef_{pigment}", abs_coef[pigment])
 
     m = add_electron_transport_chain(m, pbs_behaviour=pbs_behaviour)
     m = add_atpase(m)

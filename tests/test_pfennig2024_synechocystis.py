@@ -1,22 +1,11 @@
 import pandas as pd
 from mxlpy.units import second
 
-import mxlmodels
 from mxlmodels import get_pfennig2024_synechocystis
-
-data = mxlmodels.data.pfennig2024.default()
 
 
 def test_rhs() -> None:
-    model = get_pfennig2024_synechocystis(
-        light_spectrum=data.light_spectrum,
-        light_spectrum_measure=data.light_spectrum_measure,
-        ocp_absorption=data.ocp_absorption_per_wavelength,
-        abs_coef=data.pigment_abs_coef_per_wavelength,
-        molar_masses=data.molar_masses,
-        ps_comp=data.ps_comp,
-        pigment_content=data.pigment_content,
-    )
+    model = get_pfennig2024_synechocystis()
 
     expected = pd.Series(
         {
@@ -49,15 +38,7 @@ def test_rhs() -> None:
 
 
 def test_units() -> None:
-    model = get_pfennig2024_synechocystis(
-        light_spectrum=data.light_spectrum,
-        light_spectrum_measure=data.light_spectrum_measure,
-        ocp_absorption=data.ocp_absorption_per_wavelength,
-        abs_coef=data.pigment_abs_coef_per_wavelength,
-        molar_masses=data.molar_masses,
-        ps_comp=data.ps_comp,
-        pigment_content=data.pigment_content,
-    )
+    model = get_pfennig2024_synechocystis()
     check = model.check_units(time_unit=second)
     assert set(check.per_variable) == set(model.get_raw_variables())
     # OCP activation works on light spectra (data) and _v_fnr cannot be parsed, see FIXME
