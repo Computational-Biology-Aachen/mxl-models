@@ -31,7 +31,7 @@ from typing import Literal
 
 import numpy as np
 import pandas as pd
-from mxlpy import Derived, Model, Parameter, Variable, fns
+from mxlpy import Derived, Model, Parameter, Slider, Variable, fns
 from mxlpy.surrogates import qss
 from mxlpy.units import (
     coulomb,
@@ -272,6 +272,15 @@ parameters: dict[str, Parameter] = {
     "fluo_influence_ps2": Parameter(1.0871604554468057, unit=dimensionless),
     "fluo_influence_ps1": Parameter(1.0580747331180056, unit=dimensionless),
     "fluo_influence_pbs": Parameter(1.2652931291892002, unit=dimensionless),
+    # intensities of the actinic and measuring light, whose spectra
+    # (`light_spectrum`, `light_spectrum_measure`) each integrate to 1
+    "PPFD": Parameter(
+        100.0,
+        unit=ppfd,
+        display_name="PPFD",
+        slider=Slider(min="0", max="1000", step="10"),
+    ),
+    "PPFD_measure": Parameter(1.0, unit=ppfd),
     # light conversion factor from absorbed light to an excitation rate
     "lcf": Parameter(0.4852970468572075, unit=1 / (ppfd * second)),
     "KMPGA": Parameter(0.108119035344566, unit=_c),
@@ -400,6 +409,7 @@ def light_gaussian_led(
 
 def _spectral_absorption(
     content: float,
+    intensity: float,
     # data
     abs_coef: pd.Series,
     light_spectrum: pd.Series,
@@ -408,10 +418,11 @@ def _spectral_absorption(
     r"""Light absorbed by one pigment, integrated over the spectrum.
 
     The pigment's wavelength-resolved absorption coefficient times the incident
-    light, integrated over wavelength (Simpson's rule) and scaled by the
-    pigment's content \[mg(pigment) mg(Chla)^-1\].
+    light (the relative spectrum times its intensity), integrated over
+    wavelength (Simpson's rule) and scaled by the pigment's content
+    \[mg(pigment) mg(Chla)^-1\].
     """
-    return content * simpson(abs_coef * light_spectrum, x=wavelength)
+    return intensity * content * simpson(abs_coef * light_spectrum, x=wavelength)
 
 
 def _chla_fraction_ps1(
@@ -1507,12 +1518,13 @@ def _free_pbs(
 
 
 def _spectral_overlap(
+    intensity: float,
     absorption: pd.Series,
     light_spectrum: pd.Series,
     wavelength: pd.Series,
 ) -> float:
-    r"""Absorption spectrum times light spectrum, integrated over wavelength (Simpson's rule)."""
-    return simpson(absorption * light_spectrum, x=wavelength)
+    r"""Absorption spectrum times light (relative spectrum times intensity), integrated over wavelength (Simpson's rule)."""
+    return intensity * simpson(absorption * light_spectrum, x=wavelength)
 
 
 def _ocp_activation(
@@ -1691,7 +1703,7 @@ def add_electron_transport_chain(
     m.add_derived(
         "light_OCP",
         fn=_spectral_overlap,
-        args=["ocp_absorption", "light_spectrum", "wavelength"],
+        args=["PPFD", "ocp_absorption", "light_spectrum", "wavelength"],
     )
     m.add_reaction(
         "OCPactivation",
@@ -1733,12 +1745,21 @@ def add_electron_transport_chain(
         unit=dimensionless,
     )
     # once for the actinic light, once for the measuring light ("ml_")
-    for prefix, light in (("", "light_spectrum"), ("ml_", "light_spectrum_measure")):
+    for prefix, intensity, light in (
+        ("", "PPFD", "light_spectrum"),
+        ("ml_", "PPFD_measure", "light_spectrum_measure"),
+    ):
         for pigment in PIGMENTS:
             m.add_derived(
                 f"{prefix}absorption_{pigment}",
                 fn=_spectral_absorption,
-                args=[f"{pigment}_content", f"abs_coef_{pigment}", light, "wavelength"],
+                args=[
+                    f"{pigment}_content",
+                    intensity,
+                    f"abs_coef_{pigment}",
+                    light,
+                    "wavelength",
+                ],
             )
         m.add_derived(
             f"{prefix}absorption_ps1",
@@ -2331,8 +2352,10 @@ def get_pfennig2024_synechocystis(
     data (one 1-D series per spectrum, over the shared `wavelength` axis) to allow
     dynamic updates; each defaults to `mxlmodels.data.pfennig2024.default()`:
 
-    - light_spectrum: actinic light [umol(photons) m^-2 s^-1 nm^-1]
-    - light_spectrum_measure: measuring light [umol(photons) m^-2 s^-1 nm^-1]
+    - light_spectrum: relative spectrum of the actinic light [nm^-1], integrating
+      to 1; its intensity is the parameter `PPFD` [umol(photons) m^-2 s^-1]
+    - light_spectrum_measure: relative spectrum of the measuring light [nm^-1],
+      integrating to 1; its intensity is the parameter `PPFD_measure`
     - ocp_absorption: OCP absorption per wavelength
     - abs_coef: absorption coefficient per wavelength [m^2 mg(pigment)^-1], one
       column per pigment in `PIGMENTS`

@@ -45,7 +45,8 @@ def default(data_dir: Path = _default) -> Data:
     )
 
     # Derived
-    light_spectrum: pd.Series = lights["warm_white_led"] * 100
+    # Relative spectra; their intensities are the parameters PPFD, PPFD_measure.
+    light_spectrum: pd.Series = lights["warm_white_led"]
     light_spectrum_measure: pd.Series = light_gaussian_led(625, 1)
 
     return Data(
@@ -57,13 +58,13 @@ def default(data_dir: Path = _default) -> Data:
 
 
 def lights(data_dir: Path = _default) -> pd.DataFrame:
-    """Load the light spectra, one column per light source, scaled by 100."""
-    return (
-        pd.DataFrame(
-            {
-                path.stem: pd.read_csv(path, index_col=0).squeeze(axis=1)
-                for path in sorted((data_dir / "lights/").glob("*.csv"))
-            }
-        )
-        * 100
+    """Load the relative light spectra (each integrating to 1), one column per source.
+
+    The model takes the intensity separately, as the parameter `PPFD`.
+    """
+    return pd.DataFrame(
+        {
+            path.stem: pd.read_csv(path, index_col=0).squeeze(axis=1)
+            for path in sorted((data_dir / "lights/").glob("*.csv"))
+        }
     )
